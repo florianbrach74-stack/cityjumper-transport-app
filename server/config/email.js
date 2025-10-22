@@ -1,29 +1,50 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+let transporter = null;
+let emailEnabled = false;
 
-// Verify transporter configuration
-transporter.verify((error, success) => {
-  if (error) {
-    console.log('❌ Email configuration error:', error);
-  } else {
-    console.log('✅ Email server is ready to send messages');
+// Only create transporter if email config is complete
+if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+  try {
+    transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: parseInt(process.env.EMAIL_PORT) || 587,
+      secure: parseInt(process.env.EMAIL_PORT) === 465,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+    });
+
+    // Verify transporter configuration (non-blocking)
+    transporter.verify((error, success) => {
+      if (error) {
+        console.log('⚠️  Email configuration error (emails disabled):', error.message);
+        emailEnabled = false;
+      } else {
+        console.log('✅ Email server is ready to send messages');
+        emailEnabled = true;
+      }
+    });
+  } catch (error) {
+    console.log('⚠️  Email setup failed (emails disabled):', error.message);
   }
-});
+} else {
+  console.log('⚠️  Email not configured (emails disabled)');
+}
 
 const sendEmail = async (to, subject, html) => {
+  if (!emailEnabled || !transporter) {
+    console.log('⚠️  Email disabled, skipping:', subject);
+    return { messageId: 'email-disabled' };
+  }
+  
   try {
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || '"ZipMend Transport" <noreply@zipmend.com>',
+      from: process.env.EMAIL_FROM || '"CityJumper Transport" <noreply@cityjumper.com>',
       to,
       subject,
       html,
@@ -31,8 +52,9 @@ const sendEmail = async (to, subject, html) => {
     console.log('📧 Email sent:', info.messageId);
     return info;
   } catch (error) {
-    console.error('❌ Error sending email:', error);
-    throw error;
+    console.error('❌ Error sending email:', error.message);
+    // Don't throw - just log and continue
+    return { messageId: 'email-failed', error: error.message };
   }
 };
 
