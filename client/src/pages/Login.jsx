@@ -34,7 +34,7 @@ const Login = () => {
             <Truck className="h-16 w-16 text-primary-600" />
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Willkommen bei ZipMend
+            Willkommen bei CityJumper
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Melden Sie sich an, um fortzufahren

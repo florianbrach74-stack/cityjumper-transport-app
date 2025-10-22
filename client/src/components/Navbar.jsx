@@ -19,7 +19,7 @@ const Navbar = () => {
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center space-x-2">
               <Truck className="h-8 w-8 text-primary-600" />
-              <span className="text-xl font-bold text-gray-900">ZipMend</span>
+              <span className="text-xl font-bold text-gray-900">CityJumper</span>
             </Link>
           </div>
 
