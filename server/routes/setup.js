@@ -51,4 +51,35 @@ router.get('/health', async (req, res) => {
   }
 });
 
+// Execute custom SQL (for admin setup)
+router.post('/execute-sql', async (req, res) => {
+  try {
+    const { sql, secret } = req.body;
+    
+    // Simple security
+    if (secret !== 'admin123setup') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    
+    if (!sql) {
+      return res.status(400).json({ error: 'SQL query required' });
+    }
+    
+    console.log('🔧 Executing SQL:', sql);
+    const result = await pool.query(sql);
+    
+    res.json({ 
+      success: true, 
+      rows: result.rows,
+      rowCount: result.rowCount
+    });
+  } catch (error) {
+    console.error('❌ SQL execution error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
 module.exports = router;
