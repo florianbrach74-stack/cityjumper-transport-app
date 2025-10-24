@@ -20,6 +20,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/cmr', require('./routes/cmr'));
+app.use('/api/setup', require('./routes/setup'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
