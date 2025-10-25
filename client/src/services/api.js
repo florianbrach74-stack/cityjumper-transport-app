@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 // Use production backend URL or fallback to local proxy
-const API_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.PROD ? 'https://cityjumper-transport-app.onrender.com/api' : '/api');
+const API_URL = 'https://cityjumper-api-production-01e4.up.railway.app/api'; 
 
 const api = axios.create({
   baseURL: API_URL,
