@@ -34,14 +34,18 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
 
 ### 🌟 Highlights
 
-- ⚡ **Echtzeit-Routing**: OSRM-Integration für präzise Routen & Fahrzeiten
-- 💰 **Faire Preise**: Automatische Berechnung mit Mindestlohn-Prüfung (18€/h + 0,50€/km)
+- ⚡ **Echtzeit-Routing**: OSRM-Integration für präzise Routen & Fahrzeiten mit Verkehrsberücksichtigung
+- 💰 **Faire Preise**: Automatische Berechnung mit Mindestlohn-Garantie (18€/h + 0,50€/km)
+- 🔒 **Mindestlohn-Validierung**: Echtzeit-Prüfung verhindert Unterschreitung des Mindestlohns
 - 🗺️ **Interaktive Karten**: Leaflet.js mit vollständiger Routenvisualisierung
+- 📦 **Smart Defaults**: Europalette-Maße (120×80×15cm, 100kg) vorausgefüllt
+- 🚚 **Direktfahrt-Standard**: Zustellung am gleichen Tag wie Abholung
 - 📱 **Responsive Design**: Optimiert für Desktop, Tablet & Mobile
-- 🎨 **Modernes UI**: Komplettes CI/CD Design-System mit Logo & Animationen
-- 🔐 **Sicheres Login**: JWT-basierte Authentifizierung mit Rollen-Management
+- 🎨 **Modernes UI**: Komplettes CI/CD Design-System mit professionellem Logo
+- 🔐 **Sicheres Login**: JWT-basierte Authentifizierung mit 4 Rollen-Typen
+- 🔒 **Datenschutz**: Auftragnehmer sehen nur PLZ bis zur Auftragsannahme
 - 📄 **CMR-Frachtbriefe**: Automatische PDF-Generierung mit QR-Codes
-- ✍️ **Digitale Signaturen**: Touch-optimierte Unterschrifts-Erfassung
+- ✍️ **Digitale Signaturen**: Touch-optimierte Unterschrifts-Erfassung mit Empfänger-Name
 
 ---
 
@@ -69,11 +73,14 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
   - Realistische Fahrzeiten
   - Verkehrsberücksichtigung (Stoßzeiten +20%)
   
-- **Mindestlohn-Garantie**
+- **Mindestlohn-Garantie mit Echtzeit-Validierung**
   - Formel: (Distanz × €0,50) + (Fahrzeit × €18/h)
-  - Automatische Validierung
-  - Empfohlener Preis (+20% Aufschlag)
-  - Transparente Aufschlüsselung
+  - **Automatische Preis-Vorschläge**: System berechnet empfohlenen Preis (+20%)
+  - **Echtzeit-Validierung**: Sofortige Warnung bei Unterschreitung
+  - **Visuelles Feedback**: Rotes Eingabefeld + detaillierte Fehlermeldung
+  - **Submit-Blockierung**: Auftrag kann nicht erstellt werden wenn Mindestlohn unterschritten
+  - **Transparente Berechnung**: Zeigt genaue Formel und Differenz
+  - **Lokaler Fallback**: Funktioniert auch wenn Backend offline ist
 
 ### 👥 Rollen-Management
 - **Kunde (Customer)**
@@ -83,35 +90,62 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
   - Eigene Auftragshistorie
 
 - **Auftragnehmer (Contractor)**
-  - Aufträge annehmen
+  - **Datenschutz**: Sieht nur PLZ vor Auftragsannahme (nicht vollständige Adresse)
+  - **Nach Annahme**: Vollständige Adressen, Kontaktdaten, alle Details
+  - Aufträge annehmen & verwalten
   - Mitarbeiter verwalten
   - **Alle Mitarbeiter-Aufträge sehen**
-  - Benachrichtigungen konfigurieren
+  - PLZ-basierte Benachrichtigungen konfigurieren
   - Vollständige Preise sichtbar
 
 - **Mitarbeiter (Employee)**
-  - Nur eigene Aufträge sehen
-  - **Preise NICHT sichtbar**
-  - CMR-Dokumente
+  - Nur eigene zugewiesene Aufträge sehen
+  - **Preise NICHT sichtbar** (Datenschutz)
+  - CMR-Dokumente einsehen
   - Eigenes Dashboard
+  - Unterschriften sammeln
 
 - **Administrator**
   - Alle Aufträge & Benutzer
   - Aufträge zuweisen
   - System-Verwaltung
+  - Vollständige Übersicht
 
 ### 📄 CMR-Frachtbriefe
-- Automatische PDF-Generierung
-- QR-Code für Tracking
-- Digitale Unterschriften
-- Mobile-optimiert
-- Download & Email-Versand
+- **Automatische Erstellung**: Bei Auftragsannahme
+- **PDF-Generierung**: Mit QR-Code für Tracking
+- **Digitale Unterschriften**: 
+  - Fahrer trägt Empfänger-Name ein
+  - Empfänger unterschreibt auf Handy (kein Login nötig)
+  - GPS-Standort wird automatisch erfasst
+  - Bemerkungen optional
+- **Mobile-optimiert**: Touch-Unterschrift auf Smartphone
+- **Download & Email**: Automatischer Versand an alle Beteiligten
 
 ### 🔔 Benachrichtigungen
 - Email-Benachrichtigungen (optional)
 - PLZ-basierte Auftrags-Alerts
 - Status-Updates
 - Auftrags-Zuweisung
+
+### 📦 Smart Defaults & Automatisierung
+- **Europalette-Standard**:
+  - Maße: 120cm × 80cm × 15cm (vorausgefüllt)
+  - Gewicht: 100kg (Standard)
+  - Paletten: 1 Stück
+  - Kunde kann alle Werte ändern
+  
+- **Direktfahrt-Standard**:
+  - Zustellung: Gleiches Datum wie Abholung
+  - Uhrzeit: Gleiche Zeit wie Abholung
+  - Hinweis: "Direktfahrt" wird angezeigt
+  - Kunde kann auf späteren Termin ändern
+  
+- **Automatische Preisberechnung**:
+  - Preis wird bei Routenberechnung automatisch gesetzt
+  - Basiert auf Mindestlohn-Formel
+  - Empfohlener Preis (+20% Aufschlag)
+  - Kunde kann Preis anpassen (mit Validierung)
 
 ---
 
