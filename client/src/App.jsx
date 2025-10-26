@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import CustomerDashboard from './pages/CustomerDashboard';
 import ContractorDashboard from './pages/ContractorDashboard';
+import EmployeeDashboard from './pages/EmployeeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CMRSignature from './pages/CMRSignature';
 
@@ -19,6 +20,10 @@ const DashboardRouter = () => {
 
   if (user.role === 'admin') {
     return <AdminDashboard />;
+  }
+
+  if (user.role === 'employee') {
+    return <EmployeeDashboard />;
   }
 
   return user.role === 'customer' ? <CustomerDashboard /> : <ContractorDashboard />;

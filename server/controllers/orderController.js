@@ -73,8 +73,20 @@ const getOrders = async (req, res) => {
     if (req.user.role === 'customer') {
       filters.customer_id = req.user.id;
     }
-    // Contractors see their accepted orders
+    // Contractors see their accepted orders + all orders from their employees
     else if (req.user.role === 'contractor') {
+      // Get orders where contractor is assigned OR where any employee of this contractor is assigned
+      const result = await pool.query(
+        `SELECT o.* FROM transport_orders o
+         LEFT JOIN users u ON o.contractor_id = u.id
+         WHERE o.contractor_id = $1 OR (u.company_id = $1 AND u.role = 'employee')
+         ORDER BY o.created_at DESC`,
+        [req.user.id]
+      );
+      return res.json({ orders: result.rows });
+    }
+    // Employees see only their own orders
+    else if (req.user.role === 'employee') {
       filters.contractor_id = req.user.id;
     }
 
