@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ordersAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import CMRViewer from '../components/CMRViewer';
+import EmployeeManagement from '../components/EmployeeManagement';
 import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText } from 'lucide-react';
 
 const ContractorDashboard = () => {
@@ -254,6 +255,17 @@ const ContractorDashboard = () => {
                 {myOrders.length}
               </span>
             </button>
+            <button
+              onClick={() => setActiveTab('employees')}
+              className={`${
+                activeTab === 'employees'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
+            >
+              <Truck className="h-5 w-5" />
+              <span>Mitarbeiter</span>
+            </button>
           </nav>
         </div>
 
@@ -276,7 +288,7 @@ const ContractorDashboard = () => {
               </div>
             )}
           </div>
-        ) : (
+        ) : activeTab === 'my-orders' ? (
           <div>
             {myOrders.length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
@@ -294,6 +306,8 @@ const ContractorDashboard = () => {
               </div>
             )}
           </div>
+        ) : (
+          <EmployeeManagement />
         )}
       </div>
 
