@@ -8,8 +8,11 @@ const pool = require('../config/database');
 
 const createOrder = async (req, res) => {
   try {
+    console.log('Creating order with data:', req.body);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.error('Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
@@ -21,9 +24,25 @@ const createOrder = async (req, res) => {
     const orderData = {
       ...req.body,
       customer_id: req.user.id,
+      // Ensure required fields have defaults
+      pickup_country: req.body.pickup_country || 'Deutschland',
+      delivery_country: req.body.delivery_country || 'Deutschland',
+      pickup_contact_name: req.body.pickup_contact_name || '',
+      pickup_contact_phone: req.body.pickup_contact_phone || '',
+      delivery_contact_name: req.body.delivery_contact_name || '',
+      delivery_contact_phone: req.body.delivery_contact_phone || '',
+      weight: req.body.weight || null,
+      length: req.body.length || null,
+      width: req.body.width || null,
+      height: req.body.height || null,
+      pallets: req.body.pallets || null,
+      description: req.body.description || '',
+      special_requirements: req.body.special_requirements || '',
     };
 
+    console.log('Processed order data:', orderData);
     const order = await Order.create(orderData);
+    console.log('Order created successfully:', order.id);
 
     // Send email notification to customer
     try {
@@ -130,10 +149,15 @@ const getOrderById = async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    res.json({ order });
+    res.status(201).json({ order });
   } catch (error) {
     console.error('Get order error:', error);
-    res.status(500).json({ error: 'Server error while fetching order' });
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', error.message);
+    res.status(500).json({ 
+      error: 'Server error while fetching order',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
