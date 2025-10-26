@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import AssignOrderModal from '../components/AssignOrderModal';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editingOrder, setEditingOrder] = useState(null);
+  const [assigningOrder, setAssigningOrder] = useState(null);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -223,6 +225,14 @@ export default function AdminDashboard() {
                         {order.price ? `€${order.price}` : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                        {!order.contractor_id && (
+                          <button
+                            onClick={() => setAssigningOrder(order)}
+                            className="text-green-600 hover:text-green-900 font-medium"
+                          >
+                            Zuweisen
+                          </button>
+                        )}
                         <button
                           onClick={() => navigate(`/orders/${order.id}`)}
                           className="text-blue-600 hover:text-blue-900"
@@ -289,6 +299,18 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Assign Order Modal */}
+      {assigningOrder && (
+        <AssignOrderModal
+          order={assigningOrder}
+          onClose={() => setAssigningOrder(null)}
+          onSuccess={() => {
+            setAssigningOrder(null);
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 }

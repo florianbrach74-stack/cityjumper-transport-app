@@ -24,6 +24,7 @@ app.use('/api/setup', require('./routes/setup'));
 app.use('/api/admin-setup', require('./routes/admin-setup'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/employees', require('./routes/employees'));
+app.use('/api/contractors', require('./routes/contractors'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
