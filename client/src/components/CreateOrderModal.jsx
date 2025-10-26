@@ -8,21 +8,25 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   // Check for pending order data
   const pendingOrder = JSON.parse(localStorage.getItem('pendingOrder') || '{}');
   
+  // Hole heutiges Datum für Direktfahrt
+  const today = new Date().toISOString().split('T')[0];
+  const currentTime = new Date().toTimeString().slice(0, 5);
+
   const [formData, setFormData] = useState({
     pickup_address: pendingOrder.pickupAddress || '',
     pickup_city: pendingOrder.pickupLocation?.city || '',
     pickup_postal_code: pendingOrder.pickupLocation?.postalCode || '',
     pickup_country: 'Deutschland',
-    pickup_date: '',
-    pickup_time: '',
+    pickup_date: today,
+    pickup_time: currentTime,
     pickup_contact_name: '',
     pickup_contact_phone: '',
     delivery_address: pendingOrder.deliveryAddress || '',
     delivery_city: pendingOrder.deliveryLocation?.city || '',
     delivery_postal_code: pendingOrder.deliveryLocation?.postalCode || '',
     delivery_country: 'Deutschland',
-    delivery_date: '',
-    delivery_time: '',
+    delivery_date: today, // Standard: Direktfahrt = gleiches Datum
+    delivery_time: currentTime, // Standard: Direktfahrt = gleiche Zeit
     delivery_contact_name: '',
     delivery_contact_phone: '',
     vehicle_type: pendingOrder.vehicleType || 'Kleintransporter',
@@ -161,6 +165,9 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       // Convert empty strings to null for optional numeric fields
       const orderData = {
         ...formData,
+        // Wenn Lieferdatum/zeit fehlt, nutze Abholdatum/zeit
+        delivery_date: formData.delivery_date || formData.pickup_date,
+        delivery_time: formData.delivery_time || formData.pickup_time,
         weight: formData.weight ? parseFloat(formData.weight) : null,
         length: formData.length ? parseFloat(formData.length) : null,
         width: formData.width ? parseFloat(formData.width) : null,
@@ -302,12 +309,16 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
             </div>
           </div>
 
-          {/* Delivery Information */}
+          {/* Delivery */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <MapPin className="h-5 w-5 mr-2 text-green-600" />
+            <h4 className="text-lg font-medium text-gray-900 mb-2 flex items-center">
+              <MapPin className="h-5 w-5 mr-2 text-primary-600" />
               Zustellung
             </h4>
+            <p className="text-sm text-gray-600 mb-4 bg-blue-50 border border-blue-200 rounded p-2">
+              🚚 <strong>Direktfahrt:</strong> Zustellung erfolgt am gleichen Tag zur gleichen Zeit wie Abholung. 
+              Sie können Datum/Zeit ändern falls gewünscht.
+            </p>
             <div className="space-y-4">
               <AddressSearch
                 label="Lieferadresse"
