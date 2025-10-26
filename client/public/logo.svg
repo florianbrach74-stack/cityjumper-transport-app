@@ -1,0 +1,43 @@
+<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Glow effect -->
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Location Pin - Outer Circle (Light Blue) -->
+  <circle 
+    cx="100" 
+    cy="85" 
+    r="50" 
+    fill="none" 
+    stroke="#7dd3fc" 
+    strokeWidth="8"
+    strokeLinecap="round"
+    filter="url(#glow)"
+  />
+  
+  <!-- Location Pin - Bottom Point -->
+  <path 
+    d="M 100 135 L 85 110 A 50 50 0 0 1 115 110 Z" 
+    fill="#7dd3fc"
+    filter="url(#glow)"
+  />
+  
+  <!-- Arrow (Orange) - Curved upward representing speed/jump -->
+  <path 
+    d="M 75 95 Q 90 70 110 80 L 120 70 L 115 85 L 130 80 L 110 90 Q 85 100 75 95 Z" 
+    fill="#f59e0b"
+    filter="url(#glow)"
+  />
+  
+  <!-- Speed Lines (Light Blue) -->
+  <line x1="50" y1="120" x2="70" y2="120" stroke="#7dd3fc" strokeWidth="4" strokeLinecap="round" opacity="0.8"/>
+  <line x1="45" y1="130" x2="70" y2="130" stroke="#7dd3fc" strokeWidth="4" strokeLinecap="round" opacity="0.6"/>
+  <line x1="40" y1="140" x2="65" y2="140" stroke="#7dd3fc" strokeWidth="4" strokeLinecap="round" opacity="0.4"/>
+</svg>
