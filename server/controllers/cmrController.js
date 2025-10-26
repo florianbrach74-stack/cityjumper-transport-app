@@ -125,8 +125,6 @@ const addSignature = async (req, res) => {
     const { cmrId } = req.params;
     const { signatureType, signatureData, location, remarks } = req.body;
 
-    console.log('Adding signature:', { cmrId, signatureType, hasUser: !!req.user });
-
     if (!['sender', 'carrier', 'consignee'].includes(signatureType)) {
       return res.status(400).json({ error: 'Invalid signature type' });
     }
@@ -136,21 +134,18 @@ const addSignature = async (req, res) => {
       return res.status(404).json({ error: 'CMR document not found' });
     }
 
-    // Authorization check - only if user is logged in
+    // Authorization check
     const order = await Order.findById(cmr.order_id);
     
-    if (req.user) {
-      // User is logged in - check permissions
-      if (signatureType === 'sender' && req.user.role === 'customer' && order.customer_id !== req.user.id) {
-        return res.status(403).json({ error: 'Access denied' });
-      }
-      
-      if (signatureType === 'carrier' && req.user.role === 'contractor' && order.contractor_id !== req.user.id) {
-        return res.status(403).json({ error: 'Access denied' });
-      }
+    if (signatureType === 'sender' && req.user.role === 'customer' && order.customer_id !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    if (signatureType === 'carrier' && req.user.role === 'contractor' && order.contractor_id !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
-    // For consignee, allow public access (no login required)
+    // For consignee, allow public access with CMR number verification
     // This will be used on mobile signature page
 
     const updatedCMR = await CMR.addSignature(cmrId, signatureType, signatureData, location, remarks);
