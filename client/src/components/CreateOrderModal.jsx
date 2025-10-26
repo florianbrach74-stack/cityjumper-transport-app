@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ordersAPI } from '../services/api';
 import { X, MapPin, Calendar, Truck, Package, AlertCircle } from 'lucide-react';
-import AddressAutocomplete from './AddressAutocomplete';
+import AddressSearch from './AddressSearch';
+import RouteMap from './RouteMap';
 
 const CreateOrderModal = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -34,6 +35,9 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pickupLocation, setPickupLocation] = useState(null);
+  const [deliveryLocation, setDeliveryLocation] = useState(null);
+  const [routeInfo, setRouteInfo] = useState(null);
 
   const vehicleTypes = [
     'Kleintransporter (bis 2 Paletten)',
@@ -50,21 +54,55 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const handlePickupAddressSelect = (address) => {
     setFormData((prev) => ({
       ...prev,
-      pickup_address: address.full,
+      pickup_address: `${address.street} ${address.houseNumber}`.trim(),
       pickup_city: address.city,
       pickup_postal_code: address.postalCode,
       pickup_country: address.country,
     }));
+    setPickupLocation(address);
   };
 
   const handleDeliveryAddressSelect = (address) => {
     setFormData((prev) => ({
       ...prev,
-      delivery_address: address.full,
+      delivery_address: `${address.street} ${address.houseNumber}`.trim(),
       delivery_city: address.city,
       delivery_postal_code: address.postalCode,
       delivery_country: address.country,
     }));
+    setDeliveryLocation(address);
+  };
+
+  // Calculate route info when both addresses are selected
+  useEffect(() => {
+    if (pickupLocation && deliveryLocation) {
+      calculateRoute();
+    }
+  }, [pickupLocation, deliveryLocation]);
+
+  const calculateRoute = () => {
+    // Calculate distance using Haversine formula
+    const R = 6371; // Earth's radius in km
+    const dLat = (deliveryLocation.lat - pickupLocation.lat) * Math.PI / 180;
+    const dLon = (deliveryLocation.lon - pickupLocation.lon) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(pickupLocation.lat * Math.PI / 180) * Math.cos(deliveryLocation.lat * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+
+    // Estimate duration (assuming average speed of 60 km/h)
+    const hours = distance / 60;
+    const minutes = Math.round(hours * 60);
+    const durationText = hours >= 1 
+      ? `${Math.floor(hours)}h ${minutes % 60}min`
+      : `${minutes}min`;
+
+    setRouteInfo({
+      distance: Math.round(distance),
+      duration: durationText
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -123,7 +161,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
               Abholung
             </h4>
             <div className="space-y-4">
-              <AddressAutocomplete
+              <AddressSearch
                 label="Abholadresse"
                 value={formData.pickup_address}
                 onChange={(value) => setFormData(prev => ({ ...prev, pickup_address: value }))}
@@ -207,7 +245,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
               Zustellung
             </h4>
             <div className="space-y-4">
-              <AddressAutocomplete
+              <AddressSearch
                 label="Lieferadresse"
                 value={formData.delivery_address}
                 onChange={(value) => setFormData(prev => ({ ...prev, delivery_address: value }))}
@@ -262,6 +300,18 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
               </div>
             </div>
           </div>
+
+          {/* Route Map */}
+          {(pickupLocation || deliveryLocation) && (
+            <div className="bg-white p-4 rounded-lg border-2 border-primary-200">
+              <h4 className="text-lg font-medium text-gray-900 mb-4">Route & Entfernung</h4>
+              <RouteMap 
+                pickup={pickupLocation} 
+                delivery={deliveryLocation}
+                routeInfo={routeInfo}
+              />
+            </div>
+          )}
 
           {/* Shipment Details */}
           <div className="bg-gray-50 p-4 rounded-lg">

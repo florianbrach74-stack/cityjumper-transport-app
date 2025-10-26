@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Truck, MapPin, Clock, Shield, Euro, ArrowRight, CheckCircle } from 'lucide-react';
-import AddressAutocomplete from '../components/AddressAutocomplete';
+import AddressSearch from '../components/AddressSearch';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -131,23 +131,23 @@ export default function LandingPage() {
 
           <div className="bg-white rounded-lg shadow-lg p-8">
             <div className="space-y-6">
-              <AddressAutocomplete
+              <AddressSearch
                 label="Abholadresse"
                 value={pickupAddress}
                 onChange={setPickupAddress}
                 onAddressSelect={(address) => {
-                  setPickupAddress(address.full);
+                  setPickupAddress(`${address.street} ${address.houseNumber}, ${address.postalCode} ${address.city}`.trim());
                   setPickupPostalCode(address.postalCode);
                 }}
                 required
               />
 
-              <AddressAutocomplete
+              <AddressSearch
                 label="Lieferadresse"
                 value={deliveryAddress}
                 onChange={setDeliveryAddress}
                 onAddressSelect={(address) => {
-                  setDeliveryAddress(address.full);
+                  setDeliveryAddress(`${address.street} ${address.houseNumber}, ${address.postalCode} ${address.city}`.trim());
                   setDeliveryPostalCode(address.postalCode);
                 }}
                 required
