@@ -50,7 +50,8 @@ export default function LandingPage() {
     if (routeData) {
       setCalculating(true);
       try {
-        const response = await fetch('https://cityjumper-api-production-01e4.up.railway.app/api/pricing/calculate', {
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://cityjumper-api-production-01e4.up.railway.app';
+        const response = await fetch(`${apiUrl}/api/pricing/calculate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -58,6 +59,10 @@ export default function LandingPage() {
             durationMinutes: routeData.durationMinutes
           })
         });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
         const data = await response.json();
         
@@ -71,10 +76,13 @@ export default function LandingPage() {
             distanceCost: data.distanceCost,
             timeCost: data.timeCost
           });
+        } else {
+          throw new Error(data.error || 'Preisberechnung fehlgeschlagen');
         }
       } catch (error) {
         console.error('Price calculation error:', error);
-        alert('Fehler bei der Preisberechnung');
+        setCalculatedPrice(null);
+        alert('Fehler bei der Preisberechnung: ' + error.message);
       } finally {
         setCalculating(false);
       }
@@ -89,18 +97,33 @@ export default function LandingPage() {
     // Route wird automatisch berechnet durch RouteMap
   };
 
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
+
   const handleCreateOrder = () => {
-    navigate('/register', { 
-      state: { 
-        fromCalculator: true,
-        pickupAddress,
-        deliveryAddress,
-        pickupPostalCode,
-        deliveryPostalCode,
-        vehicleType,
-        estimatedPrice: calculatedPrice?.price
-      }
-    });
+    // Speichere Auftragsdaten in localStorage
+    const orderData = {
+      pickupAddress,
+      deliveryAddress,
+      pickupLocation,
+      deliveryLocation,
+      routeInfo,
+      calculatedPrice,
+      vehicleType: 'Kleintransporter',
+      timestamp: new Date().toISOString()
+    };
+    
+    localStorage.setItem('pendingOrder', JSON.stringify(orderData));
+    
+    // Zeige Dialog
+    setShowOrderDialog(true);
+  };
+
+  const handleLoginRedirect = () => {
+    navigate('/login', { state: { returnTo: '/dashboard', hasPendingOrder: true } });
+  };
+
+  const handleRegisterRedirect = () => {
+    navigate('/register', { state: { returnTo: '/dashboard', hasPendingOrder: true } });
   };
 
   return (
@@ -437,6 +460,100 @@ export default function LandingPage() {
           <p className="text-gray-400">© 2025 CityJumper Transport. Alle Rechte vorbehalten.</p>
         </div>
       </div>
+
+      {/* Order Confirmation Dialog */}
+      {showOrderDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-strong max-w-md w-full p-8 animate-slide-up">
+            <div className="text-center mb-6">
+              <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-primary-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Fahrt beauftragen?
+              </h3>
+              <p className="text-gray-600">
+                Möchten Sie diese Fahrt jetzt beauftragen?
+              </p>
+            </div>
+
+            {/* Order Summary */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Von:</span>
+                <span className="font-medium text-gray-900">{pickupLocation?.city}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Nach:</span>
+                <span className="font-medium text-gray-900">{deliveryLocation?.city}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Entfernung:</span>
+                <span className="font-medium text-gray-900">{calculatedPrice?.distance} km</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Fahrzeit:</span>
+                <span className="font-medium text-gray-900">{calculatedPrice?.duration}</span>
+              </div>
+              <div className="border-t border-gray-200 pt-2 mt-2">
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-900">Preis:</span>
+                  <span className="font-bold text-primary-600 text-lg">
+                    €{calculatedPrice?.recommendedPrice.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {user ? (
+              // User is logged in - direct order creation
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    navigate('/dashboard');
+                    setShowOrderDialog(false);
+                  }}
+                  className="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 transition-all shadow-medium"
+                >
+                  Auftrag jetzt erstellen
+                </button>
+                <button
+                  onClick={() => setShowOrderDialog(false)}
+                  className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            ) : (
+              // User not logged in - show login/register options
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600 text-center mb-4">
+                  Um einen Auftrag zu erstellen, müssen Sie sich anmelden oder registrieren
+                </p>
+                <button
+                  onClick={handleLoginRedirect}
+                  className="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 transition-all shadow-medium flex items-center justify-center"
+                >
+                  <LogIn className="h-5 w-5 mr-2" />
+                  Anmelden
+                </button>
+                <button
+                  onClick={handleRegisterRedirect}
+                  className="w-full bg-secondary-500 text-white py-3 rounded-xl font-semibold hover:bg-secondary-600 transition-all shadow-medium"
+                >
+                  Jetzt registrieren
+                </button>
+                <button
+                  onClick={() => setShowOrderDialog(false)}
+                  className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

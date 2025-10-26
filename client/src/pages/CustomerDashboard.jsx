@@ -39,6 +39,15 @@ const CustomerDashboard = () => {
 
   useEffect(() => {
     fetchOrders();
+    
+    // Check for pending order from landing page
+    const pendingOrder = localStorage.getItem('pendingOrder');
+    if (pendingOrder) {
+      // Show modal with pre-filled data
+      setShowCreateModal(true);
+      // Clear the pending order after opening modal
+      localStorage.removeItem('pendingOrder');
+    }
   }, []);
 
   const handleOrderCreated = () => {

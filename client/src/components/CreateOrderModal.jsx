@@ -5,24 +5,27 @@ import AddressSearch from './AddressSearch';
 import RouteMap from './RouteMap';
 
 const CreateOrderModal = ({ onClose, onSuccess }) => {
+  // Check for pending order data
+  const pendingOrder = JSON.parse(localStorage.getItem('pendingOrder') || '{}');
+  
   const [formData, setFormData] = useState({
-    pickup_address: '',
-    pickup_city: '',
-    pickup_postal_code: '',
+    pickup_address: pendingOrder.pickupAddress || '',
+    pickup_city: pendingOrder.pickupLocation?.city || '',
+    pickup_postal_code: pendingOrder.pickupLocation?.postalCode || '',
     pickup_country: 'Deutschland',
     pickup_date: '',
     pickup_time: '',
     pickup_contact_name: '',
     pickup_contact_phone: '',
-    delivery_address: '',
-    delivery_city: '',
-    delivery_postal_code: '',
+    delivery_address: pendingOrder.deliveryAddress || '',
+    delivery_city: pendingOrder.deliveryLocation?.city || '',
+    delivery_postal_code: pendingOrder.deliveryLocation?.postalCode || '',
     delivery_country: 'Deutschland',
     delivery_date: '',
     delivery_time: '',
     delivery_contact_name: '',
     delivery_contact_phone: '',
-    vehicle_type: 'Kleintransporter',
+    vehicle_type: pendingOrder.vehicleType || 'Kleintransporter',
     weight: '',
     length: '',
     width: '',
@@ -30,14 +33,14 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     pallets: '',
     description: '',
     special_requirements: '',
-    price: '',
+    price: pendingOrder.calculatedPrice?.recommendedPrice || '',
   });
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [pickupLocation, setPickupLocation] = useState(null);
-  const [deliveryLocation, setDeliveryLocation] = useState(null);
-  const [routeInfo, setRouteInfo] = useState(null);
+  const [pickupLocation, setPickupLocation] = useState(pendingOrder.pickupLocation || null);
+  const [deliveryLocation, setDeliveryLocation] = useState(pendingOrder.deliveryLocation || null);
+  const [routeInfo, setRouteInfo] = useState(pendingOrder.routeInfo || null);
 
   const vehicleTypes = [
     'Kleintransporter (bis 2 Paletten)',
