@@ -1,27 +1,39 @@
 export default function Logo({ size = 'md', showText = true, className = '' }) {
   const sizes = {
-    sm: { icon: 'h-8 w-8', text: 'text-lg' },
+    sm: { icon: 'h-10 w-10', text: 'text-xl' },
     md: { icon: 'h-12 w-12', text: 'text-2xl' },
-    lg: { icon: 'h-16 w-16', text: 'text-4xl' },
-    xl: { icon: 'h-24 w-24', text: 'text-5xl' },
+    lg: { icon: 'h-20 w-20', text: 'text-4xl' },
+    xl: { icon: 'h-28 w-28', text: 'text-6xl' },
   };
 
   const currentSize = sizes[size] || sizes.md;
 
   return (
     <div className={`flex items-center space-x-3 ${className}`}>
-      {/* CityJumper Logo - Location Pin with Arrow */}
-      <div className="relative">
+      {/* CityJumper Logo - Modern Location Pin with Dynamic Arrow */}
+      <div className="relative group">
         <svg 
-          className={`${currentSize.icon} transition-transform hover:scale-110`}
-          viewBox="0 0 200 200" 
+          className={`${currentSize.icon} transition-all duration-300 group-hover:scale-110 drop-shadow-lg`}
+          viewBox="0 0 100 100" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Glow effect */}
           <defs>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            {/* Gradient for Pin */}
+            <linearGradient id="pinGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#38bdf8" />
+              <stop offset="100%" stopColor="#0ea5e9" />
+            </linearGradient>
+            
+            {/* Gradient for Arrow */}
+            <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#fb923c" />
+              <stop offset="100%" stopColor="#f59e0b" />
+            </linearGradient>
+            
+            {/* Glow effect */}
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
               <feMerge>
                 <feMergeNode in="coloredBlur"/>
                 <feMergeNode in="SourceGraphic"/>
@@ -29,46 +41,66 @@ export default function Logo({ size = 'md', showText = true, className = '' }) {
             </filter>
           </defs>
           
-          {/* Location Pin - Outer Circle (Light Blue) */}
-          <circle 
-            cx="100" 
-            cy="85" 
-            r="50" 
-            fill="none" 
-            stroke="#7dd3fc" 
-            strokeWidth="8"
-            strokeLinecap="round"
-            filter="url(#glow)"
-          />
+          {/* Location Pin Shape */}
+          <g filter="url(#glow)">
+            {/* Pin Circle */}
+            <circle 
+              cx="50" 
+              cy="35" 
+              r="20" 
+              fill="url(#pinGradient)"
+              stroke="#0284c7"
+              strokeWidth="2"
+            />
+            
+            {/* Pin Point */}
+            <path 
+              d="M 50 55 L 40 42 Q 50 38 60 42 Z" 
+              fill="url(#pinGradient)"
+              stroke="#0284c7"
+              strokeWidth="1.5"
+            />
+            
+            {/* Inner Circle (white) */}
+            <circle 
+              cx="50" 
+              cy="35" 
+              r="12" 
+              fill="white"
+              opacity="0.9"
+            />
+            
+            {/* Dynamic Arrow Inside Pin */}
+            <path 
+              d="M 45 38 L 50 28 L 55 38 M 50 28 L 50 42" 
+              stroke="url(#arrowGradient)"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </g>
           
-          {/* Location Pin - Bottom Point */}
-          <path 
-            d="M 100 135 L 85 110 A 50 50 0 0 1 115 110 Z" 
-            fill="#7dd3fc"
-            filter="url(#glow)"
-          />
-          
-          {/* Arrow (Orange) - Curved upward representing speed/jump */}
-          <path 
-            d="M 75 95 Q 90 70 110 80 L 120 70 L 115 85 L 130 80 L 110 90 Q 85 100 75 95 Z" 
-            fill="#f59e0b"
-            filter="url(#glow)"
-          />
-          
-          {/* Speed Lines (Light Blue) */}
-          <line x1="50" y1="120" x2="70" y2="120" stroke="#7dd3fc" strokeWidth="4" strokeLinecap="round" opacity="0.8"/>
-          <line x1="45" y1="130" x2="70" y2="130" stroke="#7dd3fc" strokeWidth="4" strokeLinecap="round" opacity="0.6"/>
-          <line x1="40" y1="140" x2="65" y2="140" stroke="#7dd3fc" strokeWidth="4" strokeLinecap="round" opacity="0.4"/>
+          {/* Speed Lines */}
+          <g opacity="0.7">
+            <line x1="20" y1="60" x2="35" y2="60" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="15" y1="68" x2="35" y2="68" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" opacity="0.7"/>
+            <line x1="10" y1="76" x2="30" y2="76" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" opacity="0.4"/>
+          </g>
         </svg>
       </div>
       
       {showText && (
-        <div className="flex flex-col leading-none">
-          <span className={`${currentSize.text} font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-cyan-600`}>
-            CITY<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">JUMPER</span>
+        <div className="flex flex-col leading-tight">
+          <span className={`${currentSize.text} font-display font-extrabold tracking-tight`}>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-sky-600">
+              City
+            </span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-600">
+              Jumper
+            </span>
           </span>
           {size !== 'sm' && (
-            <span className="text-xs text-gray-500 font-medium tracking-wide mt-1">
+            <span className="text-xs text-gray-500 font-semibold tracking-wider uppercase mt-0.5">
               Express Transport
             </span>
           )}
