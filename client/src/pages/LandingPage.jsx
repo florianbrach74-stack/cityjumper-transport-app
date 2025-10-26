@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Truck, MapPin, Clock, Shield, Euro, ArrowRight, CheckCircle, LogIn, LogOut, User } from 'lucide-react';
 import AddressSearch from '../components/AddressSearch';
+import RouteMap from '../components/RouteMap';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -27,10 +28,12 @@ export default function LandingPage() {
   };
   const [pickupAddress, setPickupAddress] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [pickupPostalCode, setPickupPostalCode] = useState('');
-  const [deliveryPostalCode, setDeliveryPostalCode] = useState('');
+  const [pickupLocation, setPickupLocation] = useState(null);
+  const [deliveryLocation, setDeliveryLocation] = useState(null);
+  const [routeInfo, setRouteInfo] = useState(null);
   const [vehicleType, setVehicleType] = useState('Kleintransporter');
   const [calculatedPrice, setCalculatedPrice] = useState(null);
+  const [calculating, setCalculating] = useState(false);
 
   const vehicleTypes = [
     { name: 'Kleintransporter', basePrice: 80, pricePerKm: 1.2 },
@@ -39,28 +42,50 @@ export default function LandingPage() {
     { name: 'Transporter mit Hebebühne', basePrice: 200, pricePerKm: 2.5 },
   ];
 
-  const calculateDistance = (zip1, zip2) => {
-    // Vereinfachte Distanzberechnung basierend auf PLZ-Differenz
-    // In Produktion: Google Maps Distance Matrix API verwenden
-    const diff = Math.abs(parseInt(zip1) - parseInt(zip2));
-    return Math.max(10, diff / 100); // Mindestens 10km
+  const handleRouteCalculated = async (routeData) => {
+    setRouteInfo(routeData);
+    
+    // Berechne Preis basierend auf echter Route
+    if (routeData) {
+      setCalculating(true);
+      try {
+        const response = await fetch('https://cityjumper-api-production-01e4.up.railway.app/api/pricing/calculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            distanceKm: routeData.distance,
+            durationMinutes: routeData.durationMinutes
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          setCalculatedPrice({
+            minimumPrice: data.minimumPrice,
+            recommendedPrice: data.recommendedPrice,
+            distance: data.distanceKm,
+            duration: routeData.duration,
+            breakdown: data.breakdown,
+            distanceCost: data.distanceCost,
+            timeCost: data.timeCost
+          });
+        }
+      } catch (error) {
+        console.error('Price calculation error:', error);
+        alert('Fehler bei der Preisberechnung');
+      } finally {
+        setCalculating(false);
+      }
+    }
   };
 
   const handleCalculatePrice = () => {
-    if (!pickupPostalCode || !deliveryPostalCode) {
-      alert('Bitte geben Sie beide Postleitzahlen ein');
+    if (!pickupLocation || !deliveryLocation) {
+      alert('Bitte wählen Sie beide Adressen aus der Vorschlagsliste aus');
       return;
     }
-
-    const vehicle = vehicleTypes.find(v => v.name === vehicleType);
-    const distance = calculateDistance(pickupPostalCode, deliveryPostalCode);
-    const price = vehicle.basePrice + (distance * vehicle.pricePerKm);
-    
-    setCalculatedPrice({
-      price: Math.round(price),
-      distance: Math.round(distance),
-      vehicle: vehicle.name
-    });
+    // Route wird automatisch berechnet durch RouteMap
   };
 
   const handleCreateOrder = () => {
@@ -207,7 +232,7 @@ export default function LandingPage() {
                 onChange={setPickupAddress}
                 onAddressSelect={(address) => {
                   setPickupAddress(`${address.street} ${address.houseNumber}, ${address.postalCode} ${address.city}`.trim());
-                  setPickupPostalCode(address.postalCode);
+                  setPickupLocation(address);
                 }}
                 required
               />
@@ -218,41 +243,54 @@ export default function LandingPage() {
                 onChange={setDeliveryAddress}
                 onAddressSelect={(address) => {
                   setDeliveryAddress(`${address.street} ${address.houseNumber}, ${address.postalCode} ${address.city}`.trim());
-                  setDeliveryPostalCode(address.postalCode);
+                  setDeliveryLocation(address);
                 }}
                 required
               />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Fahrzeugtyp</label>
-                <select
-                  value={vehicleType}
-                  onChange={(e) => setVehicleType(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  {vehicleTypes.map((type) => (
-                    <option key={type.name} value={type.name}>{type.name}</option>
-                  ))}
-                </select>
-              </div>
+              {/* Route Map */}
+              {(pickupLocation && deliveryLocation) && (
+                <div className="mt-6">
+                  <RouteMap 
+                    pickup={pickupLocation} 
+                    delivery={deliveryLocation}
+                    onRouteCalculated={handleRouteCalculated}
+                  />
+                </div>
+              )}
 
-              <button
-                onClick={handleCalculatePrice}
-                className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition flex items-center justify-center"
-              >
-                <Euro className="h-5 w-5 mr-2" />
-                Preis berechnen
-              </button>
+              {calculating && (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
+                  <p className="text-sm text-gray-600">Berechne Preis...</p>
+                </div>
+              )}
 
               {calculatedPrice && (
-                <div className="mt-6 bg-primary-50 border-2 border-primary-200 rounded-lg p-6">
+                <div className="mt-6 bg-gradient-to-br from-primary-50 to-blue-50 border-2 border-primary-300 rounded-lg p-6 shadow-lg">
                   <div className="text-center">
-                    <p className="text-sm text-gray-600 mb-2">Geschätzter Preis</p>
-                    <p className="text-4xl font-bold text-primary-600 mb-4">
-                      €{calculatedPrice.price}
+                    <p className="text-sm font-medium text-gray-700 mb-2">💰 Empfohlener Preis</p>
+                    <p className="text-5xl font-bold text-primary-600 mb-2">
+                      €{calculatedPrice.recommendedPrice.toFixed(2)}
                     </p>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p>Entfernung: ca. {calculatedPrice.distance} km</p>
+                    <p className="text-xs text-gray-500 mb-4">
+                      (Mindestpreis: €{calculatedPrice.minimumPrice.toFixed(2)})
+                    </p>
+                    
+                    <div className="bg-white rounded-lg p-4 mb-4 text-left">
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Preisberechnung:</p>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p>📍 Entfernung: {calculatedPrice.distance} km × €{calculatedPrice.breakdown.perKm} = €{calculatedPrice.distanceCost.toFixed(2)}</p>
+                        <p>⏱️ Fahrzeit: {calculatedPrice.duration} × €{calculatedPrice.breakdown.perHour}/h = €{calculatedPrice.timeCost.toFixed(2)}</p>
+                        <div className="border-t border-gray-200 my-2"></div>
+                        <p className="font-semibold">Mindestpreis (Mindestlohn): €{calculatedPrice.minimumPrice.toFixed(2)}</p>
+                        <p className="text-xs text-gray-500">+ 20% Aufschlag = €{calculatedPrice.recommendedPrice.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-gray-600 space-y-1 mb-4">
+                      <p>🚗 Entfernung: {calculatedPrice.distance} km</p>
+                      <p>⏱️ Fahrzeit: {calculatedPrice.duration}</p>
                       <p>Fahrzeug: {calculatedPrice.vehicle}</p>
                     </div>
                     <button
