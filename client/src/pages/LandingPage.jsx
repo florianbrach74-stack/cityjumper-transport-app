@@ -220,12 +220,26 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 text-white overflow-hidden">
-        {/* Animated Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full filter blur-3xl animate-blob"></div>
-          <div className="absolute top-0 right-0 w-96 h-96 bg-secondary-400 rounded-full filter blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-primary-300 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
+      <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
+        {/* Futuristic Background with Neon Lines */}
+        <div className="absolute inset-0 opacity-30">
+          {/* Diagonal neon lines */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent transform -rotate-12 origin-top-left"></div>
+          <div className="absolute bottom-0 right-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent transform -rotate-12 origin-bottom-right"></div>
+          
+          {/* Grid pattern */}
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'linear-gradient(rgba(14, 165, 233, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(14, 165, 233, 0.1) 1px, transparent 1px)',
+            backgroundSize: '50px 50px'
+          }}></div>
+        </div>
+
+        {/* Glowing Logo Effect in Background */}
+        <div className="absolute top-1/4 left-10 opacity-20 pointer-events-none">
+          <div className="relative">
+            <div className="w-64 h-64 rounded-full bg-cyan-400 blur-3xl"></div>
+            <div className="absolute inset-0 w-64 h-64 rounded-full bg-orange-400 blur-3xl mix-blend-multiply"></div>
+          </div>
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
