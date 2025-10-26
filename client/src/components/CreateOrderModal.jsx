@@ -41,6 +41,8 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const [pickupLocation, setPickupLocation] = useState(pendingOrder.pickupLocation || null);
   const [deliveryLocation, setDeliveryLocation] = useState(pendingOrder.deliveryLocation || null);
   const [routeInfo, setRouteInfo] = useState(pendingOrder.routeInfo || null);
+  const [priceWarning, setPriceWarning] = useState('');
+  const [minimumPrice, setMinimumPrice] = useState(null);
 
   const vehicleTypes = [
     'Kleintransporter (bis 2 Paletten)',
@@ -49,9 +51,49 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     'Transporter mit Hebebühne',
   ];
 
+  const validatePrice = (price) => {
+    if (!routeInfo || !price) {
+      setPriceWarning('');
+      return true;
+    }
+
+    const PRICE_PER_KM = 0.50;
+    const HOURLY_RATE = 18.00;
+    
+    const distanceCost = routeInfo.distance * PRICE_PER_KM;
+    const durationHours = routeInfo.durationMinutes / 60;
+    const timeCost = durationHours * HOURLY_RATE;
+    const calculatedMinimumPrice = distanceCost + timeCost;
+    
+    setMinimumPrice(calculatedMinimumPrice);
+    
+    const proposedPrice = parseFloat(price);
+    
+    if (proposedPrice < calculatedMinimumPrice) {
+      const difference = calculatedMinimumPrice - proposedPrice;
+      setPriceWarning(
+        `⚠️ ACHTUNG: Der Preis unterschreitet den Mindestlohn! ` +
+        `Mindestpreis: €${calculatedMinimumPrice.toFixed(2)} ` +
+        `(Sie sind €${difference.toFixed(2)} zu niedrig)`
+      );
+      return false;
+    } else {
+      setPriceWarning('');
+      return true;
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    
+    // Validiere Preis bei Änderung
+    if (name === 'price') {
+      validatePrice(value);
+    }
   };
 
   const handlePickupAddressSelect = (address) => {
@@ -88,8 +130,10 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         const distanceCost = routeData.distance * PRICE_PER_KM;
         const durationHours = routeData.durationMinutes / 60;
         const timeCost = durationHours * HOURLY_RATE;
-        const minimumPrice = distanceCost + timeCost;
-        const recommendedPrice = minimumPrice * 1.2;
+        const calculatedMinimumPrice = distanceCost + timeCost;
+        const recommendedPrice = calculatedMinimumPrice * 1.2;
+        
+        setMinimumPrice(calculatedMinimumPrice);
         
         setFormData(prev => ({
           ...prev,
@@ -104,6 +148,13 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    
+    // Prüfe Mindestlohn
+    if (priceWarning) {
+      setError('Der Preis unterschreitet den Mindestlohn. Bitte erhöhen Sie den Preis auf mindestens €' + minimumPrice.toFixed(2));
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -417,8 +468,27 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                   required
                   value={formData.price}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-primary-50"
+                  className={`mt-1 block w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 ${
+                    priceWarning 
+                      ? 'border-red-500 bg-red-50' 
+                      : 'border-gray-300 bg-primary-50'
+                  }`}
                 />
+                {priceWarning && (
+                  <div className="mt-2 p-3 bg-red-100 border-2 border-red-500 rounded-lg">
+                    <p className="text-sm font-semibold text-red-800">
+                      {priceWarning}
+                    </p>
+                    <p className="text-xs text-red-700 mt-1">
+                      📊 Berechnung: {routeInfo?.distance}km × €0,50 + {(routeInfo?.durationMinutes / 60).toFixed(2)}h × €18/h = €{minimumPrice?.toFixed(2)}
+                    </p>
+                  </div>
+                )}
+                {!priceWarning && minimumPrice && (
+                  <p className="text-xs text-green-600 mt-1">
+                    ✅ Preis hält Mindestlohn ein (Minimum: €{minimumPrice.toFixed(2)})
+                  </p>
+                )}
                 <p className="text-xs text-gray-500 mt-1">
                   💡 Basierend auf Mindestlohn-Kalkulation (€0,50/km + €18/h)
                 </p>
