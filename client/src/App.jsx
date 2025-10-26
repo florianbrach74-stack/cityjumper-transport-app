@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import CustomerDashboard from './pages/CustomerDashboard';
 import ContractorDashboard from './pages/ContractorDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import CMRSignature from './pages/CMRSignature';
 
 const DashboardRouter = () => {
@@ -13,6 +14,10 @@ const DashboardRouter = () => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user.role === 'admin') {
+    return <AdminDashboard />;
   }
 
   return user.role === 'customer' ? <CustomerDashboard /> : <ContractorDashboard />;
