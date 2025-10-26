@@ -1,14 +1,26 @@
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransporter({
-  host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+// Create transporter only if email credentials are provided
+let transporter = null;
+
+if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+  try {
+    transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT || 587,
+      secure: process.env.EMAIL_PORT === '465',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+    console.log('✅ Email service configured');
+  } catch (error) {
+    console.warn('⚠️ Email service configuration failed:', error.message);
+  }
+} else {
+  console.warn('⚠️ Email service not configured - emails will be logged only');
+}
 
 const sendNewOrderNotification = async (contractorEmail, orderData) => {
   const mailOptions = {
@@ -44,6 +56,12 @@ const sendNewOrderNotification = async (contractorEmail, orderData) => {
       </div>
     `,
   };
+
+  if (!transporter) {
+    console.log(`📧 [EMAIL DISABLED] Would send notification to ${contractorEmail}`);
+    console.log('Order details:', { pickup: orderData.pickup_postal_code, delivery: orderData.delivery_postal_code });
+    return;
+  }
 
   try {
     await transporter.sendMail(mailOptions);
@@ -96,6 +114,11 @@ const sendOrderAssignmentNotification = async (contractorEmail, orderData) => {
       </div>
     `,
   };
+
+  if (!transporter) {
+    console.log(`📧 [EMAIL DISABLED] Would send assignment notification to ${contractorEmail}`);
+    return;
+  }
 
   try {
     await transporter.sendMail(mailOptions);
