@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const { validatePassword } = require('../utils/passwordValidator');
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -18,6 +19,15 @@ const register = async (req, res) => {
     }
 
     const { email, password, role, company_name, first_name, last_name, phone } = req.body;
+
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ 
+        error: 'Passwort ist nicht sicher genug',
+        details: passwordValidation.errors 
+      });
+    }
 
     // Check if user already exists
     const existingUser = await User.findByEmail(email);
@@ -113,8 +123,8 @@ const getProfile = async (req, res) => {
 // Validation rules
 const registerValidation = [
   body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 }),
-  body('role').isIn(['customer', 'contractor']),
+  body('password').isLength({ min: 8 }),
+  body('role').isIn(['customer', 'contractor', 'employee']),
   body('first_name').notEmpty().trim(),
   body('last_name').notEmpty().trim(),
 ];
