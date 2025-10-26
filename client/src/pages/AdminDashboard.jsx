@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AssignOrderModal from '../components/AssignOrderModal';
+import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -100,10 +101,13 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Lade Admin-Dashboard...</p>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Lade Admin-Dashboard...</p>
+          </div>
         </div>
       </div>
     );
@@ -111,18 +115,12 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              Zurück zum Dashboard
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
         </div>
       </div>
 
