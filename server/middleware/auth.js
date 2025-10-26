@@ -26,7 +26,30 @@ const authorizeRole = (...roles) => {
   };
 };
 
+// Optional authentication - sets req.user if token exists, but doesn't require it
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    // No token, but that's okay - continue without user
+    req.user = null;
+    return next();
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      // Invalid token, but that's okay - continue without user
+      req.user = null;
+      return next();
+    }
+    req.user = user;
+    next();
+  });
+};
+
 module.exports = {
   authenticateToken,
   authorizeRole,
+  optionalAuth,
 };
