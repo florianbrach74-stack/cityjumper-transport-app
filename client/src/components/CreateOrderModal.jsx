@@ -169,10 +169,27 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         price: formData.price ? parseFloat(formData.price) : null,
       };
 
-      await ordersAPI.createOrder(orderData);
+      console.log('Sending order data:', orderData);
+      const response = await ordersAPI.createOrder(orderData);
+      console.log('Order created successfully:', response);
       onSuccess();
+      onClose();
     } catch (err) {
-      setError(err.response?.data?.error || 'Fehler beim Erstellen des Auftrags');
+      console.error('Error creating order:', err);
+      console.error('Error response:', err.response);
+      console.error('Error data:', err.response?.data);
+      
+      let errorMessage = 'Fehler beim Erstellen des Auftrags';
+      
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.response?.data?.details) {
+        errorMessage = err.response.data.details;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
