@@ -1,10 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Truck, MapPin, Clock, Shield, Euro, ArrowRight, CheckCircle } from 'lucide-react';
+import { Truck, MapPin, Clock, Shield, Euro, ArrowRight, CheckCircle, LogIn, LogOut, User } from 'lucide-react';
 import AddressSearch from '../components/AddressSearch';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Check if user is logged in
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error('Error parsing user:', e);
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    window.location.href = '/';
+  };
   const [pickupAddress, setPickupAddress] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [pickupPostalCode, setPickupPostalCode] = useState('');
@@ -59,6 +79,54 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Navigation Bar */}
+      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2">
+              <Truck className="h-8 w-8 text-primary-600" />
+              <span className="text-2xl font-bold text-gray-900">CityJumper</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              {user ? (
+                <>
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition"
+                  >
+                    <User className="h-5 w-5" />
+                    <span>{user.first_name}</span>
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span>Abmelden</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition"
+                  >
+                    <LogIn className="h-5 w-5" />
+                    <span>Anmelden</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition"
+                  >
+                    Registrieren
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-primary-600 to-primary-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -76,12 +144,14 @@ export default function LandingPage() {
               >
                 Preis berechnen
               </button>
-              <button
-                onClick={() => navigate('/register')}
-                className="bg-primary-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-800 transition border-2 border-white"
-              >
-                Jetzt registrieren
-              </button>
+              {!user && (
+                <button
+                  onClick={() => navigate('/register')}
+                  className="bg-primary-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-800 transition border-2 border-white"
+                >
+                  Jetzt registrieren
+                </button>
+              )}
             </div>
           </div>
         </div>

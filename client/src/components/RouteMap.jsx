@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { MapPin, Navigation, Clock } from 'lucide-react';
+import { MapPin, Navigation, Clock, AlertTriangle } from 'lucide-react';
 
 // Fix for default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -47,7 +47,71 @@ function MapBounds({ pickup, delivery }) {
   return null;
 }
 
-export default function RouteMap({ pickup, delivery, routeInfo }) {
+export default function RouteMap({ pickup, delivery, onRouteCalculated }) {
+  const [routeData, setRouteData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (pickup && delivery) {
+      fetchRoute();
+    }
+  }, [pickup, delivery]);
+
+  const fetchRoute = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Use OSRM (OpenStreetMap Routing Machine) for real routing
+      const response = await fetch(
+        `https://router.project-osrm.org/route/v1/driving/${pickup.lon},${pickup.lat};${delivery.lon},${delivery.lat}?overview=full&geometries=geojson&steps=true`
+      );
+      
+      const data = await response.json();
+      
+      if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        const distanceKm = Math.round(route.distance / 1000);
+        const durationMin = Math.round(route.duration / 60);
+        
+        // Add traffic estimation (10-20% extra time during business hours)
+        const now = new Date();
+        const hour = now.getHours();
+        const isRushHour = (hour >= 7 && hour <= 9) || (hour >= 16 && hour <= 19);
+        const trafficFactor = isRushHour ? 1.2 : 1.1;
+        const durationWithTraffic = Math.round(durationMin * trafficFactor);
+        
+        const hours = Math.floor(durationWithTraffic / 60);
+        const minutes = durationWithTraffic % 60;
+        const durationText = hours >= 1 
+          ? `${hours}h ${minutes}min`
+          : `${minutes}min`;
+
+        const routeInfo = {
+          distance: distanceKm,
+          duration: durationText,
+          durationMinutes: durationWithTraffic,
+          coordinates: route.geometry.coordinates.map(coord => [coord[1], coord[0]]), // Swap lon,lat to lat,lon
+          hasTraffic: isRushHour
+        };
+
+        setRouteData(routeInfo);
+        
+        if (onRouteCalculated) {
+          onRouteCalculated(routeInfo);
+        }
+      } else {
+        throw new Error('Keine Route gefunden');
+      }
+    } catch (err) {
+      console.error('Route calculation error:', err);
+      setError('Fehler beim Berechnen der Route');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!pickup || !delivery) {
     return (
       <div className="bg-gray-50 rounded-lg p-8 text-center">
@@ -57,39 +121,57 @@ export default function RouteMap({ pickup, delivery, routeInfo }) {
     );
   }
 
-  const routeCoordinates = [
-    [pickup.lat, pickup.lon],
-    [delivery.lat, delivery.lon]
-  ];
+  if (loading) {
+    return (
+      <div className="bg-gray-50 rounded-lg p-8 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Berechne Route...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 rounded-lg p-8 text-center">
+        <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-2" />
+        <p className="text-red-700">{error}</p>
+      </div>
+    );
+  }
+
+  if (!routeData) {
+    return null;
+  }
 
   return (
     <div className="space-y-4">
       {/* Route Info */}
-      {routeInfo && (
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center text-gray-600 mb-1">
-              <Navigation className="h-4 w-4 mr-2" />
-              <span className="text-sm">Entfernung</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{routeInfo.distance} km</p>
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center text-gray-600 mb-1">
+            <Navigation className="h-4 w-4 mr-2" />
+            <span className="text-sm">Entfernung</span>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center text-gray-600 mb-1">
-              <Clock className="h-4 w-4 mr-2" />
-              <span className="text-sm">Fahrzeit</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{routeInfo.duration}</p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center text-gray-600 mb-1">
-              <MapPin className="h-4 w-4 mr-2" />
-              <span className="text-sm">Route</span>
-            </div>
-            <p className="text-lg font-bold text-gray-900">Direkt</p>
-          </div>
+          <p className="text-2xl font-bold text-gray-900">{routeData.distance} km</p>
         </div>
-      )}
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center text-gray-600 mb-1">
+            <Clock className="h-4 w-4 mr-2" />
+            <span className="text-sm">Fahrzeit</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">{routeData.duration}</p>
+          {routeData.hasTraffic && (
+            <p className="text-xs text-orange-600 mt-1">⚠️ Stoßzeit berücksichtigt</p>
+          )}
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center text-gray-600 mb-1">
+            <MapPin className="h-4 w-4 mr-2" />
+            <span className="text-sm">Route</span>
+          </div>
+          <p className="text-lg font-bold text-gray-900">Optimiert</p>
+        </div>
+      </div>
 
       {/* Map */}
       <div className="rounded-lg overflow-hidden border-2 border-gray-300 shadow-lg">
@@ -131,11 +213,10 @@ export default function RouteMap({ pickup, delivery, routeInfo }) {
           
           {/* Route Line */}
           <Polyline
-            positions={routeCoordinates}
+            positions={routeData.coordinates}
             color="#2563eb"
-            weight={4}
-            opacity={0.7}
-            dashArray="10, 10"
+            weight={5}
+            opacity={0.8}
           />
           
           <MapBounds pickup={pickup} delivery={delivery} />

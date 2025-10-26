@@ -73,36 +73,8 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     setDeliveryLocation(address);
   };
 
-  // Calculate route info when both addresses are selected
-  useEffect(() => {
-    if (pickupLocation && deliveryLocation) {
-      calculateRoute();
-    }
-  }, [pickupLocation, deliveryLocation]);
-
-  const calculateRoute = () => {
-    // Calculate distance using Haversine formula
-    const R = 6371; // Earth's radius in km
-    const dLat = (deliveryLocation.lat - pickupLocation.lat) * Math.PI / 180;
-    const dLon = (deliveryLocation.lon - pickupLocation.lon) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(pickupLocation.lat * Math.PI / 180) * Math.cos(deliveryLocation.lat * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const distance = R * c;
-
-    // Estimate duration (assuming average speed of 60 km/h)
-    const hours = distance / 60;
-    const minutes = Math.round(hours * 60);
-    const durationText = hours >= 1 
-      ? `${Math.floor(hours)}h ${minutes % 60}min`
-      : `${minutes}min`;
-
-    setRouteInfo({
-      distance: Math.round(distance),
-      duration: durationText
-    });
+  const handleRouteCalculated = (routeData) => {
+    setRouteInfo(routeData);
   };
 
   const handleSubmit = async (e) => {
@@ -308,7 +280,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
               <RouteMap 
                 pickup={pickupLocation} 
                 delivery={deliveryLocation}
-                routeInfo={routeInfo}
+                onRouteCalculated={handleRouteCalculated}
               />
             </div>
           )}
