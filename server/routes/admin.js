@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 const adminAuth = require('../middleware/adminAuth');
+const { sendOrderAssignmentNotification } = require('../utils/emailService');
 
 // Get all orders (admin only)
 router.get('/orders', adminAuth, async (req, res) => {
@@ -202,6 +203,57 @@ router.get('/stats', adminAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Get stats error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Assign order to contractor (admin only)
+router.post('/orders/:id/assign', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { contractor_id } = req.body;
+    
+    if (!contractor_id) {
+      return res.status(400).json({ error: 'Contractor ID required' });
+    }
+    
+    // Update order with contractor assignment
+    const result = await pool.query(
+      `UPDATE transport_orders 
+       SET contractor_id = $1, 
+           assigned_by_admin = true, 
+           details_visible_to_contractor = true,
+           status = 'accepted',
+           accepted_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2 
+       RETURNING *`,
+      [contractor_id, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    const order = result.rows[0];
+    
+    // Get contractor email
+    const contractor = await pool.query(
+      'SELECT email FROM users WHERE id = $1',
+      [contractor_id]
+    );
+    
+    if (contractor.rows.length > 0) {
+      // Send notification with full details
+      await sendOrderAssignmentNotification(contractor.rows[0].email, order);
+    }
+    
+    res.json({ 
+      message: 'Order assigned successfully',
+      order: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Assign order error:', error);
     res.status(500).json({ error: error.message });
   }
 });

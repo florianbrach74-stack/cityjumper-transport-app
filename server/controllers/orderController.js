@@ -3,6 +3,8 @@ const Order = require('../models/Order');
 const User = require('../models/User');
 const { sendEmail, emailTemplates } = require('../config/email');
 const { createCMRForOrder } = require('./cmrController');
+const { sendNewOrderNotification } = require('../utils/emailService');
+const pool = require('../config/database');
 
 const createOrder = async (req, res) => {
   try {
@@ -32,6 +34,25 @@ const createOrder = async (req, res) => {
     } catch (emailError) {
       console.error('Error sending email:', emailError);
       // Don't fail the request if email fails
+    }
+
+    // Notify contractors in the postal code area
+    try {
+      const contractors = await pool.query(
+        `SELECT email, first_name, last_name FROM users 
+         WHERE role = 'contractor' 
+         AND notification_postal_codes IS NOT NULL 
+         AND ($1 = ANY(notification_postal_codes) OR $2 = ANY(notification_postal_codes))`,
+        [orderData.pickup_postal_code, orderData.delivery_postal_code]
+      );
+
+      for (const contractor of contractors.rows) {
+        await sendNewOrderNotification(contractor.email, order);
+      }
+      console.log(`✅ Notified ${contractors.rows.length} contractors about new order`);
+    } catch (notifyError) {
+      console.error('Error notifying contractors:', notifyError);
+      // Don't fail the request if notification fails
     }
 
     res.status(201).json({
