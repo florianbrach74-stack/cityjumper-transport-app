@@ -26,14 +26,14 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     delivery_contact_name: '',
     delivery_contact_phone: '',
     vehicle_type: pendingOrder.vehicleType || 'Kleintransporter',
-    weight: '',
-    length: '',
-    width: '',
-    height: '',
-    pallets: '',
+    weight: '100', // Standard: 100kg (Europalette)
+    length: '120', // Standard: 120cm (Europalette)
+    width: '80',   // Standard: 80cm (Europalette)
+    height: '15',  // Standard: 15cm (Europalette)
+    pallets: '1',  // Standard: 1 Palette
     description: '',
     special_requirements: '',
-    price: pendingOrder.calculatedPrice?.recommendedPrice || '',
+    price: pendingOrder.calculatedPrice?.recommendedPrice?.toFixed(2) || '',
   });
 
   const [error, setError] = useState('');
@@ -76,8 +76,29 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     setDeliveryLocation(address);
   };
 
-  const handleRouteCalculated = (routeData) => {
+  const handleRouteCalculated = async (routeData) => {
     setRouteInfo(routeData);
+    
+    // Berechne automatisch den Preis
+    if (routeData && !formData.price) {
+      try {
+        const PRICE_PER_KM = 0.50;
+        const HOURLY_RATE = 18.00;
+        
+        const distanceCost = routeData.distance * PRICE_PER_KM;
+        const durationHours = routeData.durationMinutes / 60;
+        const timeCost = durationHours * HOURLY_RATE;
+        const minimumPrice = distanceCost + timeCost;
+        const recommendedPrice = minimumPrice * 1.2;
+        
+        setFormData(prev => ({
+          ...prev,
+          price: recommendedPrice.toFixed(2)
+        }));
+      } catch (error) {
+        console.error('Error calculating price:', error);
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -312,18 +333,25 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Gewicht (kg)</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Gewicht (kg)
+                  <span className="text-xs text-gray-500 ml-2">(Standard: 100kg)</span>
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   name="weight"
                   value={formData.weight}
                   onChange={handleChange}
+                  placeholder="100"
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Paletten</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Paletten
+                  <span className="text-xs text-gray-500 ml-2">(Standard: 1)</span>
+                </label>
                 <input
                   type="number"
                   name="pallets"
@@ -333,48 +361,67 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Länge (cm)</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Länge (cm)
+                  <span className="text-xs text-gray-500 ml-2">(Standard: 120cm Europalette)</span>
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   name="length"
                   value={formData.length}
                   onChange={handleChange}
+                  placeholder="120"
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Breite (cm)</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Breite (cm)
+                  <span className="text-xs text-gray-500 ml-2">(Standard: 80cm Europalette)</span>
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   name="width"
                   value={formData.width}
                   onChange={handleChange}
+                  placeholder="80"
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Höhe (cm)</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Höhe (cm)
+                  <span className="text-xs text-gray-500 ml-2">(Standard: 15cm)</span>
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   name="height"
                   value={formData.height}
                   onChange={handleChange}
+                  placeholder="15"
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Preis (€)</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Preis (€) *
+                  <span className="text-xs text-gray-500 ml-2">(Automatisch berechnet, änderbar)</span>
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   name="price"
+                  required
                   value={formData.price}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-primary-50"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  💡 Basierend auf Mindestlohn-Kalkulation (€0,50/km + €18/h)
+                </p>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700">Beschreibung</label>
