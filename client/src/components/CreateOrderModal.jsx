@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ordersAPI } from '../services/api';
 import { X, MapPin, Calendar, Truck, Package, AlertCircle } from 'lucide-react';
+import AddressAutocomplete from './AddressAutocomplete';
 
 const CreateOrderModal = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -44,6 +45,26 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePickupAddressSelect = (address) => {
+    setFormData((prev) => ({
+      ...prev,
+      pickup_address: address.full,
+      pickup_city: address.city,
+      pickup_postal_code: address.postalCode,
+      pickup_country: address.country,
+    }));
+  };
+
+  const handleDeliveryAddressSelect = (address) => {
+    setFormData((prev) => ({
+      ...prev,
+      delivery_address: address.full,
+      delivery_city: address.city,
+      delivery_postal_code: address.postalCode,
+      delivery_country: address.country,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -101,39 +122,39 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
               <MapPin className="h-5 w-5 mr-2 text-primary-600" />
               Abholung
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">Adresse *</label>
-                <input
-                  type="text"
-                  name="pickup_address"
-                  required
-                  value={formData.pickup_address}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Stadt *</label>
-                <input
-                  type="text"
-                  name="pickup_city"
-                  required
-                  value={formData.pickup_city}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">PLZ *</label>
-                <input
-                  type="text"
-                  name="pickup_postal_code"
-                  required
-                  value={formData.pickup_postal_code}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
+            <div className="space-y-4">
+              <AddressAutocomplete
+                label="Abholadresse"
+                value={formData.pickup_address}
+                onChange={(value) => setFormData(prev => ({ ...prev, pickup_address: value }))}
+                onAddressSelect={handlePickupAddressSelect}
+                required
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Stadt *</label>
+                  <input
+                    type="text"
+                    name="pickup_city"
+                    required
+                    value={formData.pickup_city}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">PLZ *</label>
+                  <input
+                    type="text"
+                    name="pickup_postal_code"
+                    required
+                    value={formData.pickup_postal_code}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    readOnly
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Datum *</label>
@@ -185,39 +206,39 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
               <MapPin className="h-5 w-5 mr-2 text-green-600" />
               Zustellung
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">Adresse *</label>
-                <input
-                  type="text"
-                  name="delivery_address"
-                  required
-                  value={formData.delivery_address}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Stadt *</label>
-                <input
-                  type="text"
-                  name="delivery_city"
-                  required
-                  value={formData.delivery_city}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">PLZ *</label>
-                <input
-                  type="text"
-                  name="delivery_postal_code"
-                  required
-                  value={formData.delivery_postal_code}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
+            <div className="space-y-4">
+              <AddressAutocomplete
+                label="Lieferadresse"
+                value={formData.delivery_address}
+                onChange={(value) => setFormData(prev => ({ ...prev, delivery_address: value }))}
+                onAddressSelect={handleDeliveryAddressSelect}
+                required
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Stadt *</label>
+                  <input
+                    type="text"
+                    name="delivery_city"
+                    required
+                    value={formData.delivery_city}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">PLZ *</label>
+                  <input
+                    type="text"
+                    name="delivery_postal_code"
+                    required
+                    value={formData.delivery_postal_code}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    readOnly
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Kontaktperson</label>
