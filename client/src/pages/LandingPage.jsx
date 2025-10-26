@@ -43,6 +43,30 @@ export default function LandingPage() {
     { name: 'Transporter mit Hebebühne', basePrice: 200, pricePerKm: 2.5 },
   ];
 
+  const calculatePriceLocally = (distanceKm, durationMinutes) => {
+    const PRICE_PER_KM = 0.50;
+    const HOURLY_RATE = 18.00;
+    
+    const distanceCost = distanceKm * PRICE_PER_KM;
+    const durationHours = durationMinutes / 60;
+    const timeCost = durationHours * HOURLY_RATE;
+    const minimumPrice = distanceCost + timeCost;
+    const recommendedPrice = minimumPrice * 1.2;
+    
+    return {
+      distanceKm,
+      durationMinutes,
+      distanceCost: Math.round(distanceCost * 100) / 100,
+      timeCost: Math.round(timeCost * 100) / 100,
+      minimumPrice: Math.round(minimumPrice * 100) / 100,
+      recommendedPrice: Math.round(recommendedPrice * 100) / 100,
+      breakdown: {
+        perKm: PRICE_PER_KM,
+        perHour: HOURLY_RATE
+      }
+    };
+  };
+
   const handleRouteCalculated = async (routeData) => {
     setRouteInfo(routeData);
     
@@ -61,7 +85,20 @@ export default function LandingPage() {
         });
         
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          // Fallback: Berechne lokal wenn Backend nicht verfügbar
+          console.warn('Backend nicht verfügbar, berechne lokal');
+          const localPrice = calculatePriceLocally(routeData.distance, routeData.durationMinutes);
+          setCalculatedPrice({
+            minimumPrice: localPrice.minimumPrice,
+            recommendedPrice: localPrice.recommendedPrice,
+            distance: routeData.distance,
+            duration: routeData.duration,
+            breakdown: localPrice.breakdown,
+            distanceCost: localPrice.distanceCost,
+            timeCost: localPrice.timeCost
+          });
+          setCalculating(false);
+          return;
         }
         
         const data = await response.json();
@@ -81,8 +118,17 @@ export default function LandingPage() {
         }
       } catch (error) {
         console.error('Price calculation error:', error);
-        setCalculatedPrice(null);
-        alert('Fehler bei der Preisberechnung: ' + error.message);
+        // Fallback: Berechne lokal
+        const localPrice = calculatePriceLocally(routeData.distance, routeData.durationMinutes);
+        setCalculatedPrice({
+          minimumPrice: localPrice.minimumPrice,
+          recommendedPrice: localPrice.recommendedPrice,
+          distance: routeData.distance,
+          duration: routeData.duration,
+          breakdown: localPrice.breakdown,
+          distanceCost: localPrice.distanceCost,
+          timeCost: localPrice.timeCost
+        });
       } finally {
         setCalculating(false);
       }
