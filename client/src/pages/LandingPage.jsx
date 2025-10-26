@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Truck, MapPin, Clock, Shield, Euro, ArrowRight, CheckCircle, LogIn, LogOut, User } from 'lucide-react';
+import { Truck, MapPin, Clock, Shield, Euro, ArrowRight, CheckCircle, LogIn, LogOut, User, Zap, Package, TrendingUp } from 'lucide-react';
 import AddressSearch from '../components/AddressSearch';
 import RouteMap from '../components/RouteMap';
+import Logo from '../components/Logo';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -105,13 +106,10 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation Bar */}
-      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+      <nav className="bg-white/95 backdrop-blur-sm shadow-soft border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <Truck className="h-8 w-8 text-primary-600" />
-              <span className="text-2xl font-bold text-gray-900">CityJumper</span>
-            </div>
+            <Logo size="md" showText={true} className="cursor-pointer" onClick={() => navigate('/')} />
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
@@ -153,65 +151,148 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-primary-600 to-primary-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Schneller Kurierdienst & Eiltransport
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-primary-100">
-              Deutschlandweit • Zuverlässig • Günstig
-            </p>
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={() => document.getElementById('calculator').scrollIntoView({ behavior: 'smooth' })}
-                className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-primary-50 transition"
-              >
-                Preis berechnen
-              </button>
-              {!user && (
+      <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 text-white overflow-hidden">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full filter blur-3xl animate-blob"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-secondary-400 rounded-full filter blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-primary-300 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Left: Text Content */}
+            <div className="text-center md:text-left animate-fade-in">
+              <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+                <Zap className="h-4 w-4 text-secondary-400" />
+                <span className="text-sm font-medium">Blitzschnell & Zuverlässig</span>
+              </div>
+              
+              <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight">
+                Express<br/>
+                <span className="text-secondary-400">Transport</span><br/>
+                leicht gemacht
+              </h1>
+              
+              <p className="text-xl md:text-2xl mb-8 text-primary-100 leading-relaxed">
+                Ihr zuverlässiger Partner für schnelle Kurierdienste und Eiltransporte in ganz Deutschland
+              </p>
+              
+              <div className="flex flex-col sm:flex-row justify-center md:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
                 <button
-                  onClick={() => navigate('/register')}
-                  className="bg-primary-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-800 transition border-2 border-white"
+                  onClick={() => document.getElementById('calculator').scrollIntoView({ behavior: 'smooth' })}
+                  className="group bg-white text-primary-600 px-8 py-4 rounded-xl font-semibold hover:bg-primary-50 transition-all shadow-strong hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center"
                 >
-                  Jetzt registrieren
+                  <Euro className="h-5 w-5 mr-2" />
+                  Preis berechnen
+                  <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </button>
-              )}
+                {!user && (
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="bg-secondary-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-secondary-600 transition-all shadow-strong hover:shadow-xl transform hover:-translate-y-1"
+                  >
+                    Kostenlos registrieren
+                  </button>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-6 mt-12">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-secondary-400">1000+</div>
+                  <div className="text-sm text-primary-200">Transporte/Monat</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-secondary-400">24/7</div>
+                  <div className="text-sm text-primary-200">Verfügbar</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-secondary-400">99%</div>
+                  <div className="text-sm text-primary-200">Zufriedenheit</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Hero Illustration */}
+            <div className="hidden md:block animate-slide-up">
+              <div className="relative">
+                {/* Truck Illustration using SVG/Icons */}
+                <div className="relative bg-white/10 backdrop-blur-sm rounded-3xl p-8 shadow-strong">
+                  <div className="flex items-center justify-center space-x-4 mb-6">
+                    <div className="bg-success-500 p-4 rounded-2xl animate-bounce-slow">
+                      <Package className="h-12 w-12 text-white" />
+                    </div>
+                    <ArrowRight className="h-8 w-8 text-secondary-400" />
+                    <div className="bg-primary-500 p-4 rounded-2xl">
+                      <Truck className="h-12 w-12 text-white" />
+                    </div>
+                    <ArrowRight className="h-8 w-8 text-secondary-400" />
+                    <div className="bg-secondary-500 p-4 rounded-2xl animate-bounce-slow animation-delay-2000">
+                      <MapPin className="h-12 w-12 text-white" />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold mb-2">Schnell. Sicher. Günstig.</div>
+                    <div className="text-primary-200">Von A nach B in Rekordzeit</div>
+                  </div>
+                </div>
+                
+                {/* Floating Elements */}
+                <div className="absolute -top-4 -right-4 bg-secondary-400 p-3 rounded-full shadow-lg animate-bounce">
+                  <Zap className="h-6 w-6 text-white" />
+                </div>
+                <div className="absolute -bottom-4 -left-4 bg-success-500 p-3 rounded-full shadow-lg animate-bounce animation-delay-2000">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Features */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="text-center">
-            <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Clock className="h-8 w-8 text-primary-600" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Express-Lieferung</h3>
-            <p className="text-gray-600">Schnelle Abholung und Zustellung am selben Tag möglich</p>
+      <div className="bg-gradient-to-b from-gray-50 to-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-display font-bold text-gray-900 mb-4">
+              Warum <span className="text-primary-600">CityJumper</span>?
+            </h2>
+            <p className="text-xl text-gray-600">Ihr zuverlässiger Partner für schnelle Transporte</p>
           </div>
-          <div className="text-center">
-            <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Shield className="h-8 w-8 text-primary-600" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="group text-center p-6 rounded-2xl hover:bg-white hover:shadow-medium transition-all transform hover:-translate-y-2">
+              <div className="bg-gradient-to-br from-primary-500 to-primary-700 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-soft">
+                <Clock className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-lg font-bold mb-2 text-gray-900">Express-Lieferung</h3>
+              <p className="text-gray-600">Schnelle Abholung und Zustellung am selben Tag möglich</p>
             </div>
-            <h3 className="text-lg font-semibold mb-2">Versichert</h3>
-            <p className="text-gray-600">Ihre Sendung ist während des gesamten Transports versichert</p>
-          </div>
-          <div className="text-center">
-            <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MapPin className="h-8 w-8 text-primary-600" />
+            
+            <div className="group text-center p-6 rounded-2xl hover:bg-white hover:shadow-medium transition-all transform hover:-translate-y-2">
+              <div className="bg-gradient-to-br from-success-500 to-success-700 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-soft">
+                <Shield className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-lg font-bold mb-2 text-gray-900">Versichert</h3>
+              <p className="text-gray-600">Ihre Sendung ist während des gesamten Transports versichert</p>
             </div>
-            <h3 className="text-lg font-semibold mb-2">Deutschlandweit</h3>
-            <p className="text-gray-600">Wir liefern in ganz Deutschland zuverlässig</p>
-          </div>
-          <div className="text-center">
-            <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Euro className="h-8 w-8 text-primary-600" />
+            
+            <div className="group text-center p-6 rounded-2xl hover:bg-white hover:shadow-medium transition-all transform hover:-translate-y-2">
+              <div className="bg-gradient-to-br from-secondary-500 to-secondary-700 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-soft">
+                <MapPin className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-lg font-bold mb-2 text-gray-900">Deutschlandweit</h3>
+              <p className="text-gray-600">Wir liefern in ganz Deutschland zuverlässig</p>
             </div>
-            <h3 className="text-lg font-semibold mb-2">Faire Preise</h3>
-            <p className="text-gray-600">Transparente Preisgestaltung ohne versteckte Kosten</p>
+            
+            <div className="group text-center p-6 rounded-2xl hover:bg-white hover:shadow-medium transition-all transform hover:-translate-y-2">
+              <div className="bg-gradient-to-br from-primary-600 to-primary-800 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-soft">
+                <Euro className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-lg font-bold mb-2 text-gray-900">Faire Preise</h3>
+              <p className="text-gray-600">Transparente Preisgestaltung ohne versteckte Kosten</p>
+            </div>
           </div>
         </div>
       </div>
