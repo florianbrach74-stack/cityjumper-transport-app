@@ -83,30 +83,52 @@ const ContractorDashboard = () => {
       <div className="space-y-3">
         {/* Route */}
         <div className="flex items-start space-x-3">
-          <MapPin className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
+          <MapPin className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
             <div className="text-sm">
               <div className="font-medium text-gray-900">Abholung</div>
-              <div className="text-gray-600">
-                {order.pickup_address}, {order.pickup_postal_code} {order.pickup_city}
-              </div>
-              {order.pickup_contact_name && (
-                <div className="text-gray-500 text-xs mt-1">
-                  Kontakt: {order.pickup_contact_name}
-                  {order.pickup_contact_phone && ` - ${order.pickup_contact_phone}`}
+              {showAcceptButton ? (
+                // Nur PLZ für nicht-angenommene Aufträge
+                <div className="text-gray-600">
+                  <span className="font-semibold text-lg">PLZ {order.pickup_postal_code}</span>
+                  <span className="text-gray-500 ml-2">({order.pickup_city})</span>
                 </div>
+              ) : (
+                // Vollständige Adresse für angenommene Aufträge
+                <>
+                  <div className="text-gray-600">
+                    {order.pickup_address}, {order.pickup_postal_code} {order.pickup_city}
+                  </div>
+                  {order.pickup_contact_name && (
+                    <div className="text-gray-500 text-xs mt-1">
+                      Kontakt: {order.pickup_contact_name}
+                      {order.pickup_contact_phone && ` - ${order.pickup_contact_phone}`}
+                    </div>
+                  )}
+                </>
               )}
             </div>
             <div className="text-sm mt-2">
               <div className="font-medium text-gray-900">Zustellung</div>
-              <div className="text-gray-600">
-                {order.delivery_address}, {order.delivery_postal_code} {order.delivery_city}
-              </div>
-              {order.delivery_contact_name && (
-                <div className="text-gray-500 text-xs mt-1">
-                  Kontakt: {order.delivery_contact_name}
-                  {order.delivery_contact_phone && ` - ${order.delivery_contact_phone}`}
+              {showAcceptButton ? (
+                // Nur PLZ für nicht-angenommene Aufträge
+                <div className="text-gray-600">
+                  <span className="font-semibold text-lg">PLZ {order.delivery_postal_code}</span>
+                  <span className="text-gray-500 ml-2">({order.delivery_city})</span>
                 </div>
+              ) : (
+                // Vollständige Adresse für angenommene Aufträge
+                <>
+                  <div className="text-gray-600">
+                    {order.delivery_address}, {order.delivery_postal_code} {order.delivery_city}
+                  </div>
+                  {order.delivery_contact_name && (
+                    <div className="text-gray-500 text-xs mt-1">
+                      Kontakt: {order.delivery_contact_name}
+                      {order.delivery_contact_phone && ` - ${order.delivery_contact_phone}`}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -133,8 +155,8 @@ const ContractorDashboard = () => {
           </div>
         </div>
 
-        {/* Additional Details */}
-        {(order.weight || order.pallets || order.description) && (
+        {/* Additional Details - Only for accepted orders */}
+        {!showAcceptButton && (order.weight || order.pallets || order.description) && (
           <div className="pt-3 border-t">
             <div className="text-sm space-y-1">
               {order.weight && (
@@ -158,11 +180,18 @@ const ContractorDashboard = () => {
           </div>
         )}
 
-        {/* Price and Customer */}
+        {/* Price and Customer - Hide customer name for pending orders */}
         <div className="flex justify-between items-center pt-3 border-t">
-          <div className="text-sm text-gray-600">
-            Kunde: {order.customer_company || `${order.customer_first_name} ${order.customer_last_name}`}
-          </div>
+          {!showAcceptButton && (
+            <div className="text-sm text-gray-600">
+              Kunde: {order.customer_company || `${order.customer_first_name} ${order.customer_last_name}`}
+            </div>
+          )}
+          {showAcceptButton && (
+            <div className="text-sm text-gray-500 italic">
+              Kundendetails nach Annahme sichtbar
+            </div>
+          )}
           {order.price && (
             <div className="text-lg font-bold text-primary-600">€{order.price}</div>
           )}
