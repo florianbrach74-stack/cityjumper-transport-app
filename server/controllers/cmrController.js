@@ -233,7 +233,18 @@ const addPublicSignature = async (req, res) => {
     const { cmrNumber } = req.params;
     const { signatureData, location, remarks, consigneeName, photoUrl } = req.body;
 
-    console.log('Public signature for CMR:', cmrNumber);
+    // Determine signature type from URL path
+    const urlPath = req.path;
+    let signatureType = 'consignee'; // default
+    if (urlPath.includes('/sender')) {
+      signatureType = 'sender';
+    } else if (urlPath.includes('/carrier')) {
+      signatureType = 'carrier';
+    } else if (urlPath.includes('/consignee')) {
+      signatureType = 'consignee';
+    }
+
+    console.log('Public signature for CMR:', cmrNumber, 'Type:', signatureType);
 
     // Find CMR by number
     const cmr = await CMR.findByCMRNumber(cmrNumber);
@@ -241,22 +252,30 @@ const addPublicSignature = async (req, res) => {
       return res.status(404).json({ error: 'CMR document not found' });
     }
 
-    // Only allow consignee signature via public route
+    // Get order to fetch contractor name for carrier signature
+    const order = await Order.findById(cmr.order_id);
+    let signerName = consigneeName;
+    
+    if (signatureType === 'carrier' && order.contractor_id) {
+      // Auto-fill carrier name from contractor account
+      const contractor = await User.findById(order.contractor_id);
+      signerName = `${contractor.first_name} ${contractor.last_name}`;
+    }
+
     const updatedCMR = await CMR.addSignature(
       cmr.id, 
-      'consignee', 
+      signatureType, 
       signatureData, 
       location, 
       remarks, 
-      consigneeName, 
+      signerName, 
       photoUrl
     );
 
-    // Get order for email notifications
-    const order = await Order.findById(cmr.order_id);
-
-    // Update order status to completed
-    await Order.updateStatus(cmr.order_id, 'completed');
+    // Update order status to completed only for consignee signature
+    if (signatureType === 'consignee') {
+      await Order.updateStatus(cmr.order_id, 'completed');
+    }
 
     // Regenerate PDF with signature
     await CMRPdfGenerator.generateCMR(updatedCMR, order);

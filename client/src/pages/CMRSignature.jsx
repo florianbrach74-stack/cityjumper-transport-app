@@ -10,10 +10,11 @@ const CMRSignature = () => {
   const [cmr, setCmr] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeSignature, setActiveSignature] = useState(null); // 'sender', 'carrier', or 'consignee'
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [location, setLocation] = useState('');
   const [remarks, setRemarks] = useState('');
-  const [consigneeName, setConsigneeName] = useState('');
+  const [signerName, setSignerName] = useState('');
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [deliveryType, setDeliveryType] = useState('signature'); // 'signature' or 'photo'
@@ -40,9 +41,17 @@ const CMRSignature = () => {
       const response = await cmrAPI.getCMRByCMRNumber(cmrNumber);
       setCmr(response.data.cmr);
       
-      // Check if already signed
-      if (response.data.cmr.consignee_signature) {
-        setSuccess(true);
+      // Determine signature type from URL
+      const path = window.location.pathname;
+      if (path.includes('/sender')) {
+        setActiveSignature('sender');
+        if (response.data.cmr.sender_signature) setSuccess(true);
+      } else if (path.includes('/carrier')) {
+        setActiveSignature('carrier');
+        if (response.data.cmr.carrier_signature) setSuccess(true);
+      } else {
+        setActiveSignature('consignee');
+        if (response.data.cmr.consignee_signature) setSuccess(true);
       }
     } catch (err) {
       setError('CMR-Dokument nicht gefunden');
@@ -81,9 +90,9 @@ const CMRSignature = () => {
         signatureData: null, // No signature, only photo
         location,
         remarks,
-        consigneeName: consigneeName.trim(),
+        consigneeName: signerName.trim(),
         photoUrl: photoPreview, // Base64 encoded photo
-      });
+      }, activeSignature);
       
       setSuccess(true);
       await fetchCMR();
@@ -96,8 +105,8 @@ const CMRSignature = () => {
   };
 
   const handleSignature = async (signatureData) => {
-    if (!consigneeName.trim()) {
-      setError('Bitte geben Sie den Namen des Empfängers ein');
+    if (!signerName.trim()) {
+      setError('Bitte geben Sie den Namen ein');
       return;
     }
 
@@ -107,9 +116,9 @@ const CMRSignature = () => {
         signatureData,
         location,
         remarks,
-        consigneeName: consigneeName.trim(),
+        consigneeName: signerName.trim(),
         photoUrl: photoPreview || null, // Include photo if available
-      });
+      }, activeSignature);
       
       setShowSignaturePad(false);
       setSuccess(true);
@@ -176,8 +185,12 @@ const CMRSignature = () => {
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">CMR Frachtbrief</h1>
-              <p className="text-sm text-gray-600">Internationale Frachtbescheinigung</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {activeSignature === 'sender' && 'Absender-Unterschrift'}
+                {activeSignature === 'carrier' && 'Frachtführer-Unterschrift'}
+                {activeSignature === 'consignee' && 'Empfänger-Unterschrift'}
+              </h1>
+              <p className="text-sm text-gray-600">CMR Frachtbrief</p>
             </div>
             <FileText className="h-12 w-12 text-primary-600" />
           </div>
@@ -304,12 +317,15 @@ const CMRSignature = () => {
             <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Name des Empfängers *
+                  {activeSignature === 'sender' && 'Name des Absenders *'}
+                  {activeSignature === 'carrier' && 'Name des Fahrers *'}
+                  {activeSignature === 'consignee' && 'Name des Empfängers *'}
                 </label>
                 <input
                   type="text"
-                  value={consigneeName}
-                  onChange={(e) => setConsigneeName(e.target.value)}
+                  value={signerName}
+                  onChange={(e) => setSignerName(e.target.value)}
+                  disabled={activeSignature === 'carrier'}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                   placeholder="z.B. Max Mustermann"
                   required

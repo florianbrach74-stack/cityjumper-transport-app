@@ -18,8 +18,11 @@ router.get('/number/:cmrNumber', getCMRByCMRNumber);
 // Add signature to CMR (requires auth - for sender/carrier)
 router.post('/:cmrId/signature', authenticateToken, addSignature);
 
-// PUBLIC route for consignee signature (no auth required)
-router.post('/public/:cmrNumber/signature', addPublicSignature);
+// PUBLIC routes for signatures (no auth required)
+router.post('/public/:cmrNumber/signature', addPublicSignature); // Consignee (legacy)
+router.post('/public/:cmrNumber/sender', addPublicSignature); // Sender
+router.post('/public/:cmrNumber/carrier', addPublicSignature); // Carrier
+router.post('/public/:cmrNumber/consignee', addPublicSignature); // Consignee
 
 // Download CMR PDF (PUBLIC - no auth required)
 router.get('/:cmrNumber/download', downloadCMRPdf);

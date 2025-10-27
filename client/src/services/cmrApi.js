@@ -5,10 +5,11 @@ export const cmrAPI = {
   getCMRByOrderId: (orderId) => api.get(`/cmr/order/${orderId}`),
   getCMRByCMRNumber: (cmrNumber) => api.get(`/cmr/number/${cmrNumber}`),
   addSignature: (cmrId, data) => api.post(`/cmr/${cmrId}/signature`, data),
-  addPublicSignature: (cmrNumber, data) => {
+  addPublicSignature: (cmrNumber, data, signatureType = 'consignee') => {
     // Public route - no auth token needed
     const apiUrl = import.meta.env.VITE_API_URL || 'https://cityjumper-api-production-01e4.up.railway.app';
-    return fetch(`${apiUrl}/api/cmr/public/${cmrNumber}/signature`, {
+    const endpoint = signatureType === 'consignee' ? 'signature' : signatureType;
+    return fetch(`${apiUrl}/api/cmr/public/${cmrNumber}/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
