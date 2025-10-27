@@ -227,6 +227,99 @@ const addSignature = async (req, res) => {
   }
 };
 
+// PUBLIC signature endpoint (no auth required)
+const addPublicSignature = async (req, res) => {
+  try {
+    const { cmrNumber } = req.params;
+    const { signatureData, location, remarks, consigneeName, photoUrl } = req.body;
+
+    console.log('Public signature for CMR:', cmrNumber);
+
+    // Find CMR by number
+    const cmr = await CMR.findByCMRNumber(cmrNumber);
+    if (!cmr) {
+      return res.status(404).json({ error: 'CMR document not found' });
+    }
+
+    // Only allow consignee signature via public route
+    const updatedCMR = await CMR.addSignature(
+      cmr.id, 
+      'consignee', 
+      signatureData, 
+      location, 
+      remarks, 
+      consigneeName, 
+      photoUrl
+    );
+
+    // Get order for email notifications
+    const order = await Order.findById(cmr.order_id);
+
+    // Regenerate PDF with signature
+    await CMRPdfGenerator.generateCMR(updatedCMR, order);
+
+    // Send notification emails
+    const customer = await User.findById(order.customer_id);
+    const contractor = await User.findById(order.contractor_id);
+
+    // Email to customer
+    await sendEmail(
+      customer.email,
+      '✅ Lieferung bestätigt - CMR unterschrieben',
+      `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #16a34a;">Lieferung erfolgreich abgeschlossen</h2>
+          <p>Hallo ${customer.first_name} ${customer.last_name},</p>
+          <p>Ihr Transportauftrag wurde erfolgreich zugestellt und vom Empfänger bestätigt.</p>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">CMR-Details:</h3>
+            <p><strong>CMR-Nummer:</strong> ${updatedCMR.cmr_number}</p>
+            <p><strong>Empfänger:</strong> ${consigneeName}</p>
+            <p><strong>Zugestellt am:</strong> ${new Date().toLocaleString('de-DE')}</p>
+            <p><strong>Ort:</strong> ${location}</p>
+            ${remarks ? `<p><strong>Bemerkungen:</strong> ${remarks}</p>` : ''}
+          </div>
+          
+          <p>Das unterschriebene CMR-Dokument steht in Ihrem Dashboard zum Download bereit.</p>
+          
+          <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+        </div>
+      `
+    );
+
+    // Email to contractor
+    await sendEmail(
+      contractor.email,
+      '✅ Lieferung bestätigt - CMR unterschrieben',
+      `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #16a34a;">Lieferung erfolgreich abgeschlossen</h2>
+          <p>Hallo ${contractor.first_name} ${contractor.last_name},</p>
+          <p>Der Transportauftrag wurde erfolgreich zugestellt und vom Empfänger bestätigt.</p>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">CMR-Details:</h3>
+            <p><strong>CMR-Nummer:</strong> ${updatedCMR.cmr_number}</p>
+            <p><strong>Empfänger:</strong> ${consigneeName}</p>
+            <p><strong>Zugestellt am:</strong> ${new Date().toLocaleString('de-DE')}</p>
+          </div>
+          
+          <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+        </div>
+      `
+    );
+
+    res.json({
+      message: 'Signature added successfully',
+      cmr: updatedCMR,
+    });
+  } catch (error) {
+    console.error('Public signature error:', error);
+    res.status(500).json({ error: 'Server error while adding signature' });
+  }
+};
+
 const getMyCMRs = async (req, res) => {
   try {
     let filters = {};
@@ -250,5 +343,7 @@ module.exports = {
   getCMRByOrderId,
   getCMRByCMRNumber,
   addSignature,
+  addPublicSignature,
   getMyCMRs,
+  downloadCMRPdf,
 };

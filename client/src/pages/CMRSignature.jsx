@@ -77,8 +77,7 @@ const CMRSignature = () => {
 
     setSubmitting(true);
     try {
-      await cmrAPI.addSignature(cmr.id, {
-        signatureType: 'consignee',
+      await cmrAPI.addPublicSignature(cmr.cmr_number, {
         signatureData: null, // No signature, only photo
         location,
         remarks,
@@ -89,6 +88,7 @@ const CMRSignature = () => {
       setSuccess(true);
       await fetchCMR();
     } catch (err) {
+      console.error('Photo submit error:', err);
       setError('Fehler beim Speichern des Fotos');
     } finally {
       setSubmitting(false);
@@ -103,8 +103,7 @@ const CMRSignature = () => {
 
     setSubmitting(true);
     try {
-      await cmrAPI.addSignature(cmr.id, {
-        signatureType: 'consignee',
+      await cmrAPI.addPublicSignature(cmr.cmr_number, {
         signatureData,
         location,
         remarks,
@@ -118,6 +117,7 @@ const CMRSignature = () => {
       // Refresh CMR data
       await fetchCMR();
     } catch (err) {
+      console.error('Signature submit error:', err);
       setError('Fehler beim Speichern der Unterschrift');
     } finally {
       setSubmitting(false);
