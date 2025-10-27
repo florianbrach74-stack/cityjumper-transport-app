@@ -256,79 +256,71 @@ const CMRViewer = ({ orderId, onClose }) => {
               )}
             </div>
 
-            {/* Signature Buttons for Sender and Carrier */}
-            {currentUser && (
-              <div className="space-y-3">
-                {/* Sender Signature - Only for customer */}
-                {currentUser.role === 'customer' && !cmr.sender_signature && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold text-green-900">Absender-Unterschrift</h4>
-                        <p className="text-sm text-green-800">
-                          Unterschreiben Sie als Absender bei der Abholung
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setShowSignatureModal('sender')}
-                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                      >
-                        <PenTool className="h-4 w-4 mr-2" />
-                        Unterschreiben
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Carrier Signature - Only for contractor */}
-                {currentUser.role === 'contractor' && !cmr.carrier_signature && (
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold text-purple-900">Frachtführer-Unterschrift</h4>
-                        <p className="text-sm text-purple-800">
-                          Unterschreiben Sie als Frachtführer bei der Abholung
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setShowSignatureModal('carrier')}
-                        className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                      >
-                        <PenTool className="h-4 w-4 mr-2" />
-                        Unterschreiben
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Signature Link for Consignee */}
-            {!cmr.consignee_signature && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <QrCode className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-blue-900 mb-1">
-                      Empfänger-Unterschrift ausstehend
-                    </h4>
-                    <p className="text-sm text-blue-800 mb-3">
-                      Senden Sie den folgenden Link an den Empfänger zur digitalen Unterschrift:
-                    </p>
-                    <div className="bg-white rounded border border-blue-300 p-2 mb-2 break-all text-sm">
-                      {window.location.origin}/cmr/{cmr.cmr_number}
+            {/* Signature Buttons - All 3 signatures on courier device */}
+            <div className="space-y-3">
+              {/* Sender Signature */}
+              {!cmr.sender_signature && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-green-900">1. Absender-Unterschrift</h4>
+                      <p className="text-sm text-green-800">
+                        Bei Abholung: Absender unterschreibt auf Ihrem Gerät
+                      </p>
                     </div>
                     <button
-                      onClick={copySignatureLink}
-                      className="flex items-center text-sm text-blue-700 hover:text-blue-800 font-medium"
+                      onClick={() => setShowSignatureModal('sender')}
+                      className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                     >
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      Link kopieren
+                      <PenTool className="h-4 w-4 mr-2" />
+                      Unterschreiben
                     </button>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Carrier Signature */}
+              {!cmr.carrier_signature && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-purple-900">2. Frachtführer-Unterschrift</h4>
+                      <p className="text-sm text-purple-800">
+                        Bei Abholung: Sie unterschreiben als Frachtführer
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowSignatureModal('carrier')}
+                      className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    >
+                      <PenTool className="h-4 w-4 mr-2" />
+                      Unterschreiben
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Consignee Signature */}
+              {!cmr.consignee_signature && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-blue-900">3. Empfänger-Unterschrift</h4>
+                      <p className="text-sm text-blue-800">
+                        Bei Zustellung: Empfänger unterschreibt auf Ihrem Gerät
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowSignatureModal('consignee')}
+                      className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      <PenTool className="h-4 w-4 mr-2" />
+                      Unterschreiben
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Actions */}
             <div className="flex justify-between items-center pt-4 border-t">
@@ -359,8 +351,17 @@ const CMRViewer = ({ orderId, onClose }) => {
       {/* Signature Modal */}
       {showSignatureModal && (
         <SignatureModal
-          title={showSignatureModal === 'sender' ? 'Absender-Unterschrift' : 'Frachtführer-Unterschrift'}
-          signerName={currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : ''}
+          title={
+            showSignatureModal === 'sender' ? 'Absender-Unterschrift' :
+            showSignatureModal === 'carrier' ? 'Frachtführer-Unterschrift' :
+            'Empfänger-Unterschrift'
+          }
+          signerName={
+            showSignatureModal === 'carrier' && currentUser 
+              ? `${currentUser.first_name} ${currentUser.last_name}` 
+              : ''
+          }
+          isCarrier={showSignatureModal === 'carrier'}
           onClose={() => setShowSignatureModal(null)}
           onSubmit={(data) => handleSignatureSubmit(showSignatureModal, data)}
         />

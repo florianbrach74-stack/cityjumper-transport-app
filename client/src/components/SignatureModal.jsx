@@ -2,11 +2,12 @@ import React, { useRef, useState, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { X, Trash2, Check } from 'lucide-react';
 
-const SignatureModal = ({ title, onClose, onSubmit, signerName }) => {
+const SignatureModal = ({ title, onClose, onSubmit, signerName: initialSignerName, isCarrier = false }) => {
   const sigPad = useRef(null);
   const [isEmpty, setIsEmpty] = useState(true);
   const [location, setLocation] = useState('');
   const [remarks, setRemarks] = useState('');
+  const [signerName, setSignerName] = useState(initialSignerName || '');
 
   useEffect(() => {
     // Get current location
@@ -46,11 +47,17 @@ const SignatureModal = ({ title, onClose, onSubmit, signerName }) => {
       return;
     }
 
+    if (!signerName.trim()) {
+      alert('Bitte geben Sie einen Namen ein');
+      return;
+    }
+
     const signatureData = sigPad.current.toDataURL();
     onSubmit({
       signatureData,
       location: location.trim(),
       remarks: remarks.trim() || null,
+      consigneeName: signerName.trim(),
     });
   };
 
@@ -73,6 +80,26 @@ const SignatureModal = ({ title, onClose, onSubmit, signerName }) => {
 
           {/* Content */}
           <div className="p-6 space-y-4">
+            {/* Name Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Name *
+              </label>
+              <input
+                type="text"
+                value={signerName}
+                onChange={(e) => setSignerName(e.target.value)}
+                disabled={isCarrier}
+                placeholder="Name der unterzeichnenden Person"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+              {isCarrier && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Name wird automatisch aus Ihrem Account übernommen
+                </p>
+              )}
+            </div>
+
             {/* Signature Pad */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
