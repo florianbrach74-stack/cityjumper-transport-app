@@ -50,4 +50,13 @@ export const ordersAPI = {
   updateOrderStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
 };
 
+// Bids API
+export const bidsAPI = {
+  createBid: (orderId, data) => api.post(`/bids/orders/${orderId}/bid`, data),
+  getMyBids: () => api.get('/bids/my-bids'),
+  getBidsForOrder: (orderId) => api.get(`/bids/orders/${orderId}`),
+  acceptBid: (bidId) => api.post(`/bids/${bidId}/accept`),
+  rejectBid: (bidId) => api.post(`/bids/${bidId}/reject`),
+};
+
 export default api;

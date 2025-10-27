@@ -20,6 +20,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/cmr', require('./routes/cmr'));
+app.use('/api/bids', require('./routes/bids'));
 app.use('/api/setup', require('./routes/setup'));
 app.use('/api/admin-setup', require('./routes/admin-setup'));
 app.use('/api/admin', require('./routes/admin'));
