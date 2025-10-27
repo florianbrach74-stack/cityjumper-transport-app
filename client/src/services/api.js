@@ -59,4 +59,12 @@ export const bidsAPI = {
   rejectBid: (bidId) => api.post(`/bids/${bidId}/reject`),
 };
 
+// Verification API
+export const verificationAPI = {
+  submitVerification: (data) => api.post('/verification/submit', data),
+  getStatus: () => api.get('/verification/status'),
+  approveContractor: (userId, notes) => api.post(`/verification/${userId}/approve`, { notes }),
+  rejectContractor: (userId, reason) => api.post(`/verification/${userId}/reject`, { reason }),
+};
+
 export default api;

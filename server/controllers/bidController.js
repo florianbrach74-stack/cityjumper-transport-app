@@ -10,6 +10,14 @@ const createBid = async (req, res) => {
     const { bidAmount, message } = req.body;
     const contractorId = req.user.id;
 
+    // Check if contractor is verified
+    const contractorUser = await User.findById(contractorId);
+    if (contractorUser.verification_status !== 'approved') {
+      return res.status(403).json({ 
+        error: 'Ihr Account muss erst verifiziert werden, bevor Sie sich auf Aufträge bewerben können' 
+      });
+    }
+
     // Check if order exists and is still pending
     const order = await Order.findById(orderId);
     if (!order) {
