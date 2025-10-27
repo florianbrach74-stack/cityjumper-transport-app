@@ -245,6 +245,67 @@ const updateOrderStatus = async (req, res) => {
     }
 
     const updatedOrder = await Order.updateStatus(id, status);
+    
+    // Send email notifications based on status
+    try {
+      const customer = await User.findById(order.customer_id);
+      const contractor = await User.findById(order.contractor_id);
+      
+      if (status === 'picked_up') {
+        // Email to customer when order is picked up
+        await sendEmail(
+          customer.email,
+          '📦 Sendung abgeholt - Auftrag in Bearbeitung',
+          `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #0ea5e9;">Sendung wurde abgeholt</h2>
+              <p>Hallo ${customer.first_name} ${customer.last_name},</p>
+              <p>Ihr Transportauftrag wurde erfolgreich abgeholt und ist nun unterwegs.</p>
+              
+              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Auftrags-Details:</h3>
+                <p><strong>Auftrag:</strong> #${order.id}</p>
+                <p><strong>Abholung:</strong> ${order.pickup_address}, ${order.pickup_city}</p>
+                <p><strong>Ziel:</strong> ${order.delivery_address}, ${order.delivery_city}</p>
+                <p><strong>Fahrer:</strong> ${contractor.company_name || contractor.first_name + ' ' + contractor.last_name}</p>
+              </div>
+              
+              <p>Sie werden benachrichtigt, sobald die Sendung zugestellt wurde.</p>
+              
+              <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+            </div>
+          `
+        );
+      } else if (status === 'delivered') {
+        // Email to customer when order is delivered (before signature)
+        await sendEmail(
+          customer.email,
+          '🚚 Sendung zugestellt - Warte auf Unterschrift',
+          `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #16a34a;">Sendung wurde zugestellt</h2>
+              <p>Hallo ${customer.first_name} ${customer.last_name},</p>
+              <p>Ihr Transportauftrag wurde zugestellt. Der Empfänger wird nun um Unterschrift gebeten.</p>
+              
+              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Auftrags-Details:</h3>
+                <p><strong>Auftrag:</strong> #${order.id}</p>
+                <p><strong>Zugestellt an:</strong> ${order.delivery_address}, ${order.delivery_city}</p>
+                <p><strong>Zugestellt am:</strong> ${new Date().toLocaleString('de-DE')}</p>
+              </div>
+              
+              <p>Sie erhalten eine weitere Email sobald der Empfänger das CMR-Dokument unterschrieben hat.</p>
+              
+              <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+            </div>
+          `
+        );
+      }
+    } catch (emailError) {
+      console.error('Error sending status email:', emailError);
+      // Don't fail the status update if email fails
+    }
+    
     res.json({
       message: 'Order status updated successfully',
       order: updatedOrder,

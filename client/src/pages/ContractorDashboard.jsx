@@ -51,11 +51,40 @@ const ContractorDashboard = () => {
     }
   };
 
+  const handleStatusChange = async (orderId, newStatus) => {
+    const statusMessages = {
+      'picked_up': 'Möchten Sie den Auftrag als "Abgeholt" markieren?\n\nDer Kunde wird per Email benachrichtigt.',
+      'delivered': 'Möchten Sie die Zustellung abschließen?\n\nSie werden zur Unterschrifts-Seite weitergeleitet.'
+    };
+
+    if (!confirm(statusMessages[newStatus])) {
+      return;
+    }
+
+    try {
+      await ordersAPI.updateOrderStatus(orderId, newStatus);
+      
+      if (newStatus === 'delivered') {
+        // Open CMR signature page
+        setSelectedOrderForCMR(orderId);
+      } else {
+        // Just refresh orders
+        await fetchOrders();
+        alert('Status erfolgreich aktualisiert! Kunde wurde benachrichtigt.');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Fehler beim Aktualisieren des Status');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
       pending: { color: 'bg-yellow-100 text-yellow-800', text: 'Ausstehend', icon: Clock },
       accepted: { color: 'bg-blue-100 text-blue-800', text: 'Angenommen', icon: CheckCircle },
+      picked_up: { color: 'bg-green-100 text-green-800', text: 'Abgeholt', icon: Package },
       in_transit: { color: 'bg-purple-100 text-purple-800', text: 'Unterwegs', icon: Truck },
+      delivered: { color: 'bg-green-600 text-white', text: 'Zugestellt', icon: CheckCircle },
       completed: { color: 'bg-green-100 text-green-800', text: 'Abgeschlossen', icon: CheckCircle },
     };
     const badge = badges[status] || badges.pending;
@@ -197,15 +226,40 @@ const ContractorDashboard = () => {
           )}
         </div>
 
-        {/* CMR Button for accepted orders */}
+        {/* Status Buttons and CMR for accepted orders */}
         {!showAcceptButton && (
-          <button
-            onClick={() => setSelectedOrderForCMR(order.id)}
-            className="w-full mt-4 flex justify-center items-center px-4 py-2 border border-primary-600 rounded-lg text-sm font-medium text-primary-600 hover:bg-primary-50"
-          >
-            <FileText className="h-5 w-5 mr-2" />
-            CMR anzeigen
-          </button>
+          <div className="mt-4 space-y-2">
+            {/* Status: Accepted - Show "Abgeholt" button */}
+            {order.status === 'accepted' && (
+              <button
+                onClick={() => handleStatusChange(order.id, 'picked_up')}
+                className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="h-5 w-5 mr-2" />
+                Als abgeholt markieren
+              </button>
+            )}
+
+            {/* Status: Picked Up - Show "Zugestellt" button */}
+            {order.status === 'picked_up' && (
+              <button
+                onClick={() => handleStatusChange(order.id, 'delivered')}
+                className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                <Truck className="h-5 w-5 mr-2" />
+                Zustellung abschließen
+              </button>
+            )}
+
+            {/* CMR Button - always visible for accepted orders */}
+            <button
+              onClick={() => setSelectedOrderForCMR(order.id)}
+              className="w-full flex justify-center items-center px-4 py-2 border border-primary-600 rounded-lg text-sm font-medium text-primary-600 hover:bg-primary-50"
+            >
+              <FileText className="h-5 w-5 mr-2" />
+              CMR anzeigen
+            </button>
+          </div>
         )}
 
         {/* Accept Button */}

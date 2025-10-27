@@ -45,8 +45,8 @@ export const ordersAPI = {
   createOrder: (data) => api.post('/orders', data),
   getOrders: () => api.get('/orders'),
   getAvailableOrders: () => api.get('/orders/available'),
-  getOrderById: (id) => api.get(`/orders/${id}`),
-  acceptOrder: (id) => api.put(`/orders/${id}/accept`),
+  acceptOrder: (id) => api.post(`/orders/${id}/accept`),
+  getOrder: (id) => api.get(`/orders/${id}`),
   updateOrderStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
 };
 
