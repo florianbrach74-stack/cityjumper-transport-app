@@ -255,6 +255,9 @@ const addPublicSignature = async (req, res) => {
     // Get order for email notifications
     const order = await Order.findById(cmr.order_id);
 
+    // Update order status to completed
+    await Order.updateStatus(cmr.order_id, 'completed');
+
     // Regenerate PDF with signature
     await CMRPdfGenerator.generateCMR(updatedCMR, order);
 

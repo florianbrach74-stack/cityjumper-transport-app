@@ -309,7 +309,7 @@ const ContractorDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 border-b border-gray-200">
+        <div className="border-b border-gray-200 mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('available')}
@@ -320,10 +320,7 @@ const ContractorDashboard = () => {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
             >
               <Package className="h-5 w-5" />
-              <span>Verfügbare Aufträge</span>
-              <span className="bg-primary-100 text-primary-600 py-0.5 px-2 rounded-full text-xs font-semibold">
-                {availableOrders.length}
-              </span>
+              <span>Verfügbare Aufträge ({availableOrders.length})</span>
             </button>
             <button
               onClick={() => setActiveTab('my-orders')}
@@ -333,11 +330,19 @@ const ContractorDashboard = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
             >
+              <Truck className="h-5 w-5" />
+              <span>Aktive Aufträge ({myOrders.filter(o => o.status !== 'completed').length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('completed')}
+              className={`${
+                activeTab === 'completed'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
+            >
               <CheckCircle className="h-5 w-5" />
-              <span>Meine Aufträge</span>
-              <span className="bg-blue-100 text-blue-600 py-0.5 px-2 rounded-full text-xs font-semibold">
-                {myOrders.length}
-              </span>
+              <span>Abgeschlossene Aufträge ({myOrders.filter(o => o.status === 'completed').length})</span>
             </button>
             <button
               onClick={() => setActiveTab('employees')}
@@ -385,17 +390,35 @@ const ContractorDashboard = () => {
           </div>
         ) : activeTab === 'my-orders' ? (
           <div>
-            {myOrders.length === 0 ? (
+            {myOrders.filter(o => o.status !== 'completed').length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                 <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Keine angenommenen Aufträge</h3>
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Keine aktiven Aufträge</h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  Sie haben noch keine Aufträge angenommen. Wechseln Sie zu "Verfügbare Aufträge", um Aufträge anzunehmen.
+                  Sie haben momentan keine aktiven Aufträge.
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {myOrders.map((order) => (
+                {myOrders.filter(o => o.status !== 'completed').map((order) => (
+                  <OrderCard key={order.id} order={order} showAcceptButton={false} />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : activeTab === 'completed' ? (
+          <div>
+            {myOrders.filter(o => o.status === 'completed').length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                <CheckCircle className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Keine abgeschlossenen Aufträge</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Sie haben noch keine Aufträge abgeschlossen.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {myOrders.filter(o => o.status === 'completed').map((order) => (
                   <OrderCard key={order.id} order={order} showAcceptButton={false} />
                 ))}
               </div>

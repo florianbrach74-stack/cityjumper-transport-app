@@ -128,11 +128,16 @@ class Order {
     const query = `
       UPDATE transport_orders
       SET status = $1, 
+          picked_up_at = CASE WHEN $1 = 'picked_up' THEN CURRENT_TIMESTAMP ELSE picked_up_at END,
+          delivered_at = CASE WHEN $1 = 'delivered' THEN CURRENT_TIMESTAMP ELSE delivered_at END,
           completed_at = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP ELSE completed_at END
       WHERE id = $2
       RETURNING *
     `;
     const result = await pool.query(query, [status, orderId]);
+    if (result.rows.length === 0) {
+      throw new Error('Order not found or could not be updated');
+    }
     return result.rows[0];
   }
 

@@ -8,6 +8,7 @@ import { Plus, Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText } 
 const CustomerDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('active');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedOrderForCMR, setSelectedOrderForCMR] = useState(null);
   const [stats, setStats] = useState({
@@ -146,9 +147,37 @@ const CustomerDashboard = () => {
           </button>
         </div>
 
+        {/* Tabs */}
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`${
+                activeTab === 'active'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
+            >
+              <Truck className="h-5 w-5" />
+              <span>Aktive Aufträge ({orders.filter(o => o.status !== 'completed').length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('completed')}
+              className={`${
+                activeTab === 'completed'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
+            >
+              <CheckCircle className="h-5 w-5" />
+              <span>Abgeschlossene Aufträge ({orders.filter(o => o.status === 'completed').length})</span>
+            </button>
+          </nav>
+        </div>
+
         {/* Orders List */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {orders.length === 0 ? (
+          {orders.filter(o => activeTab === 'active' ? o.status !== 'completed' : o.status === 'completed').length === 0 ? (
             <div className="text-center py-12">
               <Package className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">Keine Aufträge</h3>
@@ -197,7 +226,7 @@ const CustomerDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {orders.map((order) => (
+                  {orders.filter(o => activeTab === 'active' ? o.status !== 'completed' : o.status === 'completed').map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">#{order.id}</div>
