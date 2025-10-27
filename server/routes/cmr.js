@@ -5,7 +5,8 @@ const {
   getCMRByOrderId,
   getCMRByCMRNumber,
   addSignature,
-  addPublicSignature
+  addPublicSignature,
+  downloadCMRPdf
 } = require('../controllers/cmrController');
 
 // Get CMR by order ID (requires auth)
@@ -19,5 +20,8 @@ router.post('/:cmrId/signature', authenticateToken, addSignature);
 
 // PUBLIC route for consignee signature (no auth required)
 router.post('/public/:cmrNumber/signature', addPublicSignature);
+
+// Download CMR PDF (PUBLIC - no auth required)
+router.get('/:cmrNumber/download', downloadCMRPdf);
 
 module.exports = router;

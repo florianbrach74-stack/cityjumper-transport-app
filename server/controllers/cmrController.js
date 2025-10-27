@@ -338,6 +338,35 @@ const getMyCMRs = async (req, res) => {
   }
 };
 
+const downloadCMRPdf = async (req, res) => {
+  try {
+    const { cmrNumber } = req.params;
+    
+    // Find CMR by number
+    const cmr = await CMR.findByCMRNumber(cmrNumber);
+    if (!cmr) {
+      return res.status(404).json({ error: 'CMR document not found' });
+    }
+
+    // Get order for PDF generation
+    const order = await Order.findById(cmr.order_id);
+    
+    // Generate PDF
+    const { filepath, filename } = await CMRPdfGenerator.generateCMR(cmr, order);
+    
+    // Send PDF file
+    res.download(filepath, filename, (err) => {
+      if (err) {
+        console.error('Error sending PDF:', err);
+        res.status(500).json({ error: 'Error downloading PDF' });
+      }
+    });
+  } catch (error) {
+    console.error('Download CMR PDF error:', error);
+    res.status(500).json({ error: 'Server error while downloading CMR PDF' });
+  }
+};
+
 module.exports = {
   createCMRForOrder,
   getCMRByOrderId,
@@ -345,4 +374,5 @@ module.exports = {
   addSignature,
   addPublicSignature,
   getMyCMRs,
+  downloadCMRPdf,
 };
