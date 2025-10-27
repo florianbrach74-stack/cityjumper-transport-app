@@ -87,7 +87,7 @@ class CMR {
     return result.rows[0];
   }
 
-  static async addSignature(cmrId, signatureType, signatureData, location, remarks = null) {
+  static async addSignature(cmrId, signatureType, signatureData, location, remarks = null, consigneeName = null, photoUrl = null) {
     let query;
     const timestamp = new Date();
 
@@ -109,19 +109,26 @@ class CMR {
         `;
         break;
       case 'consignee':
+        // Support both signature and photo (for Briefkasten delivery)
         query = `
           UPDATE cmr_documents
           SET consignee_signature = $1, consignee_signed_at = $2, 
               consignee_signature_location = $3, consignee_remarks = $4,
+              consignee_signed_name = $5, consignee_photo = $6,
               status = 'signed', delivered_at = $2
-          WHERE id = $5
+          WHERE id = $7
           RETURNING *
         `;
-        if (remarks) {
-          const result = await pool.query(query, [signatureData, timestamp, location, remarks, cmrId]);
-          return result.rows[0];
-        }
-        break;
+        const result = await pool.query(query, [
+          signatureData || null, 
+          timestamp, 
+          location, 
+          remarks || '', 
+          consigneeName || '', 
+          photoUrl || null, 
+          cmrId
+        ]);
+        return result.rows[0];
       default:
         throw new Error('Invalid signature type');
     }

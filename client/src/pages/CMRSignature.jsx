@@ -14,6 +14,9 @@ const CMRSignature = () => {
   const [location, setLocation] = useState('');
   const [remarks, setRemarks] = useState('');
   const [consigneeName, setConsigneeName] = useState('');
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [deliveryType, setDeliveryType] = useState('signature'); // 'signature' or 'photo'
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -48,6 +51,50 @@ const CMRSignature = () => {
     }
   };
 
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPhotoFile(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePhotoSubmit = async () => {
+    if (!consigneeName.trim()) {
+      setError('Bitte geben Sie den Namen des Empfängers ein');
+      return;
+    }
+
+    if (!photoPreview) {
+      setError('Bitte laden Sie ein Foto hoch');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await cmrAPI.addSignature(cmr.id, {
+        signatureType: 'consignee',
+        signatureData: null, // No signature, only photo
+        location,
+        remarks,
+        consigneeName: consigneeName.trim(),
+        photoUrl: photoPreview, // Base64 encoded photo
+      });
+      
+      setSuccess(true);
+      await fetchCMR();
+    } catch (err) {
+      setError('Fehler beim Speichern des Fotos');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSignature = async (signatureData) => {
     if (!consigneeName.trim()) {
       setError('Bitte geben Sie den Namen des Empfängers ein');
@@ -62,6 +109,7 @@ const CMRSignature = () => {
         location,
         remarks,
         consigneeName: consigneeName.trim(),
+        photoUrl: photoPreview || null, // Include photo if available
       });
       
       setShowSignaturePad(false);
@@ -216,8 +264,41 @@ const CMRSignature = () => {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Empfangsbestätigung</h2>
             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
               <p className="text-sm text-blue-800">
-                <strong>Für Fahrer:</strong> Bitte geben Sie den Namen des Empfängers ein und lassen Sie ihn auf dem Handy unterschreiben.
+                <strong>Für Fahrer:</strong> Bitte geben Sie den Namen des Empfängers ein und wählen Sie:
+                <br/>• <strong>Unterschrift</strong> - Empfänger unterschreibt auf dem Handy
+                <br/>• <strong>Foto</strong> - Für Briefkasten-Zustellung (z.B. Kündigung)
               </p>
+            </div>
+
+            {/* Delivery Type Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Zustellungsart *</label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType('signature')}
+                  className={`p-4 border-2 rounded-lg text-center transition-all ${
+                    deliveryType === 'signature'
+                      ? 'border-primary-600 bg-primary-50 text-primary-900'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="font-semibold">✍️ Unterschrift</div>
+                  <div className="text-xs mt-1">Empfänger unterschreibt</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType('photo')}
+                  className={`p-4 border-2 rounded-lg text-center transition-all ${
+                    deliveryType === 'photo'
+                      ? 'border-primary-600 bg-primary-50 text-primary-900'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="font-semibold">📸 Foto</div>
+                  <div className="text-xs mt-1">Briefkasten-Zustellung</div>
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4 mb-6">
@@ -263,21 +344,65 @@ const CMRSignature = () => {
                   placeholder="z.B. Sendung in gutem Zustand erhalten"
                 />
               </div>
+
+              {/* Photo Upload (only if photo delivery type) */}
+              {deliveryType === 'photo' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Foto hochladen *
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handlePhotoChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  />
+                  {photoPreview && (
+                    <div className="mt-2">
+                      <img src={photoPreview} alt="Preview" className="max-w-full h-48 object-contain rounded-lg border" />
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    📸 Foto von Briefkasten, Kündigung, etc.
+                  </p>
+                </div>
+              )}
             </div>
 
-            <button
-              onClick={() => {
-                if (!consigneeName.trim()) {
-                  alert('Bitte geben Sie den Namen des Empfängers ein');
-                  return;
-                }
-                setShowSignaturePad(true);
-              }}
-              className="w-full flex justify-center items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <FileText className="h-5 w-5 mr-2" />
-              Empfänger unterschreiben lassen
-            </button>
+            {deliveryType === 'signature' ? (
+              <button
+                onClick={() => {
+                  if (!consigneeName.trim()) {
+                    alert('Bitte geben Sie den Namen des Empfängers ein');
+                    return;
+                  }
+                  setShowSignaturePad(true);
+                }}
+                className="w-full flex justify-center items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                <FileText className="h-5 w-5 mr-2" />
+                Empfänger unterschreiben lassen
+              </button>
+            ) : (
+              <button
+                onClick={handlePhotoSubmit}
+                disabled={submitting || !photoPreview}
+                className="w-full flex justify-center items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Wird gespeichert...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="h-5 w-5 mr-2" />
+                    Foto speichern
+                  </>
+                )}
+              </button>
+            )}
           </div>
         )}
 
