@@ -270,9 +270,9 @@ const CMRViewer = ({ orderId, onClose }) => {
               >
                 Schließen
               </button>
-              {cmr.pdf_url && (
+              {cmr.cmr_number && (
                 <a
-                  href={cmr.pdf_url}
+                  href={`${import.meta.env.VITE_API_URL || 'https://cityjumper-api-production-01e4.up.railway.app'}/api/cmr/${cmr.cmr_number}/download`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700"
