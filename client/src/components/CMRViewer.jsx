@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { cmrAPI } from '../services/cmrApi';
-import { FileText, Download, ExternalLink, CheckCircle, Clock, QrCode } from 'lucide-react';
+import SignatureModal from './SignatureModal';
+import { FileText, Download, ExternalLink, CheckCircle, Clock, QrCode, PenTool } from 'lucide-react';
 
 const CMRViewer = ({ orderId, onClose }) => {
   const [cmr, setCmr] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showSignatureModal, setShowSignatureModal] = useState(null); // 'sender' or 'carrier'
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
+    // Get current user
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    setCurrentUser(user);
     fetchCMR();
   }, [orderId]);
 
@@ -19,6 +25,21 @@ const CMRViewer = ({ orderId, onClose }) => {
       setError('CMR-Dokument nicht gefunden');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSignatureSubmit = async (signatureType, data) => {
+    try {
+      await cmrAPI.addSignature(cmr.id, {
+        ...data,
+        signatureType,
+      });
+      setShowSignatureModal(null);
+      await fetchCMR(); // Refresh CMR data
+      alert('Unterschrift erfolgreich hinzugefügt!');
+    } catch (err) {
+      console.error('Error adding signature:', err);
+      alert('Fehler beim Hinzufügen der Unterschrift');
     }
   };
 
@@ -235,6 +256,53 @@ const CMRViewer = ({ orderId, onClose }) => {
               )}
             </div>
 
+            {/* Signature Buttons for Sender and Carrier */}
+            {currentUser && (
+              <div className="space-y-3">
+                {/* Sender Signature - Only for customer */}
+                {currentUser.role === 'customer' && !cmr.sender_signature && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-green-900">Absender-Unterschrift</h4>
+                        <p className="text-sm text-green-800">
+                          Unterschreiben Sie als Absender bei der Abholung
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowSignatureModal('sender')}
+                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                      >
+                        <PenTool className="h-4 w-4 mr-2" />
+                        Unterschreiben
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Carrier Signature - Only for contractor */}
+                {currentUser.role === 'contractor' && !cmr.carrier_signature && (
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-purple-900">Frachtführer-Unterschrift</h4>
+                        <p className="text-sm text-purple-800">
+                          Unterschreiben Sie als Frachtführer bei der Abholung
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowSignatureModal('carrier')}
+                        className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                      >
+                        <PenTool className="h-4 w-4 mr-2" />
+                        Unterschreiben
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Signature Link for Consignee */}
             {!cmr.consignee_signature && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -242,7 +310,7 @@ const CMRViewer = ({ orderId, onClose }) => {
                   <QrCode className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <h4 className="font-semibold text-blue-900 mb-1">
-                      Unterschrift ausstehend
+                      Empfänger-Unterschrift ausstehend
                     </h4>
                     <p className="text-sm text-blue-800 mb-3">
                       Senden Sie den folgenden Link an den Empfänger zur digitalen Unterschrift:
@@ -287,6 +355,16 @@ const CMRViewer = ({ orderId, onClose }) => {
           </div>
         </div>
       </div>
+
+      {/* Signature Modal */}
+      {showSignatureModal && (
+        <SignatureModal
+          title={showSignatureModal === 'sender' ? 'Absender-Unterschrift' : 'Frachtführer-Unterschrift'}
+          signerName={currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : ''}
+          onClose={() => setShowSignatureModal(null)}
+          onSubmit={(data) => handleSignatureSubmit(showSignatureModal, data)}
+        />
+      )}
     </div>
   );
 };
