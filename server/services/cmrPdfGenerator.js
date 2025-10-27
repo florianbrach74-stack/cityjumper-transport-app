@@ -133,8 +133,17 @@ class CMRPdfGenerator {
         doc.fontSize(8).font('Helvetica-Bold').text('22. Absender', 35, signatureY + 5);
         doc.fontSize(7).font('Helvetica').text('Unterschrift und Stempel des Absenders', 35, signatureY + 20);
         if (cmrData.sender_signature) {
-          doc.fontSize(7).text('✓ Unterschrieben', 35, signatureY + 60);
-          doc.fontSize(6).text(new Date(cmrData.sender_signed_at).toLocaleString('de-DE'), 35, signatureY + 75);
+          try {
+            if (cmrData.sender_signature.startsWith('data:image')) {
+              const base64Data = cmrData.sender_signature.split(',')[1];
+              const imgBuffer = Buffer.from(base64Data, 'base64');
+              doc.image(imgBuffer, 35, signatureY + 35, { width: 150, height: 40 });
+            }
+          } catch (err) {
+            console.error('Error adding sender signature image:', err);
+            doc.fontSize(7).text('✓ Unterschrieben', 35, signatureY + 60);
+          }
+          doc.fontSize(6).text(new Date(cmrData.sender_signed_at).toLocaleString('de-DE'), 35, signatureY + 80);
         }
 
         // Box 23: Carrier Signature
@@ -142,8 +151,17 @@ class CMRPdfGenerator {
         doc.fontSize(8).font('Helvetica-Bold').text('23. Frachtführer', 215, signatureY + 5);
         doc.fontSize(7).font('Helvetica').text('Unterschrift und Stempel des Frachtführers', 215, signatureY + 20);
         if (cmrData.carrier_signature) {
-          doc.fontSize(7).text('✓ Unterschrieben', 215, signatureY + 60);
-          doc.fontSize(6).text(new Date(cmrData.carrier_signed_at).toLocaleString('de-DE'), 215, signatureY + 75);
+          try {
+            if (cmrData.carrier_signature.startsWith('data:image')) {
+              const base64Data = cmrData.carrier_signature.split(',')[1];
+              const imgBuffer = Buffer.from(base64Data, 'base64');
+              doc.image(imgBuffer, 215, signatureY + 35, { width: 150, height: 40 });
+            }
+          } catch (err) {
+            console.error('Error adding carrier signature image:', err);
+            doc.fontSize(7).text('✓ Unterschrieben', 215, signatureY + 60);
+          }
+          doc.fontSize(6).text(new Date(cmrData.carrier_signed_at).toLocaleString('de-DE'), 215, signatureY + 80);
         }
 
         // Box 24: Consignee Signature
@@ -151,11 +169,24 @@ class CMRPdfGenerator {
         doc.fontSize(8).font('Helvetica-Bold').text('24. Empfänger', 395, signatureY + 5);
         doc.fontSize(7).font('Helvetica').text('Unterschrift und Stempel des Empfängers', 395, signatureY + 20);
         if (cmrData.consignee_signature) {
-          doc.fontSize(7).text('✓ Unterschrieben', 395, signatureY + 60);
-          doc.fontSize(6).text(new Date(cmrData.consignee_signed_at).toLocaleString('de-DE'), 395, signatureY + 75);
+          // Display signature image if it's a base64 string
+          try {
+            if (cmrData.consignee_signature.startsWith('data:image')) {
+              const base64Data = cmrData.consignee_signature.split(',')[1];
+              const imgBuffer = Buffer.from(base64Data, 'base64');
+              doc.image(imgBuffer, 395, signatureY + 35, { width: 150, height: 40 });
+            }
+          } catch (err) {
+            console.error('Error adding signature image:', err);
+            doc.fontSize(7).text('✓ Unterschrieben', 395, signatureY + 60);
+          }
+          doc.fontSize(6).text(new Date(cmrData.consignee_signed_at).toLocaleString('de-DE'), 395, signatureY + 80);
+          if (cmrData.consignee_signed_name) {
+            doc.fontSize(7).text(cmrData.consignee_signed_name, 395, signatureY + 90);
+          }
         }
         if (cmrData.consignee_remarks) {
-          doc.fontSize(6).text(`Bemerkungen: ${cmrData.consignee_remarks}`, 395, signatureY + 85, { width: 165 });
+          doc.fontSize(6).text(`Bemerkungen: ${cmrData.consignee_remarks}`, 395, signatureY + 95, { width: 165 });
         }
 
         // Footer
