@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ordersAPI, bidsAPI } from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import { ordersAPI, bidsAPI, verificationAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import CMRViewer from '../components/CMRViewer';
 import BidModal from '../components/BidModal';
@@ -8,6 +9,7 @@ import NotificationSettings from '../components/NotificationSettings';
 import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell } from 'lucide-react';
 
 const ContractorDashboard = () => {
+  const navigate = useNavigate();
   const [availableOrders, setAvailableOrders] = useState([]);
   const [myOrders, setMyOrders] = useState([]);
   const [myBids, setMyBids] = useState([]);
@@ -15,6 +17,7 @@ const ContractorDashboard = () => {
   const [activeTab, setActiveTab] = useState('available');
   const [selectedOrderForBid, setSelectedOrderForBid] = useState(null);
   const [selectedOrderForCMR, setSelectedOrderForCMR] = useState(null);
+  const [verificationStatus, setVerificationStatus] = useState(null);
 
   const fetchOrders = async () => {
     try {
@@ -35,7 +38,17 @@ const ContractorDashboard = () => {
 
   useEffect(() => {
     fetchOrders();
+    fetchVerificationStatus();
   }, []);
+
+  const fetchVerificationStatus = async () => {
+    try {
+      const response = await verificationAPI.getStatus();
+      setVerificationStatus(response.data.verificationStatus);
+    } catch (error) {
+      console.error('Error fetching verification status:', error);
+    }
+  };
 
   const handleBidSuccess = () => {
     setSelectedOrderForBid(null);
@@ -295,6 +308,57 @@ const ContractorDashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900">Aufträge</h1>
           <p className="mt-2 text-gray-600">Verfügbare Aufträge annehmen und verwalten</p>
         </div>
+
+        {/* Verification Banner */}
+        {verificationStatus && verificationStatus !== 'approved' && (
+          <div className={`mb-6 rounded-lg p-4 ${
+            verificationStatus === 'pending' 
+              ? 'bg-yellow-50 border border-yellow-200' 
+              : 'bg-red-50 border border-red-200'
+          }`}>
+            <div className="flex items-start">
+              <AlertCircle className={`h-5 w-5 ${
+                verificationStatus === 'pending' ? 'text-yellow-600' : 'text-red-600'
+              } mr-3 mt-0.5`} />
+              <div className="flex-1">
+                {verificationStatus === 'pending' ? (
+                  <>
+                    <h3 className="font-semibold text-yellow-900">Verifizierung ausstehend</h3>
+                    <p className="text-sm text-yellow-800 mt-1">
+                      Ihre Dokumente werden geprüft. Sie werden benachrichtigt sobald Ihr Account freigegeben wurde.
+                    </p>
+                  </>
+                ) : verificationStatus === 'rejected' ? (
+                  <>
+                    <h3 className="font-semibold text-red-900">Verifizierung abgelehnt</h3>
+                    <p className="text-sm text-red-800 mt-1">
+                      Ihre Dokumente wurden abgelehnt. Bitte laden Sie die korrekten Dokumente erneut hoch.
+                    </p>
+                    <button
+                      onClick={() => navigate('/verification')}
+                      className="mt-2 text-sm font-medium text-red-700 hover:text-red-800 underline"
+                    >
+                      Dokumente erneut hochladen
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="font-semibold text-red-900">Account nicht verifiziert</h3>
+                    <p className="text-sm text-red-800 mt-1">
+                      Bitte verifizieren Sie Ihren Account um sich auf Aufträge bewerben zu können.
+                    </p>
+                    <button
+                      onClick={() => navigate('/verification')}
+                      className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700"
+                    >
+                      Jetzt verifizieren
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-6">

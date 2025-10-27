@@ -10,6 +10,7 @@ import ContractorDashboard from './pages/ContractorDashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CMRSignature from './pages/CMRSignature';
+import VerificationPage from './pages/VerificationPage';
 
 const DashboardRouter = () => {
   const { user } = useAuth();
@@ -38,6 +39,17 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/cmr/:cmrNumber" element={<CMRSignature />} />
+          <Route path="/cmr/:cmrNumber/sender" element={<CMRSignature />} />
+          <Route path="/cmr/:cmrNumber/carrier" element={<CMRSignature />} />
+          <Route path="/cmr/:cmrNumber/consignee" element={<CMRSignature />} />
+          <Route
+            path="/verification"
+            element={
+              <ProtectedRoute>
+                <VerificationPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={
