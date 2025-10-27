@@ -342,28 +342,58 @@ const downloadCMRPdf = async (req, res) => {
   try {
     const { cmrNumber } = req.params;
     
+    console.log('📥 PDF Download requested for CMR:', cmrNumber);
+    
     // Find CMR by number
     const cmr = await CMR.findByCMRNumber(cmrNumber);
     if (!cmr) {
+      console.error('❌ CMR not found:', cmrNumber);
       return res.status(404).json({ error: 'CMR document not found' });
     }
 
+    console.log('✅ CMR found:', cmr.id);
+
     // Get order for PDF generation
     const order = await Order.findById(cmr.order_id);
+    if (!order) {
+      console.error('❌ Order not found:', cmr.order_id);
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    console.log('✅ Order found:', order.id);
     
-    // Generate PDF
+    // Generate PDF (always regenerate to ensure it's up to date)
+    console.log('🔄 Generating PDF...');
     const { filepath, filename } = await CMRPdfGenerator.generateCMR(cmr, order);
+    
+    console.log('✅ PDF generated:', filepath);
+    
+    // Check if file exists
+    const fs = require('fs');
+    if (!fs.existsSync(filepath)) {
+      console.error('❌ PDF file not found at:', filepath);
+      return res.status(404).json({ error: 'PDF file not found' });
+    }
+
+    console.log('📤 Sending PDF file...');
     
     // Send PDF file
     res.download(filepath, filename, (err) => {
       if (err) {
-        console.error('Error sending PDF:', err);
-        res.status(500).json({ error: 'Error downloading PDF' });
+        console.error('❌ Error sending PDF:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Error downloading PDF' });
+        }
+      } else {
+        console.log('✅ PDF sent successfully');
       }
     });
   } catch (error) {
-    console.error('Download CMR PDF error:', error);
-    res.status(500).json({ error: 'Server error while downloading CMR PDF' });
+    console.error('❌ Download CMR PDF error:', error);
+    console.error('Error stack:', error.stack);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Server error while downloading CMR PDF', details: error.message });
+    }
   }
 };
 
