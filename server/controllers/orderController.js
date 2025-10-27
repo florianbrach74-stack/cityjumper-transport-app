@@ -181,11 +181,14 @@ const acceptOrder = async (req, res) => {
 
     // Create CMR document automatically
     try {
-      await createCMRForOrder(id);
-      console.log('✅ CMR document created for order', id);
+      console.log('🔄 Creating CMR for order', id);
+      const cmr = await createCMRForOrder(id);
+      console.log('✅ CMR document created:', cmr.cmr_number);
     } catch (cmrError) {
       console.error('❌ Error creating CMR:', cmrError);
+      console.error('CMR Error stack:', cmrError.stack);
       // Don't fail the order acceptance if CMR creation fails
+      // But log it for debugging
     }
 
     // Send email notifications
