@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api, { bidsAPI } from '../services/api';
+import api, { bidsAPI, verificationAPI } from '../services/api';
 import AssignOrderModal from '../components/AssignOrderModal';
 import CMRViewer from '../components/CMRViewer';
 import Navbar from '../components/Navbar';
@@ -111,6 +111,34 @@ export default function AdminDashboard() {
     }
   };
 
+  const approveContractor = async (userId) => {
+    const notes = prompt('Optional: Notizen zur Freigabe');
+    if (notes === null) return; // User cancelled
+    
+    try {
+      await verificationAPI.approveContractor(userId, notes);
+      await loadData();
+      alert('Auftragnehmer erfolgreich freigegeben!');
+    } catch (error) {
+      console.error('Error approving contractor:', error);
+      alert('Fehler beim Freigeben');
+    }
+  };
+
+  const rejectContractor = async (userId) => {
+    const reason = prompt('Grund für die Ablehnung:');
+    if (!reason) return;
+    
+    try {
+      await verificationAPI.rejectContractor(userId, reason);
+      await loadData();
+      alert('Auftragnehmer abgelehnt.');
+    } catch (error) {
+      console.error('Error rejecting contractor:', error);
+      alert('Fehler beim Ablehnen');
+    }
+  };
+
   const updateUserRole = async (userId, newRole) => {
     try {
       await api.patch(`/admin/users/${userId}/role`, { role: newRole });
@@ -216,6 +244,16 @@ export default function AdminDashboard() {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               Benutzer ({users.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('verifications')}
+              className={`${
+                activeTab === 'verifications'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Verifizierungen ({users.filter(u => u.role === 'contractor' && u.verification_status === 'pending').length})
             </button>
           </nav>
         </div>
@@ -352,6 +390,106 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'verifications' && (
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold mb-4">Auftragnehmer-Verifizierungen</h2>
+              {users.filter(u => u.role === 'contractor' && u.verification_status !== 'approved').length === 0 ? (
+                <p className="text-gray-500 text-center py-8">Keine ausstehenden Verifizierungen</p>
+              ) : (
+                <div className="space-y-4">
+                  {users.filter(u => u.role === 'contractor' && u.verification_status !== 'approved').map((user) => (
+                    <div key={user.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">
+                            {user.company_name || `${user.first_name} ${user.last_name}`}
+                          </h3>
+                          <p className="text-sm text-gray-600">{user.email}</p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          user.verification_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          user.verification_status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {user.verification_status === 'pending' ? 'Ausstehend' :
+                           user.verification_status === 'rejected' ? 'Abgelehnt' : 'Nicht eingereicht'}
+                        </span>
+                      </div>
+
+                      {user.insurance_document_url && user.business_license_url ? (
+                        <>
+                          <div className="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Transportversicherung</p>
+                              <a
+                                href={user.insurance_document_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-blue-600 hover:text-blue-700 underline"
+                              >
+                                Dokument ansehen
+                              </a>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Gewerbeanmeldung</p>
+                              <a
+                                href={user.business_license_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-blue-600 hover:text-blue-700 underline"
+                              >
+                                Dokument ansehen
+                              </a>
+                            </div>
+                          </div>
+
+                          <div className="mb-3">
+                            <p className="text-xs text-gray-500 mb-1">Mindestlohngesetz-Erklärung</p>
+                            <p className="text-sm">
+                              {user.minimum_wage_declaration_signed ? (
+                                <span className="text-green-600">✓ Unterschrieben am {new Date(user.minimum_wage_signed_at).toLocaleDateString('de-DE')}</span>
+                              ) : (
+                                <span className="text-red-600">✗ Nicht unterschrieben</span>
+                              )}
+                            </p>
+                          </div>
+
+                          {user.verification_status === 'pending' && (
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => approveContractor(user.id)}
+                                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                              >
+                                ✓ Freigeben
+                              </button>
+                              <button
+                                onClick={() => rejectContractor(user.id)}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
+                              >
+                                ✗ Ablehnen
+                              </button>
+                            </div>
+                          )}
+
+                          {user.verification_notes && (
+                            <div className="mt-3 bg-gray-50 p-3 rounded">
+                              <p className="text-xs text-gray-500 mb-1">Notizen</p>
+                              <p className="text-sm text-gray-700">{user.verification_notes}</p>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-500">Noch keine Dokumente hochgeladen</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
