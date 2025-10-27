@@ -345,5 +345,4 @@ module.exports = {
   addSignature,
   addPublicSignature,
   getMyCMRs,
-  downloadCMRPdf,
 };
