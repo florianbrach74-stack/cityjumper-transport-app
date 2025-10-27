@@ -28,10 +28,19 @@ const CMRSignature = () => {
         (position) => {
           setLocation(`${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`);
         },
-        () => {
-          setLocation('Standort nicht verfügbar');
+        (error) => {
+          console.log('Geolocation error:', error);
+          // Fallback: Use city name or manual input
+          setLocation('Standort manuell eingeben');
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
+    } else {
+      setLocation('GPS nicht verfügbar - Bitte manuell eingeben');
     }
   }, [cmrNumber]);
 
