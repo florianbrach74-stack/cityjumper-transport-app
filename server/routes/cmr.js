@@ -1,23 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
 const {
   getCMRByOrderId,
   getCMRByCMRNumber,
   addSignature,
-  downloadCMRPdf
+  getMyCMRs,
 } = require('../controllers/cmrController');
+const { authenticateToken } = require('../middleware/auth');
 
-// Get CMR by order ID (requires auth)
+// Get my CMRs (authenticated)
+router.get('/my-cmrs', authenticateToken, getMyCMRs);
+
+// Get CMR by order ID (authenticated)
 router.get('/order/:orderId', authenticateToken, getCMRByOrderId);
 
-// Get CMR by CMR number (PUBLIC - no auth required)
-router.get('/number/:cmrNumber', getCMRByCMRNumber);
+// Get CMR by CMR number (public for signature page)
+router.get('/:cmrNumber', getCMRByCMRNumber);
 
-// Add signature to CMR (PUBLIC - no auth required for mobile signature)
+// Add signature (public for consignee, authenticated for sender/carrier)
 router.post('/:cmrId/signature', addSignature);
-
-// Download CMR PDF (PUBLIC - no auth required)
-router.get('/:cmrNumber/download', downloadCMRPdf);
 
 module.exports = router;

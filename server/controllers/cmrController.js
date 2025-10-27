@@ -136,13 +136,11 @@ const addSignature = async (req, res) => {
       return res.status(404).json({ error: 'CMR document not found' });
     }
 
-    // Get order for email notifications
+    // Authorization check - only if user is logged in
     const order = await Order.findById(cmr.order_id);
     
-    // Authorization check - only if user is logged in
-    // For consignee signature, no auth is required (public mobile access)
-    if (req.user && signatureType !== 'consignee') {
-      // User is logged in - check permissions for sender/carrier
+    if (req.user) {
+      // User is logged in - check permissions
       if (signatureType === 'sender' && req.user.role === 'customer' && order.customer_id !== req.user.id) {
         return res.status(403).json({ error: 'Access denied' });
       }
@@ -151,6 +149,9 @@ const addSignature = async (req, res) => {
         return res.status(403).json({ error: 'Access denied' });
       }
     }
+
+    // For consignee, allow public access (no login required)
+    // This will be used on mobile signature page
 
     const updatedCMR = await CMR.addSignature(cmrId, signatureType, signatureData, location, remarks, consigneeName, photoUrl);
 
