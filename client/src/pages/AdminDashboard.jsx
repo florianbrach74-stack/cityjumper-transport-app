@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import api, { bidsAPI } from '../services/api';
 import AssignOrderModal from '../components/AssignOrderModal';
 import CMRViewer from '../components/CMRViewer';
 import Navbar from '../components/Navbar';
@@ -15,6 +15,8 @@ export default function AdminDashboard() {
   const [editingOrder, setEditingOrder] = useState(null);
   const [assigningOrder, setAssigningOrder] = useState(null);
   const [selectedOrderForCMR, setSelectedOrderForCMR] = useState(null);
+  const [selectedOrderForBids, setSelectedOrderForBids] = useState(null);
+  const [bidsForOrder, setBidsForOrder] = useState([]);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -65,6 +67,47 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error deleting order:', error);
       alert('Fehler beim Löschen des Auftrags');
+    }
+  };
+
+  const viewBids = async (order) => {
+    try {
+      const response = await bidsAPI.getBidsForOrder(order.id);
+      setBidsForOrder(response.data.bids);
+      setSelectedOrderForBids(order);
+    } catch (error) {
+      console.error('Error loading bids:', error);
+      alert('Fehler beim Laden der Bewerbungen');
+    }
+  };
+
+  const acceptBid = async (bidId) => {
+    if (!confirm('Möchten Sie diese Bewerbung wirklich akzeptieren?\n\nDer Auftrag wird dem Auftragnehmer zugewiesen.')) return;
+    
+    try {
+      await bidsAPI.acceptBid(bidId);
+      setSelectedOrderForBids(null);
+      setBidsForOrder([]);
+      await loadData();
+      alert('Bewerbung akzeptiert! Der Auftragnehmer wurde benachrichtigt.');
+    } catch (error) {
+      console.error('Error accepting bid:', error);
+      alert('Fehler beim Akzeptieren der Bewerbung');
+    }
+  };
+
+  const rejectBid = async (bidId) => {
+    if (!confirm('Möchten Sie diese Bewerbung wirklich ablehnen?')) return;
+    
+    try {
+      await bidsAPI.rejectBid(bidId);
+      // Refresh bids list
+      const response = await bidsAPI.getBidsForOrder(selectedOrderForBids.id);
+      setBidsForOrder(response.data.bids);
+      alert('Bewerbung abgelehnt.');
+    } catch (error) {
+      console.error('Error rejecting bid:', error);
+      alert('Fehler beim Ablehnen der Bewerbung');
     }
   };
 
@@ -224,29 +267,41 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {order.price ? `€${order.price}` : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                        {!order.contractor_id && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex space-x-2">
+                            {order.status === 'pending' && (
+                              <button
+                                onClick={() => viewBids(order)}
+                                className="text-blue-600 hover:text-blue-900 font-medium"
+                              >
+                                Bewerbungen
+                              </button>
+                            )}
+                            {!order.contractor_id && order.status === 'pending' && (
+                              <button
+                                onClick={() => setAssigningOrder(order)}
+                                className="text-green-600 hover:text-green-900 font-medium"
+                              >
+                                Zuweisen
+                              </button>
+                            )}
+                            {order.contractor_id && (
+                              <button
+                                onClick={() => setSelectedOrderForCMR(order.id)}
+                                className="text-purple-600 hover:text-purple-900 font-medium"
+                              >
+                                CMR
+                              </button>
+                            )}
+                          </div>
                           <button
-                            onClick={() => setAssigningOrder(order)}
-                            className="text-green-600 hover:text-green-900 font-medium"
+                            onClick={() => deleteOrder(order.id)}
+                            className="text-red-600 hover:text-red-900 text-left"
                           >
-                            Zuweisen
+                            Löschen
                           </button>
-                        )}
-                        {order.contractor_id && (
-                          <button
-                            onClick={() => setSelectedOrderForCMR(order.id)}
-                            className="text-purple-600 hover:text-purple-900 font-medium"
-                          >
-                            CMR
-                          </button>
-                        )}
-                        <button
-                          onClick={() => deleteOrder(order.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Löschen
-                        </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -301,6 +356,110 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Bids Modal */}
+      {selectedOrderForBids && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Bewerbungen für Auftrag #{selectedOrderForBids.id}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {selectedOrderForBids.pickup_city} → {selectedOrderForBids.delivery_city} | Kundenpreis: €{selectedOrderForBids.price}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedOrderForBids(null);
+                  setBidsForOrder([]);
+                }}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <span className="text-2xl">&times;</span>
+              </button>
+            </div>
+
+            <div className="p-6">
+              {bidsForOrder.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">Noch keine Bewerbungen für diesen Auftrag.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {bidsForOrder.map((bid) => (
+                    <div key={bid.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">
+                            {bid.contractor_company || `${bid.contractor_first_name} ${bid.contractor_last_name}`}
+                          </h4>
+                          <p className="text-sm text-gray-600">{bid.contractor_email}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Beworben am: {new Date(bid.created_at).toLocaleString('de-DE')}
+                          </p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          bid.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          bid.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {bid.status === 'pending' ? 'Ausstehend' :
+                           bid.status === 'accepted' ? 'Akzeptiert' : 'Abgelehnt'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4 mb-3">
+                        <div>
+                          <p className="text-xs text-gray-500">Gebotener Preis</p>
+                          <p className="text-lg font-bold text-primary-600">€{bid.bid_amount}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Ihre Marge</p>
+                          <p className="text-lg font-bold text-green-600">
+                            €{(selectedOrderForBids.price - bid.bid_amount).toFixed(2)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Marge %</p>
+                          <p className="text-lg font-bold text-gray-700">
+                            {((selectedOrderForBids.price - bid.bid_amount) / selectedOrderForBids.price * 100).toFixed(1)}%
+                          </p>
+                        </div>
+                      </div>
+
+                      {bid.message && (
+                        <div className="bg-gray-50 p-3 rounded mb-3">
+                          <p className="text-xs text-gray-500 mb-1">Nachricht:</p>
+                          <p className="text-sm text-gray-700">{bid.message}</p>
+                        </div>
+                      )}
+
+                      {bid.status === 'pending' && (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => acceptBid(bid.id)}
+                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                          >
+                            Akzeptieren
+                          </button>
+                          <button
+                            onClick={() => rejectBid(bid.id)}
+                            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
+                          >
+                            Ablehnen
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CMR Viewer Modal */}
       {selectedOrderForCMR && (
