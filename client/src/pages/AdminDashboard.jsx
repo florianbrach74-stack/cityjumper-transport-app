@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AssignOrderModal from '../components/AssignOrderModal';
+import CMRViewer from '../components/CMRViewer';
 import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
@@ -13,6 +14,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [editingOrder, setEditingOrder] = useState(null);
   const [assigningOrder, setAssigningOrder] = useState(null);
+  const [selectedOrderForCMR, setSelectedOrderForCMR] = useState(null);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -231,12 +233,14 @@ export default function AdminDashboard() {
                             Zuweisen
                           </button>
                         )}
-                        <button
-                          onClick={() => navigate(`/orders/${order.id}`)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          Ansehen
-                        </button>
+                        {order.contractor_id && (
+                          <button
+                            onClick={() => setSelectedOrderForCMR(order.id)}
+                            className="text-purple-600 hover:text-purple-900 font-medium"
+                          >
+                            CMR
+                          </button>
+                        )}
                         <button
                           onClick={() => deleteOrder(order.id)}
                           className="text-red-600 hover:text-red-900"
@@ -297,6 +301,14 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* CMR Viewer Modal */}
+      {selectedOrderForCMR && (
+        <CMRViewer
+          orderId={selectedOrderForCMR}
+          onClose={() => setSelectedOrderForCMR(null)}
+        />
+      )}
 
       {/* Assign Order Modal */}
       {assigningOrder && (
