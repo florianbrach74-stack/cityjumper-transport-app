@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ordersAPI } from '../services/api';
+import { ordersAPI, bidsAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import CMRViewer from '../components/CMRViewer';
+import BidModal from '../components/BidModal';
 import EmployeeManagement from '../components/EmployeeManagement';
 import NotificationSettings from '../components/NotificationSettings';
 import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell } from 'lucide-react';
@@ -9,19 +10,22 @@ import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, File
 const ContractorDashboard = () => {
   const [availableOrders, setAvailableOrders] = useState([]);
   const [myOrders, setMyOrders] = useState([]);
+  const [myBids, setMyBids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('available');
-  const [acceptingOrder, setAcceptingOrder] = useState(null);
+  const [selectedOrderForBid, setSelectedOrderForBid] = useState(null);
   const [selectedOrderForCMR, setSelectedOrderForCMR] = useState(null);
 
   const fetchOrders = async () => {
     try {
-      const [availableRes, myOrdersRes] = await Promise.all([
+      const [availableRes, myOrdersRes, myBidsRes] = await Promise.all([
         ordersAPI.getAvailableOrders(),
         ordersAPI.getOrders(),
+        bidsAPI.getMyBids(),
       ]);
       setAvailableOrders(availableRes.data.orders);
       setMyOrders(myOrdersRes.data.orders);
+      setMyBids(myBidsRes.data.bids);
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
@@ -33,22 +37,11 @@ const ContractorDashboard = () => {
     fetchOrders();
   }, []);
 
-  const handleAcceptOrder = async (orderId) => {
-    if (!confirm('Möchten Sie diesen Auftrag wirklich annehmen?')) {
-      return;
-    }
-
-    setAcceptingOrder(orderId);
-    try {
-      await ordersAPI.acceptOrder(orderId);
-      await fetchOrders();
-      setActiveTab('my-orders');
-    } catch (error) {
-      console.error('Error accepting order:', error);
-      alert('Fehler beim Annehmen des Auftrags');
-    } finally {
-      setAcceptingOrder(null);
-    }
+  const handleBidSuccess = () => {
+    setSelectedOrderForBid(null);
+    fetchOrders();
+    alert('Bewerbung erfolgreich eingereicht! Sie werden benachrichtigt wenn Ihre Bewerbung akzeptiert wird.');
+    setActiveTab('my-bids');
   };
 
   const handleStatusChange = async (orderId, newStatus) => {
@@ -222,7 +215,12 @@ const ContractorDashboard = () => {
             </div>
           )}
           {order.price && (
-            <div className="text-lg font-bold text-primary-600">€{order.price}</div>
+            <div className="text-lg font-bold text-primary-600">
+              €{showAcceptButton ? (order.price * 0.85).toFixed(2) : order.price}
+              {showAcceptButton && (
+                <span className="text-xs text-gray-500 ml-1">(max.)</span>
+              )}
+            </div>
           )}
         </div>
 
@@ -262,24 +260,14 @@ const ContractorDashboard = () => {
           </div>
         )}
 
-        {/* Accept Button */}
+        {/* Apply Button */}
         {showAcceptButton && (
           <button
-            onClick={() => handleAcceptOrder(order.id)}
-            disabled={acceptingOrder === order.id}
-            className="w-full mt-4 flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => setSelectedOrderForBid(order)}
+            className="w-full mt-4 flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
           >
-            {acceptingOrder === order.id ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Wird angenommen...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="h-5 w-5 mr-2" />
-                Auftrag annehmen
-              </>
-            )}
+            <CheckCircle className="h-5 w-5 mr-2" />
+            Auf Auftrag bewerben
           </button>
         )}
       </div>
@@ -332,6 +320,17 @@ const ContractorDashboard = () => {
             >
               <Truck className="h-5 w-5" />
               <span>Aktive Aufträge ({myOrders.filter(o => o.status !== 'completed').length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('my-bids')}
+              className={`${
+                activeTab === 'my-bids'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
+            >
+              <Clock className="h-5 w-5" />
+              <span>Meine Bewerbungen ({myBids.length})</span>
             </button>
             <button
               onClick={() => setActiveTab('completed')}
@@ -406,6 +405,54 @@ const ContractorDashboard = () => {
               </div>
             )}
           </div>
+        ) : activeTab === 'my-bids' ? (
+          <div>
+            {myBids.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                <Clock className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Keine Bewerbungen</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Sie haben sich noch auf keine Aufträge beworben.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {myBids.map((bid) => (
+                  <div key={bid.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">Bewerbung #{bid.id}</h3>
+                        <p className="text-sm text-gray-500">
+                          {new Date(bid.created_at).toLocaleDateString('de-DE')}
+                        </p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        bid.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        bid.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {bid.status === 'pending' ? 'Ausstehend' :
+                         bid.status === 'accepted' ? 'Akzeptiert' : 'Abgelehnt'}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600">
+                        <strong>Route:</strong> {bid.pickup_city} → {bid.delivery_city}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <strong>Ihr Gebot:</strong> <span className="text-primary-600 font-semibold">€{bid.bid_amount}</span>
+                      </p>
+                      {bid.message && (
+                        <p className="text-sm text-gray-600">
+                          <strong>Ihre Nachricht:</strong> {bid.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         ) : activeTab === 'completed' ? (
           <div>
             {myOrders.filter(o => o.status === 'completed').length === 0 ? (
@@ -430,6 +477,15 @@ const ContractorDashboard = () => {
           <NotificationSettings />
         )}
       </div>
+
+      {/* Bid Modal */}
+      {selectedOrderForBid && (
+        <BidModal
+          order={selectedOrderForBid}
+          onClose={() => setSelectedOrderForBid(null)}
+          onSuccess={handleBidSuccess}
+        />
+      )}
 
       {/* CMR Viewer Modal */}
       {selectedOrderForCMR && (
