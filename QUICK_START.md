@@ -1,13 +1,14 @@
-# 🚀 Quick Start Guide
+# 🚀 CityJumper Transport App - Quick Start Guide
 
-## Schnellstart in 5 Minuten
+## 🚀 Schnellstart (5 Minuten)
 
-### 1. Setup-Script ausführen (Empfohlen)
-
+### 1. Repository klonen
 ```bash
-./setup.sh
+git clone https://github.com/florianbrach74-stack/cityjumper-transport-app.git
+cd cityjumper-transport-app
 ```
 
+### 2. Backend starten
 Das Script führt automatisch folgende Schritte aus:
 - ✅ Prüft Voraussetzungen (Node.js, PostgreSQL)
 - ✅ Installiert alle Abhängigkeiten
