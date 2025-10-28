@@ -73,12 +73,15 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
   - Adresse, Stadt, PLZ verwalten
   - Passwort ändern mit Bestätigung
   
-- **Auftragnehmer-Verifizierung**
-  - Transportversicherung hochladen (PDF)
-  - Gewerbeanmeldung hochladen (PDF)
-  - Mindestlohn-Erklärung digital unterschreiben
-  - Verifizierungs-Status einsehen
-  - Admin-Freigabe erforderlich für Bewerbungen
+- **Auftragnehmer-Verifizierung** 🔐
+  - **Dokument-Upload**: Transportversicherung + Gewerbeanmeldung (PDF, max. 5 MB)
+  - **Dateigrößen-Validierung**: Automatische Prüfung vor Upload
+  - **Mindestlohn-Erklärung**: Digitale Checkbox mit Zeitstempel
+  - **Admin-Prüfung**: Dokumente werden im Admin-Dashboard angezeigt
+  - **Freigabe-Prozess**: Admin kann freigeben, ablehnen oder zurücksetzen
+  - **Jährliche Kontrolle**: Verifizierung kann zurückgesetzt werden (Account bleibt erhalten)
+  - **Status-Tracking**: Pending → Approved → Rejected
+  - **Bewerbungs-Sperre**: Nur verifizierte Auftragnehmer können sich bewerben
 
 ### 🗺️ Routing & Preisberechnung
 - **OSRM-Integration**
@@ -104,11 +107,14 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
   - Eigene Auftragshistorie
   - Profil & Passwort ändern
 
-- **Auftragnehmer (Contractor)**
-  - **Bewerbungssystem**: Auf Aufträge bewerben mit eigenem Preis
+- **Auftragnehmer (Contractor)** 🚚
+  - **Bewerbungssystem**: Auf Aufträge bewerben mit eigenem Preis (max. 85% des Kundenpreises)
   - **Verifizierung erforderlich**: Dokumente hochladen für Admin-Freigabe
   - **Datenschutz**: Sieht nur PLZ vor Bewerbungs-Akzeptanz
   - **Nach Akzeptanz**: Vollständige Adressen, Kontaktdaten, alle Details
+  - **Abholungs-Workflow**: Button "Paket abholen" → Unterschriften sammeln → Status-Update
+  - **Zustellungs-Workflow**: Button "Zustellung abschließen" → Empfänger-Unterschrift → Auftrag abgeschlossen
+  - **CMR-Dokumente**: Anzeigen und herunterladen
   - Mitarbeiter verwalten & Aufträge zuweisen
   - **Alle Mitarbeiter-Aufträge sehen**
   - PLZ-basierte Benachrichtigungen konfigurieren
@@ -123,29 +129,50 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
   - Unterschriften sammeln
   - Profil & Passwort ändern
 
-- **Administrator**
-  - Alle Aufträge & Benutzer
-  - **Bewerbungen verwalten**: Akzeptieren/Ablehnen
-  - **Verifizierungen prüfen**: Auftragnehmer freigeben
-  - Aufträge zuweisen
-  - System-Verwaltung
-  - Vollständige Übersicht
+- **Administrator** 👨‍💼
+  - **Alle Aufträge & Benutzer**: Vollständige Übersicht
+  - **Bewerbungs-Management**: 
+    - Bewerbungen ansehen mit Preis & Marge
+    - Akzeptieren → CMR wird automatisch erstellt
+    - Ablehnen mit Begründung
+  - **Verifizierungs-Management**:
+    - Tab "Ausstehende Verifizierungen" → Dokumente prüfen
+    - Tab "Alle Auftragnehmer" → Komplette Übersicht
+    - Dokumente als PDF anzeigen (Base64)
+    - Freigeben, Ablehnen oder Zurücksetzen
+    - Passwort zurücksetzen für Benutzer
+  - **Aufträge zuweisen**: An Auftragnehmer oder Mitarbeiter
+  - **System-Verwaltung**: Alle Funktionen
   - Profil & Passwort ändern
 
-### 📄 CMR-Frachtbriefe & Unterschriften
-- **Automatische Erstellung**: Bei Bewerbungs-Akzeptanz durch Admin
-- **PDF-Generierung**: Mit QR-Code für Tracking
-- **Intelligenter Unterschriften-Workflow**:
-  - **Bei Abholung**: Absender & Frachtführer unterschreiben auf Fahrer-Gerät
-  - **Nach Frachtführer-Unterschrift**: Status automatisch auf "Abgeholt" + Email an Kunde
-  - **Bei Zustellung**: Empfänger unterschreibt auf Fahrer-Gerät
-  - **Nach Empfänger-Unterschrift**: Status auf "Abgeschlossen" + Auftrag in Historie
-  - Namen werden automatisch erfasst und im CMR gespeichert
-  - GPS-Standort wird automatisch erfasst
-  - Bemerkungen optional
-- **Kontext-basierte Buttons**: Nur relevante Unterschriften werden angezeigt
-- **Mobile-optimiert**: Touch-Unterschrift auf Smartphone
-- **Download & Email**: Automatischer Versand an alle Beteiligten
+### 📄 CMR-Frachtbriefe & Digitale Unterschriften
+- **Automatische CMR-Erstellung**: Bei Bewerbungs-Akzeptanz durch Admin
+- **PDF-Generierung**: Vollständiges CMR-Dokument mit QR-Code
+- **Intelligenter Abholungs-Workflow**:
+  1. **Button "Paket abholen"** → Modal öffnet sich
+  2. **Absender-Name eingeben** + Unterschrift auf Canvas
+  3. **Frachtführer unterschreibt** (Name automatisch aus Profil)
+  4. **Beide Unterschriften werden gespeichert**
+  5. **Status → "picked_up"** (Abgeholt)
+  6. **CMR-PDF wird neu generiert** mit beiden Unterschriften
+  7. **Email an Kunde**: "Paket abgeholt - unterwegs"
+  
+- **Intelligenter Zustellungs-Workflow**:
+  1. **Button "Zustellung abschließen"** → Modal öffnet sich
+  2. **Empfänger-Name eingeben** + Unterschrift auf Canvas
+  3. **Empfänger-Unterschrift wird gespeichert**
+  4. **Status → "delivered"** (Zugestellt)
+  5. **CMR-PDF wird finalisiert** mit allen 3 Unterschriften
+  6. **Email an Kunde**: "Paket zugestellt" + CMR-PDF im Anhang
+  7. **Auftrag → "Abgeschlossen"** (in Historie verschoben)
+  
+- **Features**:
+  - ✍️ **Touch-optimierte Unterschriften**: Canvas mit react-signature-canvas
+  - 📱 **Mobile-First**: Optimiert für Smartphone-Nutzung
+  - 🔒 **Sichere Speicherung**: Base64-Signaturen in Datenbank
+  - 📧 **Automatische Benachrichtigungen**: Kunde wird bei jedem Schritt informiert
+  - 📄 **Vollständiges CMR**: Alle Unterschriften + Zeitstempel
+  - 🚫 **Validierung**: Keine leeren Unterschriften möglich
 
 ### 🔔 Benachrichtigungen
 - Email-Benachrichtigungen (optional)
