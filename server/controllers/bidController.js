@@ -12,9 +12,12 @@ const createBid = async (req, res) => {
 
     // Check if contractor is verified
     const contractorUser = await User.findById(contractorId);
+    console.log('Contractor verification status:', contractorUser.verification_status);
+    
     if (contractorUser.verification_status !== 'approved') {
       return res.status(403).json({ 
-        error: 'Ihr Account muss erst verifiziert werden, bevor Sie sich auf Aufträge bewerben können' 
+        error: 'Ihr Account muss erst verifiziert werden, bevor Sie sich auf Aufträge bewerben können',
+        verification_status: contractorUser.verification_status
       });
     }
 
