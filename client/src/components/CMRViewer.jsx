@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { cmrAPI } from '../services/cmrApi';
+import { ordersAPI } from '../services/api';
 import SignatureModal from './SignatureModal';
 import { FileText, Download, ExternalLink, CheckCircle, Clock, QrCode, PenTool } from 'lucide-react';
 
 const CMRViewer = ({ orderId, onClose }) => {
   const [cmr, setCmr] = useState(null);
+  const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showSignatureModal, setShowSignatureModal] = useState(null); // 'sender' or 'carrier'
@@ -14,13 +16,17 @@ const CMRViewer = ({ orderId, onClose }) => {
     // Get current user
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setCurrentUser(user);
-    fetchCMR();
+    fetchData();
   }, [orderId]);
 
-  const fetchCMR = async () => {
+  const fetchData = async () => {
     try {
-      const response = await cmrAPI.getCMRByOrderId(orderId);
-      setCmr(response.data.cmr);
+      const [cmrResponse, orderResponse] = await Promise.all([
+        cmrAPI.getCMRByOrderId(orderId),
+        ordersAPI.getOrder(orderId)
+      ]);
+      setCmr(cmrResponse.data.cmr);
+      setOrder(orderResponse.data.order);
     } catch (err) {
       setError('CMR-Dokument nicht gefunden');
     } finally {
@@ -35,7 +41,7 @@ const CMRViewer = ({ orderId, onClose }) => {
         signatureType,
       });
       setShowSignatureModal(null);
-      await fetchCMR(); // Refresh CMR data
+      await fetchData(); // Refresh CMR and order data
       alert('Unterschrift erfolgreich hinzugefügt!');
     } catch (err) {
       console.error('Error adding signature:', err);
@@ -256,52 +262,57 @@ const CMRViewer = ({ orderId, onClose }) => {
               )}
             </div>
 
-            {/* Signature Buttons - All 3 signatures on courier device */}
+            {/* Signature Buttons - Context-aware based on order status */}
             <div className="space-y-3">
-              {/* Sender Signature */}
-              {!cmr.sender_signature && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold text-green-900">1. Absender-Unterschrift</h4>
-                      <p className="text-sm text-green-800">
-                        Bei Abholung: Absender unterschreibt auf Ihrem Gerät
-                      </p>
+              {/* Pickup Phase: Sender & Carrier signatures */}
+              {order && (order.status === 'accepted' || order.status === 'picked_up') && (
+                <>
+                  {/* Sender Signature */}
+                  {!cmr.sender_signature && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-semibold text-green-900">1. Absender-Unterschrift</h4>
+                          <p className="text-sm text-green-800">
+                            Bei Abholung: Absender unterschreibt auf Ihrem Gerät
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setShowSignatureModal('sender')}
+                          className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        >
+                          <PenTool className="h-4 w-4 mr-2" />
+                          Unterschreiben
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => setShowSignatureModal('sender')}
-                      className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
-                      <PenTool className="h-4 w-4 mr-2" />
-                      Unterschreiben
-                    </button>
-                  </div>
-                </div>
+                  )}
+
+                  {/* Carrier Signature */}
+                  {!cmr.carrier_signature && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-semibold text-purple-900">2. Frachtführer-Unterschrift</h4>
+                          <p className="text-sm text-purple-800">
+                            Bei Abholung: Sie unterschreiben als Frachtführer
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setShowSignatureModal('carrier')}
+                          className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        >
+                          <PenTool className="h-4 w-4 mr-2" />
+                          Unterschreiben
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
-              {/* Carrier Signature */}
-              {!cmr.carrier_signature && (
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold text-purple-900">2. Frachtführer-Unterschrift</h4>
-                      <p className="text-sm text-purple-800">
-                        Bei Abholung: Sie unterschreiben als Frachtführer
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setShowSignatureModal('carrier')}
-                      className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                    >
-                      <PenTool className="h-4 w-4 mr-2" />
-                      Unterschreiben
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Consignee Signature */}
-              {!cmr.consignee_signature && (
+              {/* Delivery Phase: Consignee signature only */}
+              {order && order.status === 'delivered' && !cmr.consignee_signature && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div>
