@@ -170,21 +170,32 @@ const Settings = () => {
 
     try {
       const token = localStorage.getItem('token');
+      
+      // Map frontend field names to backend field names
+      const payload = {
+        insuranceDocumentUrl: verificationData.insurance_document,
+        businessLicenseUrl: verificationData.business_license,
+        minimumWageSignature: verificationData.minimum_wage_signature,
+      };
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/verification/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(verificationData),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('Verification submission failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Verification submission failed');
+      }
 
       setMessage({ type: 'success', text: 'Verifizierung erfolgreich eingereicht!' });
       fetchVerificationStatus();
     } catch (error) {
-      setMessage({ type: 'error', text: 'Fehler beim Einreichen der Verifizierung' });
+      setMessage({ type: 'error', text: error.message || 'Fehler beim Einreichen der Verifizierung' });
     } finally {
       setLoading(false);
     }
