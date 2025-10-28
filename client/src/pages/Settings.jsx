@@ -140,12 +140,24 @@ const Settings = () => {
   const handleFileChange = (e, field) => {
     const file = e.target.files[0];
     if (file) {
+      // Check file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        setMessage({ 
+          type: 'error', 
+          text: `Die Datei ist zu groß! Maximale Größe: 5 MB. Ihre Datei: ${(file.size / 1024 / 1024).toFixed(2)} MB` 
+        });
+        e.target.value = ''; // Reset file input
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setVerificationData(prev => ({
           ...prev,
           [field]: reader.result,
         }));
+        setMessage({ type: '', text: '' }); // Clear any previous error
       };
       reader.readAsDataURL(file);
     }
@@ -410,6 +422,12 @@ const Settings = () => {
 
             {(!verificationStatus || verificationStatus.status === 'pending' || verificationStatus.status === 'rejected') && (
               <form onSubmit={handleVerificationSubmit} className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Hinweis:</strong> Maximale Dateigröße pro Dokument: 5 MB
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Transportversicherung (PDF)
@@ -420,6 +438,7 @@ const Settings = () => {
                     onChange={(e) => handleFileChange(e, 'insurance_document')}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Max. 5 MB</p>
                 </div>
 
                 <div>
@@ -432,6 +451,7 @@ const Settings = () => {
                     onChange={(e) => handleFileChange(e, 'business_license')}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Max. 5 MB</p>
                 </div>
 
                 <div className="border-t pt-4">
