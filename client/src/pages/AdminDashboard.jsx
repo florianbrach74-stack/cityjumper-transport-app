@@ -484,7 +484,23 @@ export default function AdminDashboard() {
                           )}
                         </>
                       ) : (
-                        <p className="text-sm text-gray-500">Noch keine Dokumente hochgeladen</p>
+                        <div>
+                          <p className="text-sm text-gray-500 mb-3">Noch keine Dokumente hochgeladen</p>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => approveContractor(user.id)}
+                              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                            >
+                              ✓ Manuell freigeben
+                            </button>
+                            <button
+                              onClick={() => rejectContractor(user.id)}
+                              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
+                            >
+                              ✗ Ablehnen
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </div>
                   ))}
