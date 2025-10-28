@@ -48,6 +48,27 @@ class User {
     const result = await pool.query(query, values);
     return result.rows;
   }
+
+  static async updateProfile(userId, data) {
+    const { first_name, last_name, email, phone, company_name, address, city, postal_code } = data;
+    
+    const query = `
+      UPDATE users
+      SET first_name = $1, last_name = $2, email = $3, phone = $4, 
+          company_name = $5, address = $6, city = $7, postal_code = $8
+      WHERE id = $9
+      RETURNING id, email, role, company_name, first_name, last_name, phone, address, city, postal_code, created_at
+    `;
+    
+    const values = [first_name, last_name, email, phone, company_name, address, city, postal_code, userId];
+    const result = await pool.query(query, values);
+    return result.rows[0];
+  }
+
+  static async updatePassword(userId, hashedPassword) {
+    const query = 'UPDATE users SET password = $1 WHERE id = $2';
+    await pool.query(query, [hashedPassword, userId]);
+  }
 }
 
 module.exports = User;

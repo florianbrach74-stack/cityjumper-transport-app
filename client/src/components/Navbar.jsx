@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User, Package, Home } from 'lucide-react';
+import { LogOut, User, Home, LayoutDashboard, Settings } from 'lucide-react';
 import Logo from './Logo';
 
 const Navbar = () => {
@@ -65,6 +65,14 @@ const Navbar = () => {
                 </div>
               </div>
             </div>
+
+            <Link
+              to="/settings"
+              className="flex items-center space-x-2 bg-gray-50 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Einstellungen</span>
+            </Link>
 
             <button
               onClick={handleLogout}

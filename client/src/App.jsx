@@ -11,6 +11,7 @@ import EmployeeDashboard from './pages/EmployeeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CMRSignature from './pages/CMRSignature';
 import VerificationPage from './pages/VerificationPage';
+import Settings from './pages/Settings';
 
 const DashboardRouter = () => {
   const { user } = useAuth();
@@ -42,6 +43,14 @@ function App() {
           <Route path="/cmr/:cmrNumber/sender" element={<CMRSignature />} />
           <Route path="/cmr/:cmrNumber/carrier" element={<CMRSignature />} />
           <Route path="/cmr/:cmrNumber/consignee" element={<CMRSignature />} />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/verification"
             element={
