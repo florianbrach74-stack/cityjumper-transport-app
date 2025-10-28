@@ -313,7 +313,12 @@ const updateOrderStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('Update order status error:', error);
-    res.status(500).json({ error: 'Server error while updating order status' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Server error while updating order status',
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
