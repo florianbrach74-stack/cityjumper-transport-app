@@ -95,19 +95,21 @@ class CMR {
       case 'sender':
         query = `
           UPDATE cmr_documents
-          SET sender_signature = $1, sender_signed_at = $2, sender_signature_location = $3
-          WHERE id = $4
+          SET sender_signature = $1, sender_signed_at = $2, sender_signature_location = $3, sender_signed_name = $4
+          WHERE id = $5
           RETURNING *
         `;
-        break;
+        const senderResult = await pool.query(query, [signatureData, timestamp, location, consigneeName || '', cmrId]);
+        return senderResult.rows[0];
       case 'carrier':
         query = `
           UPDATE cmr_documents
-          SET carrier_signature = $1, carrier_signed_at = $2, carrier_signature_location = $3, status = 'in_transit'
-          WHERE id = $4
+          SET carrier_signature = $1, carrier_signed_at = $2, carrier_signature_location = $3, carrier_signed_name = $4, status = 'in_transit'
+          WHERE id = $5
           RETURNING *
         `;
-        break;
+        const carrierResult = await pool.query(query, [signatureData, timestamp, location, consigneeName || '', cmrId]);
+        return carrierResult.rows[0];
       case 'consignee':
         // Support both signature and photo (for Briefkasten delivery)
         query = `
@@ -132,9 +134,6 @@ class CMR {
       default:
         throw new Error('Invalid signature type');
     }
-
-    const result = await pool.query(query, [signatureData, timestamp, location, cmrId]);
-    return result.rows[0];
   }
 
   static async updateStatus(cmrId, status) {
