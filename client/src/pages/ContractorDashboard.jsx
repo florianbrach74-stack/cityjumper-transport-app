@@ -80,7 +80,8 @@ const ContractorDashboard = () => {
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Fehler beim Aktualisieren des Status');
+      console.error('Error details:', error.response?.data);
+      alert(`Fehler beim Aktualisieren des Status: ${error.response?.data?.error || error.message}`);
     }
   };
 
