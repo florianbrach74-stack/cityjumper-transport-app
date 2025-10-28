@@ -6,7 +6,9 @@ const {
   getCMRByCMRNumber,
   addSignature,
   addPublicSignature,
-  downloadCMRPdf
+  downloadCMRPdf,
+  confirmPickup,
+  confirmDelivery
 } = require('../controllers/cmrController');
 
 // Get CMR by order ID (requires auth)
@@ -17,6 +19,12 @@ router.get('/number/:cmrNumber', getCMRByCMRNumber);
 
 // Add signature to CMR (requires auth - for sender/carrier)
 router.post('/:cmrId/signature', authenticateToken, addSignature);
+
+// Confirm pickup with signatures (contractor only)
+router.post('/order/:orderId/pickup', authenticateToken, confirmPickup);
+
+// Confirm delivery with signature (contractor only)
+router.post('/order/:orderId/delivery', authenticateToken, confirmDelivery);
 
 // PUBLIC routes for signatures (no auth required)
 router.post('/public/:cmrNumber/signature', addPublicSignature); // Consignee (legacy)
