@@ -474,6 +474,22 @@ const Settings = () => {
                     <input
                       type="checkbox"
                       required
+                      checked={!!verificationData.minimum_wage_signature}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          // Generate a simple signature timestamp
+                          const signature = `Bestätigt am ${new Date().toLocaleString('de-DE')}`;
+                          setVerificationData(prev => ({
+                            ...prev,
+                            minimum_wage_signature: signature
+                          }));
+                        } else {
+                          setVerificationData(prev => ({
+                            ...prev,
+                            minimum_wage_signature: null
+                          }));
+                        }
+                      }}
                       className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
                     <span className="ml-2 text-sm text-gray-700">
