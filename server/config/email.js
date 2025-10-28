@@ -5,15 +5,16 @@ let transporter = null;
 let emailEnabled = false;
 
 // Only create transporter if email config is complete
-if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+const emailPassword = process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
+if (process.env.EMAIL_HOST && process.env.EMAIL_USER && emailPassword) {
   try {
     transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: parseInt(process.env.EMAIL_PORT) || 587,
-      secure: parseInt(process.env.EMAIL_PORT) === 465,
+      secure: process.env.EMAIL_SECURE === 'true' || parseInt(process.env.EMAIL_PORT) === 465,
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
+        pass: emailPassword,
       },
       connectionTimeout: 10000, // 10 seconds
       greetingTimeout: 10000,
