@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User, Home, LayoutDashboard, Settings } from 'lucide-react';
+import { LogOut, User, Home, LayoutDashboard, Settings, Package } from 'lucide-react';
 import Logo from './Logo';
 
 const Navbar = () => {
