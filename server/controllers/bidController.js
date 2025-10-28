@@ -121,6 +121,19 @@ const acceptBid = async (req, res) => {
     const contractor = await User.findById(bid.contractor_id);
     const customer = await User.findById(order.customer_id);
 
+    // Create CMR document automatically
+    const CMR = require('../models/CMR');
+    const CMRPdfGenerator = require('../utils/cmrPdfGenerator');
+    
+    try {
+      const cmr = await CMR.create(order.id);
+      await CMRPdfGenerator.generateCMR(cmr, order);
+      console.log(`✅ CMR document created for order #${order.id}`);
+    } catch (cmrError) {
+      console.error('Error creating CMR:', cmrError);
+      // Don't fail the bid acceptance if CMR creation fails
+    }
+
     // Send email to contractor
     await sendEmail(
       contractor.email,
