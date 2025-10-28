@@ -48,37 +48,41 @@ const createBid = async (req, res) => {
     // Create bid
     const bid = await OrderBid.create(orderId, contractorId, bidAmount, message);
 
-    // Send notification to admin
-    const admins = await User.findByRole('admin');
-    const contractor = await User.findById(contractorId);
-    
-    for (const admin of admins) {
-      await sendEmail(
-        admin.email,
-        '🎯 Neue Bewerbung für Auftrag',
-        `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2563eb;">Neue Bewerbung eingegangen</h2>
-            <p>Hallo ${admin.first_name},</p>
-            <p>Ein Auftragnehmer hat sich für einen Auftrag beworben.</p>
-            
-            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin-top: 0;">Bewerbungs-Details:</h3>
-              <p><strong>Auftrag:</strong> #${order.id}</p>
-              <p><strong>Route:</strong> ${order.pickup_city} → ${order.delivery_city}</p>
-              <p><strong>Auftragnehmer:</strong> ${contractor.company_name || contractor.first_name + ' ' + contractor.last_name}</p>
-              <p><strong>Gebotener Preis:</strong> €${bidAmount}</p>
-              <p><strong>Kundenpreis:</strong> €${order.price}</p>
-              <p><strong>Ihre Marge:</strong> €${(order.price - bidAmount).toFixed(2)}</p>
-              ${message ? `<p><strong>Nachricht:</strong> ${message}</p>` : ''}
+    // Send notification to admin (optional)
+    try {
+      const admins = await User.findByRole('admin');
+      const contractor = await User.findById(contractorId);
+      
+      for (const admin of admins) {
+        await sendEmail(
+          admin.email,
+          '🎯 Neue Bewerbung für Auftrag',
+          `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563eb;">Neue Bewerbung eingegangen</h2>
+              <p>Hallo ${admin.first_name},</p>
+              <p>Ein Auftragnehmer hat sich für einen Auftrag beworben.</p>
+              
+              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Bewerbungs-Details:</h3>
+                <p><strong>Auftrag:</strong> #${order.id}</p>
+                <p><strong>Route:</strong> ${order.pickup_city} → ${order.delivery_city}</p>
+                <p><strong>Auftragnehmer:</strong> ${contractor.company_name || contractor.first_name + ' ' + contractor.last_name}</p>
+                <p><strong>Gebotener Preis:</strong> €${bidAmount}</p>
+                <p><strong>Kundenpreis:</strong> €${order.price}</p>
+                <p><strong>Ihre Marge:</strong> €${(order.price - bidAmount).toFixed(2)}</p>
+                ${message ? `<p><strong>Nachricht:</strong> ${message}</p>` : ''}
+              </div>
+              
+              <p>Bitte prüfen Sie die Bewerbung im Admin-Dashboard.</p>
+              
+              <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper System</p>
             </div>
-            
-            <p>Bitte prüfen Sie die Bewerbung im Admin-Dashboard.</p>
-            
-            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper System</p>
-          </div>
-        `
-      );
+          `
+        );
+      }
+    } catch (emailError) {
+      console.error('⚠️ Email notification failed (non-critical):', emailError.message);
     }
 
     res.status(201).json({
@@ -137,31 +141,35 @@ const acceptBid = async (req, res) => {
       // Don't fail the bid acceptance if CMR creation fails
     }
 
-    // Send email to contractor
-    await sendEmail(
-      contractor.email,
-      '🎉 Auftrag zugewiesen - Ihre Bewerbung wurde akzeptiert',
-      `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #16a34a;">Glückwunsch! Auftrag zugewiesen</h2>
-          <p>Hallo ${contractor.first_name} ${contractor.last_name},</p>
-          <p>Ihre Bewerbung wurde akzeptiert. Der Auftrag wurde Ihnen zugewiesen.</p>
-          
-          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="margin-top: 0;">Auftrags-Details:</h3>
-            <p><strong>Auftrag:</strong> #${order.id}</p>
-            <p><strong>Abholung:</strong> ${order.pickup_address}, ${order.pickup_city}</p>
-            <p><strong>Zustellung:</strong> ${order.delivery_address}, ${order.delivery_city}</p>
-            <p><strong>Datum:</strong> ${new Date(order.pickup_date).toLocaleDateString('de-DE')}</p>
-            <p><strong>Ihr Preis:</strong> €${bid.bid_amount}</p>
+    // Send email to contractor (optional)
+    try {
+      await sendEmail(
+        contractor.email,
+        '🎉 Auftrag zugewiesen - Ihre Bewerbung wurde akzeptiert',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #16a34a;">Glückwunsch! Auftrag zugewiesen</h2>
+            <p>Hallo ${contractor.first_name} ${contractor.last_name},</p>
+            <p>Ihre Bewerbung wurde akzeptiert. Der Auftrag wurde Ihnen zugewiesen.</p>
+            
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0;">Auftrags-Details:</h3>
+              <p><strong>Auftrag:</strong> #${order.id}</p>
+              <p><strong>Abholung:</strong> ${order.pickup_address}, ${order.pickup_city}</p>
+              <p><strong>Zustellung:</strong> ${order.delivery_address}, ${order.delivery_city}</p>
+              <p><strong>Datum:</strong> ${new Date(order.pickup_date).toLocaleDateString('de-DE')}</p>
+              <p><strong>Ihr Preis:</strong> €${bid.bid_amount}</p>
+            </div>
+            
+            <p>Sie können den Auftrag jetzt in Ihrem Dashboard sehen.</p>
+            
+            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
           </div>
-          
-          <p>Sie können den Auftrag jetzt in Ihrem Dashboard sehen.</p>
-          
-          <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
-        </div>
-      `
-    );
+        `
+      );
+    } catch (emailError) {
+      console.error('⚠️ Email notification failed (non-critical):', emailError.message);
+    }
 
     res.json({
       message: 'Bid accepted successfully',
