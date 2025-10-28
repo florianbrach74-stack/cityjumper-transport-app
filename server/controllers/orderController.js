@@ -237,10 +237,11 @@ const updateOrderStatus = async (req, res) => {
     }
 
     // Check authorization
-    if (
-      req.user.role === 'customer' && order.customer_id !== req.user.id ||
-      req.user.role === 'contractor' && order.contractor_id !== req.user.id
-    ) {
+    if (req.user.role === 'customer' && order.customer_id !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    if (req.user.role === 'contractor' && order.contractor_id !== req.user.id) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
