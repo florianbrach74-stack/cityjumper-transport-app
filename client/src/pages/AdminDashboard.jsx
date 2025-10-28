@@ -117,11 +117,12 @@ export default function AdminDashboard() {
     
     try {
       await verificationAPI.approveContractor(userId, notes);
-      await loadData();
       alert('Auftragnehmer erfolgreich freigegeben!');
+      // Reload data after alert
+      await loadData();
     } catch (error) {
       console.error('Error approving contractor:', error);
-      alert('Fehler beim Freigeben');
+      alert('Fehler beim Freigeben: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -131,11 +132,12 @@ export default function AdminDashboard() {
     
     try {
       await verificationAPI.rejectContractor(userId, reason);
-      await loadData();
       alert('Auftragnehmer abgelehnt.');
+      // Reload data after alert
+      await loadData();
     } catch (error) {
       console.error('Error rejecting contractor:', error);
-      alert('Fehler beim Ablehnen');
+      alert('Fehler beim Ablehnen: ' + (error.response?.data?.error || error.message));
     }
   };
 
