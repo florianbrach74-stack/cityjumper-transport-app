@@ -241,17 +241,6 @@ const ContractorDashboard = () => {
         {/* Status Buttons and CMR for accepted orders */}
         {!showAcceptButton && (
           <div className="mt-4 space-y-2">
-            {/* Status: Accepted - Show "Abgeholt" button */}
-            {order.status === 'accepted' && (
-              <button
-                onClick={() => handleStatusChange(order.id, 'picked_up')}
-                className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
-              >
-                <CheckCircle className="h-5 w-5 mr-2" />
-                Als abgeholt markieren
-              </button>
-            )}
-
             {/* Status: Picked Up - Show "Zugestellt" button */}
             {order.status === 'picked_up' && (
               <button

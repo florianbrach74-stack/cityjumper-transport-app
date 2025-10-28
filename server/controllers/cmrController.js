@@ -158,6 +158,42 @@ const addSignature = async (req, res) => {
     // Regenerate PDF with signature
     const { filepath } = await CMRPdfGenerator.generateCMR(updatedCMR, order);
 
+    // Handle carrier signature - update order status to picked_up
+    if (signatureType === 'carrier') {
+      const customer = await User.findById(order.customer_id);
+      const contractor = await User.findById(order.contractor_id);
+
+      // Update order status to picked_up
+      await Order.updateStatus(order.id, 'picked_up');
+
+      // Email to customer
+      await sendEmail(
+        customer.email,
+        '📦 Sendung abgeholt - Transport gestartet',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #0ea5e9;">Sendung wurde abgeholt</h2>
+            <p>Hallo ${customer.first_name} ${customer.last_name},</p>
+            <p>Ihr Transportauftrag wurde erfolgreich abgeholt und ist nun unterwegs.</p>
+            
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0;">Auftrags-Details:</h3>
+              <p><strong>Auftrag:</strong> #${order.id}</p>
+              <p><strong>Abgeholt am:</strong> ${new Date().toLocaleString('de-DE')}</p>
+              <p><strong>Abholung:</strong> ${order.pickup_address}, ${order.pickup_city}</p>
+              <p><strong>Ziel:</strong> ${order.delivery_address}, ${order.delivery_city}</p>
+              <p><strong>Fahrer:</strong> ${contractor.company_name || contractor.first_name + ' ' + contractor.last_name}</p>
+            </div>
+            
+            <p>Das CMR-Dokument wurde vom Absender und Frachtführer unterschrieben.</p>
+            <p>Sie werden benachrichtigt, sobald die Sendung zugestellt wurde.</p>
+            
+            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+          </div>
+        `
+      );
+    }
+
     // Send notification emails
     if (signatureType === 'consignee') {
       const customer = await User.findById(order.customer_id);
