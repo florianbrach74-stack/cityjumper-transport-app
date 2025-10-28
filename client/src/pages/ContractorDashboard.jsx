@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ordersAPI, bidsAPI, verificationAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import CMRViewer from '../components/CMRViewer';
+import CMRSignature from '../components/CMRSignature';
 import BidModal from '../components/BidModal';
 import EmployeeManagement from '../components/EmployeeManagement';
 import NotificationSettings from '../components/NotificationSettings';
@@ -17,6 +18,8 @@ const ContractorDashboard = () => {
   const [activeTab, setActiveTab] = useState('available');
   const [selectedOrderForBid, setSelectedOrderForBid] = useState(null);
   const [selectedOrderForCMR, setSelectedOrderForCMR] = useState(null);
+  const [selectedOrderForPickup, setSelectedOrderForPickup] = useState(null);
+  const [selectedOrderForDelivery, setSelectedOrderForDelivery] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState(null);
 
   const fetchOrders = async () => {
@@ -55,6 +58,52 @@ const ContractorDashboard = () => {
     fetchOrders();
     alert('Bewerbung erfolgreich eingereicht! Sie werden benachrichtigt wenn Ihre Bewerbung akzeptiert wird.');
     setActiveTab('my-bids');
+  };
+
+  const handlePickupComplete = async (data) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/cmr/order/${selectedOrderForPickup.id}/pickup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error('Pickup confirmation failed');
+
+      alert('Abholung erfolgreich bestätigt! Der Kunde wurde benachrichtigt.');
+      setSelectedOrderForPickup(null);
+      fetchOrders();
+    } catch (error) {
+      console.error('Error confirming pickup:', error);
+      throw error;
+    }
+  };
+
+  const handleDeliveryComplete = async (data) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/cmr/order/${selectedOrderForDelivery.id}/delivery`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error('Delivery confirmation failed');
+
+      alert('Zustellung erfolgreich bestätigt! Der Kunde wurde benachrichtigt und das CMR-Dokument wurde versendet.');
+      setSelectedOrderForDelivery(null);
+      fetchOrders();
+    } catch (error) {
+      console.error('Error confirming delivery:', error);
+      throw error;
+    }
   };
 
   const handleStatusChange = async (orderId, newStatus) => {
@@ -241,10 +290,21 @@ const ContractorDashboard = () => {
         {/* Status Buttons and CMR for accepted orders */}
         {!showAcceptButton && (
           <div className="mt-4 space-y-2">
-            {/* Status: Picked Up - Show "Zugestellt" button */}
+            {/* Status: Accepted - Show "Paket abholen" button */}
+            {order.status === 'accepted' && (
+              <button
+                onClick={() => setSelectedOrderForPickup(order)}
+                className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+              >
+                <Package className="h-5 w-5 mr-2" />
+                Paket abholen
+              </button>
+            )}
+
+            {/* Status: Picked Up - Show "Zustellung" button */}
             {order.status === 'picked_up' && (
               <button
-                onClick={() => handleStatusChange(order.id, 'delivered')}
+                onClick={() => setSelectedOrderForDelivery(order)}
                 className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
               >
                 <Truck className="h-5 w-5 mr-2" />
@@ -252,14 +312,16 @@ const ContractorDashboard = () => {
               </button>
             )}
 
-            {/* CMR Button - always visible for accepted orders */}
-            <button
-              onClick={() => setSelectedOrderForCMR(order.id)}
-              className="w-full flex justify-center items-center px-4 py-2 border border-primary-600 rounded-lg text-sm font-medium text-primary-600 hover:bg-primary-50"
-            >
-              <FileText className="h-5 w-5 mr-2" />
-              CMR anzeigen
-            </button>
+            {/* CMR Button - visible after pickup */}
+            {(order.status === 'picked_up' || order.status === 'delivered') && (
+              <button
+                onClick={() => setSelectedOrderForCMR(order.id)}
+                className="w-full flex justify-center items-center px-4 py-2 border border-primary-600 rounded-lg text-sm font-medium text-primary-600 hover:bg-primary-50"
+              >
+                <FileText className="h-5 w-5 mr-2" />
+                CMR anzeigen
+              </button>
+            )}
           </div>
         )}
 
@@ -546,6 +608,26 @@ const ContractorDashboard = () => {
         <CMRViewer
           orderId={selectedOrderForCMR}
           onClose={() => setSelectedOrderForCMR(null)}
+        />
+      )}
+
+      {/* Pickup Signature Modal */}
+      {selectedOrderForPickup && (
+        <CMRSignature
+          order={selectedOrderForPickup}
+          mode="pickup"
+          onClose={() => setSelectedOrderForPickup(null)}
+          onComplete={handlePickupComplete}
+        />
+      )}
+
+      {/* Delivery Signature Modal */}
+      {selectedOrderForDelivery && (
+        <CMRSignature
+          order={selectedOrderForDelivery}
+          mode="delivery"
+          onClose={() => setSelectedOrderForDelivery(null)}
+          onComplete={handleDeliveryComplete}
         />
       )}
     </div>

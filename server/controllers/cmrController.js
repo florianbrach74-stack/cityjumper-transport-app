@@ -455,6 +455,176 @@ const downloadCMRPdf = async (req, res) => {
   }
 };
 
+// Confirm pickup with sender and carrier signatures
+const confirmPickup = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { senderName, senderSignature, carrierSignature } = req.body;
+    const contractorId = req.user.id;
+
+    // Verify order belongs to this contractor
+    const order = await Order.findById(orderId);
+    if (!order || order.contractor_id !== contractorId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Get or create CMR
+    let cmr = await CMR.findByOrderId(orderId);
+    if (!cmr) {
+      cmr = await CMR.create(orderId);
+    }
+
+    // Get contractor details
+    const contractor = await User.findById(contractorId);
+
+    // Update CMR with signatures
+    const pool = require('../config/database');
+    await pool.query(
+      `UPDATE cmr 
+       SET sender_name = $1,
+           sender_signature = $2,
+           sender_signed_at = CURRENT_TIMESTAMP,
+           carrier_name = $3,
+           carrier_signature = $4,
+           carrier_signed_at = CURRENT_TIMESTAMP
+       WHERE id = $5`,
+      [
+        senderName,
+        senderSignature,
+        contractor.company_name || `${contractor.first_name} ${contractor.last_name}`,
+        carrierSignature,
+        cmr.id
+      ]
+    );
+
+    // Update order status to picked_up
+    await Order.updateStatus(orderId, 'picked_up');
+
+    // Regenerate CMR PDF with signatures
+    const updatedCmr = await CMR.findByOrderId(orderId);
+    await CMRPdfGenerator.generateCMR(updatedCmr, order);
+
+    // Send email to customer
+    try {
+      const customer = await User.findById(order.customer_id);
+      await sendEmail(
+        customer.email,
+        '📦 Paket abgeholt - Auftrag in Bearbeitung',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Paket erfolgreich abgeholt</h2>
+            <p>Hallo ${customer.first_name} ${customer.last_name},</p>
+            <p>Ihr Paket wurde vom Frachtführer abgeholt und ist nun unterwegs.</p>
+            
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0;">Auftrags-Details:</h3>
+              <p><strong>Auftrag:</strong> #${order.id}</p>
+              <p><strong>Abholung:</strong> ${order.pickup_address}, ${order.pickup_city}</p>
+              <p><strong>Zustellung:</strong> ${order.delivery_address}, ${order.delivery_city}</p>
+              <p><strong>Frachtführer:</strong> ${contractor.company_name || contractor.first_name + ' ' + contractor.last_name}</p>
+            </div>
+            
+            <p>Sie werden benachrichtigt, sobald das Paket zugestellt wurde.</p>
+            
+            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+          </div>
+        `
+      );
+    } catch (emailError) {
+      console.error('⚠️ Email notification failed (non-critical):', emailError.message);
+    }
+
+    res.json({
+      message: 'Pickup confirmed successfully',
+      cmr: updatedCmr,
+      order: { ...order, status: 'picked_up' }
+    });
+  } catch (error) {
+    console.error('❌ Confirm pickup error:', error);
+    res.status(500).json({ error: 'Server error while confirming pickup' });
+  }
+};
+
+// Confirm delivery with receiver signature
+const confirmDelivery = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { receiverName, receiverSignature } = req.body;
+    const contractorId = req.user.id;
+
+    // Verify order belongs to this contractor
+    const order = await Order.findById(orderId);
+    if (!order || order.contractor_id !== contractorId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Get CMR
+    const cmr = await CMR.findByOrderId(orderId);
+    if (!cmr) {
+      return res.status(404).json({ error: 'CMR not found' });
+    }
+
+    // Update CMR with receiver signature
+    const pool = require('../config/database');
+    await pool.query(
+      `UPDATE cmr 
+       SET consignee_name = $1,
+           consignee_signature = $2,
+           consignee_signed_at = CURRENT_TIMESTAMP
+       WHERE id = $3`,
+      [receiverName, receiverSignature, cmr.id]
+    );
+
+    // Update order status to delivered
+    await Order.updateStatus(orderId, 'delivered');
+
+    // Regenerate CMR PDF with all signatures
+    const updatedCmr = await CMR.findByOrderId(orderId);
+    await CMRPdfGenerator.generateCMR(updatedCmr, order);
+
+    // Send email to customer with CMR
+    try {
+      const customer = await User.findById(order.customer_id);
+      const contractor = await User.findById(contractorId);
+      
+      await sendEmail(
+        customer.email,
+        '✅ Paket zugestellt - Auftrag abgeschlossen',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #16a34a;">Paket erfolgreich zugestellt</h2>
+            <p>Hallo ${customer.first_name} ${customer.last_name},</p>
+            <p>Ihr Paket wurde erfolgreich zugestellt und vom Empfänger entgegengenommen.</p>
+            
+            <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #16a34a;">
+              <h3 style="margin-top: 0;">Auftrags-Details:</h3>
+              <p><strong>Auftrag:</strong> #${order.id}</p>
+              <p><strong>Zustellung:</strong> ${order.delivery_address}, ${order.delivery_city}</p>
+              <p><strong>Empfänger:</strong> ${receiverName}</p>
+              <p><strong>Zugestellt am:</strong> ${new Date().toLocaleString('de-DE')}</p>
+            </div>
+            
+            <p>Das vollständige CMR-Dokument mit allen Unterschriften finden Sie im Anhang oder in Ihrem Dashboard.</p>
+            
+            <p style="margin-top: 30px;">Vielen Dank für Ihr Vertrauen!<br>Ihr CityJumper Team</p>
+          </div>
+        `
+      );
+    } catch (emailError) {
+      console.error('⚠️ Email notification failed (non-critical):', emailError.message);
+    }
+
+    res.json({
+      message: 'Delivery confirmed successfully',
+      cmr: updatedCmr,
+      order: { ...order, status: 'delivered' }
+    });
+  } catch (error) {
+    console.error('❌ Confirm delivery error:', error);
+    res.status(500).json({ error: 'Server error while confirming delivery' });
+  }
+};
+
 module.exports = {
   createCMRForOrder,
   getCMRByOrderId,
@@ -463,4 +633,6 @@ module.exports = {
   addPublicSignature,
   getMyCMRs,
   downloadCMRPdf,
+  confirmPickup,
+  confirmDelivery,
 };
