@@ -134,7 +134,11 @@ router.delete('/orders/:id', adminAuth, async (req, res) => {
 router.get('/users', adminAuth, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, email, role, company_name, first_name, last_name, phone, created_at
+      SELECT 
+        id, email, role, company_name, first_name, last_name, phone, created_at,
+        verification_status, verified_by, verified_at, verification_notes,
+        insurance_document_url, business_license_url,
+        minimum_wage_declaration_signed, minimum_wage_signed_at
       FROM users
       ORDER BY created_at DESC
     `);
