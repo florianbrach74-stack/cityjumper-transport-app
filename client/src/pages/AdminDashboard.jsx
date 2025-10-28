@@ -559,25 +559,27 @@ export default function AdminDashboard() {
                           <div className="grid grid-cols-2 gap-4 mb-3">
                             <div>
                               <p className="text-xs text-gray-500 mb-1">Transportversicherung</p>
-                              <a
-                                href={user.insurance_document_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-blue-600 hover:text-blue-700 underline"
+                              <button
+                                onClick={() => {
+                                  const win = window.open();
+                                  win.document.write(`<iframe src="${user.insurance_document_url}" width="100%" height="100%" style="border:none;"></iframe>`);
+                                }}
+                                className="text-sm text-blue-600 hover:text-blue-700 underline cursor-pointer"
                               >
                                 Dokument ansehen
-                              </a>
+                              </button>
                             </div>
                             <div>
                               <p className="text-xs text-gray-500 mb-1">Gewerbeanmeldung</p>
-                              <a
-                                href={user.business_license_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-blue-600 hover:text-blue-700 underline"
+                              <button
+                                onClick={() => {
+                                  const win = window.open();
+                                  win.document.write(`<iframe src="${user.business_license_url}" width="100%" height="100%" style="border:none;"></iframe>`);
+                                }}
+                                className="text-sm text-blue-600 hover:text-blue-700 underline cursor-pointer"
                               >
                                 Dokument ansehen
-                              </a>
+                              </button>
                             </div>
                           </div>
 
