@@ -152,6 +152,16 @@ export default function AdminDashboard() {
     }
   };
 
+  const resetPassword = async (userId, newPassword) => {
+    try {
+      await api.patch(`/admin/users/${userId}/reset-password`, { newPassword });
+      alert('Passwort erfolgreich zurückgesetzt!');
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      alert('Fehler beim Zurücksetzen des Passworts: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
   const updateUserRole = async (userId, newRole) => {
     try {
       await api.patch(`/admin/users/${userId}/role`, { role: newRole });
@@ -259,6 +269,16 @@ export default function AdminDashboard() {
               Benutzer ({users.length})
             </button>
             <button
+              onClick={() => setActiveTab('contractors')}
+              className={`${
+                activeTab === 'contractors'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Alle Auftragnehmer ({users.filter(u => u.role === 'contractor').length})
+            </button>
+            <button
               onClick={() => setActiveTab('verifications')}
               className={`${
                 activeTab === 'verifications'
@@ -266,17 +286,7 @@ export default function AdminDashboard() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
-              Verifizierungen ({users.filter(u => u.role === 'contractor' && u.verification_status === 'pending').length})
-            </button>
-            <button
-              onClick={() => setActiveTab('verified')}
-              className={`${
-                activeTab === 'verified'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-            >
-              Verifizierte Auftragnehmer ({users.filter(u => u.role === 'contractor' && u.verification_status === 'approved').length})
+              Ausstehende Verifizierungen ({users.filter(u => u.role === 'contractor' && u.verification_status === 'pending').length})
             </button>
           </nav>
         </div>
@@ -417,11 +427,111 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* All Contractors Tab */}
+        {activeTab === 'contractors' && (
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold mb-4">Alle Auftragnehmer</h2>
+              {users.filter(u => u.role === 'contractor').length === 0 ? (
+                <p className="text-gray-500 text-center py-8">Keine Auftragnehmer</p>
+              ) : (
+                <div className="space-y-4">
+                  {users.filter(u => u.role === 'contractor').map((user) => (
+                    <div key={user.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 text-lg">
+                            {user.company_name || `${user.first_name} ${user.last_name}`}
+                          </h3>
+                          <p className="text-sm text-gray-600">{user.email}</p>
+                          {user.phone && <p className="text-sm text-gray-600">{user.phone}</p>}
+                          <p className="text-xs text-gray-500 mt-1">
+                            Registriert: {new Date(user.created_at).toLocaleDateString('de-DE')}
+                          </p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          user.verification_status === 'approved' ? 'bg-green-100 text-green-800' :
+                          user.verification_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          user.verification_status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {user.verification_status === 'approved' ? '✓ Verifiziert' :
+                           user.verification_status === 'pending' ? '⏳ Ausstehend' :
+                           user.verification_status === 'rejected' ? '✗ Abgelehnt' : '○ Nicht eingereicht'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                        {user.verified_at && (
+                          <div>
+                            <p className="text-xs text-gray-500">Verifiziert am</p>
+                            <p className="font-medium">{new Date(user.verified_at).toLocaleDateString('de-DE')}</p>
+                          </div>
+                        )}
+                        {user.verification_notes && (
+                          <div>
+                            <p className="text-xs text-gray-500">Notizen</p>
+                            <p className="font-medium">{user.verification_notes}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        {user.verification_status !== 'approved' && (
+                          <button
+                            onClick={() => approveContractor(user.id)}
+                            className="px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                          >
+                            ✓ Freigeben
+                          </button>
+                        )}
+                        {user.verification_status === 'approved' && (
+                          <button
+                            onClick={() => resetVerification(user.id)}
+                            className="px-3 py-1.5 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
+                          >
+                            🔄 Zurücksetzen
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            const newPassword = prompt('Neues Passwort für ' + user.email + ':');
+                            if (newPassword) {
+                              resetPassword(user.id, newPassword);
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                        >
+                          🔑 Passwort zurücksetzen
+                        </button>
+                        <button
+                          onClick={() => window.open(`/admin/contractor/${user.id}/orders`, '_blank')}
+                          className="px-3 py-1.5 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
+                        >
+                          📦 Aufträge ansehen
+                        </button>
+                        {user.verification_status !== 'rejected' && (
+                          <button
+                            onClick={() => rejectContractor(user.id)}
+                            className="px-3 py-1.5 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                          >
+                            ✗ Ablehnen
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'verifications' && (
           <div className="bg-white shadow rounded-lg overflow-hidden">
             <div className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Auftragnehmer-Verifizierungen</h2>
-              {users.filter(u => u.role === 'contractor' && u.verification_status !== 'approved').length === 0 ? (
+              <h2 className="text-lg font-semibold mb-4">Ausstehende Verifizierungen</h2>
+              {users.filter(u => u.role === 'contractor' && u.verification_status === 'pending').length === 0 ? (
                 <p className="text-gray-500 text-center py-8">Keine ausstehenden Verifizierungen</p>
               ) : (
                 <div className="space-y-4">
@@ -533,68 +643,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Verified Contractors Tab */}
-        {activeTab === 'verified' && (
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Verifizierte Auftragnehmer</h2>
-              {users.filter(u => u.role === 'contractor' && u.verification_status === 'approved').length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Keine verifizierten Auftragnehmer</p>
-              ) : (
-                <div className="space-y-4">
-                  {users.filter(u => u.role === 'contractor' && u.verification_status === 'approved').map((user) => (
-                    <div key={user.id} className="border rounded-lg p-4 bg-green-50 border-green-200">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {user.company_name || `${user.first_name} ${user.last_name}`}
-                          </h3>
-                          <p className="text-sm text-gray-600">{user.email}</p>
-                          {user.phone && <p className="text-sm text-gray-600">{user.phone}</p>}
-                        </div>
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          ✓ Verifiziert
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
-                        <div>
-                          <p className="text-xs text-gray-500">Verifiziert am</p>
-                          <p className="font-medium">{new Date(user.verified_at).toLocaleDateString('de-DE')}</p>
-                        </div>
-                        {user.verification_notes && (
-                          <div>
-                            <p className="text-xs text-gray-500">Notizen</p>
-                            <p className="font-medium">{user.verification_notes}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex space-x-2 mt-4">
-                        <button
-                          onClick={() => {
-                            if (confirm('Möchten Sie die Verifizierung dieses Auftragnehmers zurücksetzen? Der Account bleibt erhalten, aber der Auftragnehmer kann sich nicht mehr auf Aufträge bewerben bis zur erneuten Freigabe.')) {
-                              resetVerification(user.id);
-                            }
-                          }}
-                          className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm font-medium"
-                        >
-                          🔄 Verifizierung zurücksetzen
-                        </button>
-                        <button
-                          onClick={() => rejectContractor(user.id)}
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
-                        >
-                          ✗ Verifizierung entziehen
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Bids Modal */}
