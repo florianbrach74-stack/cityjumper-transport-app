@@ -127,10 +127,10 @@ class Order {
   static async updateStatus(orderId, status) {
     const query = `
       UPDATE transport_orders
-      SET status = $1, 
-          picked_up_at = CASE WHEN $1 = 'picked_up' THEN CURRENT_TIMESTAMP ELSE picked_up_at END,
-          delivered_at = CASE WHEN $1 = 'delivered' THEN CURRENT_TIMESTAMP ELSE delivered_at END,
-          completed_at = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP ELSE completed_at END
+      SET status = $1::varchar, 
+          picked_up_at = CASE WHEN $1::varchar = 'picked_up' THEN CURRENT_TIMESTAMP ELSE picked_up_at END,
+          delivered_at = CASE WHEN $1::varchar = 'delivered' THEN CURRENT_TIMESTAMP ELSE delivered_at END,
+          completed_at = CASE WHEN $1::varchar = 'completed' THEN CURRENT_TIMESTAMP ELSE completed_at END
       WHERE id = $2
       RETURNING *
     `;
