@@ -130,14 +130,14 @@ const acceptBid = async (req, res) => {
 
     // Create CMR document automatically
     const CMR = require('../models/CMR');
-    const CMRPdfGenerator = require('../utils/cmrPdfGenerator');
+    const CMRPdfGenerator = require('../services/cmrPdfGenerator');
     
     try {
       const cmr = await CMR.create(order.id);
       await CMRPdfGenerator.generateCMR(cmr, order);
       console.log(`✅ CMR document created for order #${order.id}`);
     } catch (cmrError) {
-      console.error('Error creating CMR:', cmrError);
+      console.error('⚠️ Error creating CMR (non-critical):', cmrError.message);
       // Don't fail the bid acceptance if CMR creation fails
     }
 

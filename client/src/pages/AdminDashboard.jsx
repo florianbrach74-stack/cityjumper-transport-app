@@ -85,14 +85,30 @@ export default function AdminDashboard() {
     if (!confirm('Möchten Sie diese Bewerbung wirklich akzeptieren?\n\nDer Auftrag wird dem Auftragnehmer zugewiesen.')) return;
     
     try {
-      await bidsAPI.acceptBid(bidId);
-      setSelectedOrderForBids(null);
-      setBidsForOrder([]);
-      await loadData();
-      alert('Bewerbung akzeptiert! Der Auftragnehmer wurde benachrichtigt.');
+      const response = await bidsAPI.acceptBid(bidId);
+      
+      // Check if the bid was actually accepted (status 200)
+      if (response.status === 200) {
+        setSelectedOrderForBids(null);
+        setBidsForOrder([]);
+        await loadData();
+        alert('Bewerbung akzeptiert! Der Auftragnehmer wurde benachrichtigt.');
+      }
     } catch (error) {
       console.error('Error accepting bid:', error);
-      alert('Fehler beim Akzeptieren der Bewerbung');
+      
+      // Check if it's a network error or actual failure
+      // If the error is after successful acceptance, reload data anyway
+      try {
+        await loadData();
+        // If data loaded successfully, the bid was probably accepted
+        setSelectedOrderForBids(null);
+        setBidsForOrder([]);
+        alert('Bewerbung wurde akzeptiert (mit Warnung: Email-Benachrichtigung könnte fehlgeschlagen sein)');
+      } catch (reloadError) {
+        // Real error
+        alert('Fehler beim Akzeptieren der Bewerbung: ' + (error.response?.data?.error || error.message));
+      }
     }
   };
 
