@@ -177,6 +177,36 @@ router.patch('/users/:id/role', adminAuth, async (req, res) => {
   }
 });
 
+// Reset contractor verification (admin only)
+router.patch('/users/:id/reset-verification', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(
+      `UPDATE users 
+       SET verification_status = NULL,
+           verified_by = NULL,
+           verified_at = NULL,
+           verification_notes = 'Verifizierung zurückgesetzt - erneute Prüfung erforderlich'
+       WHERE id = $1 AND role = 'contractor'
+       RETURNING id, email, company_name, first_name, last_name, verification_status`,
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Contractor not found' });
+    }
+    
+    res.json({ 
+      message: 'Verifizierung zurückgesetzt',
+      user: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Reset verification error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get statistics (admin only)
 router.get('/stats', adminAuth, async (req, res) => {
   try {
