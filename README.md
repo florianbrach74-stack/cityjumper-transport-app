@@ -66,6 +66,20 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
   - Preiskalkulator mit Echtzeit-Berechnung
   - Login/Logout-Buttons
 
+### ⚙️ Settings & Profil-Verwaltung
+- **Profil-Einstellungen**
+  - Vorname, Nachname, Email, Telefon bearbeiten
+  - Firmenname (für Auftragnehmer)
+  - Adresse, Stadt, PLZ verwalten
+  - Passwort ändern mit Bestätigung
+  
+- **Auftragnehmer-Verifizierung**
+  - Transportversicherung hochladen (PDF)
+  - Gewerbeanmeldung hochladen (PDF)
+  - Mindestlohn-Erklärung digital unterschreiben
+  - Verifizierungs-Status einsehen
+  - Admin-Freigabe erforderlich für Bewerbungen
+
 ### 🗺️ Routing & Preisberechnung
 - **OSRM-Integration**
   - Echte Straßenrouten (kein Luftlinie!)
@@ -88,15 +102,18 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
   - Preisberechnung
   - CMR-Dokumente einsehen
   - Eigene Auftragshistorie
+  - Profil & Passwort ändern
 
 - **Auftragnehmer (Contractor)**
-  - **Datenschutz**: Sieht nur PLZ vor Auftragsannahme (nicht vollständige Adresse)
-  - **Nach Annahme**: Vollständige Adressen, Kontaktdaten, alle Details
-  - Aufträge annehmen & verwalten
-  - Mitarbeiter verwalten
+  - **Bewerbungssystem**: Auf Aufträge bewerben mit eigenem Preis
+  - **Verifizierung erforderlich**: Dokumente hochladen für Admin-Freigabe
+  - **Datenschutz**: Sieht nur PLZ vor Bewerbungs-Akzeptanz
+  - **Nach Akzeptanz**: Vollständige Adressen, Kontaktdaten, alle Details
+  - Mitarbeiter verwalten & Aufträge zuweisen
   - **Alle Mitarbeiter-Aufträge sehen**
   - PLZ-basierte Benachrichtigungen konfigurieren
   - Vollständige Preise sichtbar
+  - Profil & Passwort ändern
 
 - **Mitarbeiter (Employee)**
   - Nur eigene zugewiesene Aufträge sehen
@@ -104,21 +121,29 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
   - CMR-Dokumente einsehen
   - Eigenes Dashboard
   - Unterschriften sammeln
+  - Profil & Passwort ändern
 
 - **Administrator**
   - Alle Aufträge & Benutzer
+  - **Bewerbungen verwalten**: Akzeptieren/Ablehnen
+  - **Verifizierungen prüfen**: Auftragnehmer freigeben
   - Aufträge zuweisen
   - System-Verwaltung
   - Vollständige Übersicht
+  - Profil & Passwort ändern
 
-### 📄 CMR-Frachtbriefe
-- **Automatische Erstellung**: Bei Auftragsannahme
+### 📄 CMR-Frachtbriefe & Unterschriften
+- **Automatische Erstellung**: Bei Bewerbungs-Akzeptanz durch Admin
 - **PDF-Generierung**: Mit QR-Code für Tracking
-- **Digitale Unterschriften**: 
-  - Fahrer trägt Empfänger-Name ein
-  - Empfänger unterschreibt auf Handy (kein Login nötig)
+- **Intelligenter Unterschriften-Workflow**:
+  - **Bei Abholung**: Absender & Frachtführer unterschreiben auf Fahrer-Gerät
+  - **Nach Frachtführer-Unterschrift**: Status automatisch auf "Abgeholt" + Email an Kunde
+  - **Bei Zustellung**: Empfänger unterschreibt auf Fahrer-Gerät
+  - **Nach Empfänger-Unterschrift**: Status auf "Abgeschlossen" + Auftrag in Historie
+  - Namen werden automatisch erfasst und im CMR gespeichert
   - GPS-Standort wird automatisch erfasst
   - Bemerkungen optional
+- **Kontext-basierte Buttons**: Nur relevante Unterschriften werden angezeigt
 - **Mobile-optimiert**: Touch-Unterschrift auf Smartphone
 - **Download & Email**: Automatischer Versand an alle Beteiligten
 
