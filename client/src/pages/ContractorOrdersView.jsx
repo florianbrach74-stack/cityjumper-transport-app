@@ -62,16 +62,21 @@ export default function ContractorOrdersView() {
     try {
       const response = await api.get(`/cmr/order/${orderId}`);
       if (response.data.cmr) {
-        // Use the production backend URL
+        // Use the production backend URL and CMR number (not ID!)
         const baseURL = 'https://cityjumper-api-production-01e4.up.railway.app';
+        const cmrNumber = response.data.cmr.cmr_number;
         // Open CMR PDF in new tab
-        window.open(`${baseURL}/api/cmr/${response.data.cmr.id}/pdf`, '_blank');
+        window.open(`${baseURL}/api/cmr/${cmrNumber}/download`, '_blank');
       } else {
-        alert('CMR noch nicht verfügbar');
+        alert('CMR noch nicht verfügbar für diesen Auftrag');
       }
     } catch (error) {
       console.error('Error viewing CMR:', error);
-      alert('Fehler beim Laden des CMR');
+      if (error.response?.status === 404) {
+        alert('CMR wurde noch nicht erstellt. Der Auftrag muss erst abgeholt werden.');
+      } else {
+        alert('Fehler beim Laden des CMR');
+      }
     }
   };
 
