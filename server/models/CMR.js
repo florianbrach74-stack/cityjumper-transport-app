@@ -75,20 +75,57 @@ class CMR {
     return result.rows[0];
   }
 
-  // Create CMR from order ID only (minimal creation)
+  // Create CMR from order ID only (gets data from order)
   static async createFromOrder(orderId) {
+    // Get order data
+    const orderResult = await pool.query('SELECT * FROM transport_orders WHERE id = $1', [orderId]);
+    const order = orderResult.rows[0];
+    
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
     // Generate CMR number
     const cmrNumberResult = await pool.query('SELECT generate_cmr_number() as cmr_number');
     const cmr_number = cmrNumberResult.rows[0].cmr_number;
 
+    // Get contractor data for carrier info
+    const contractorResult = await pool.query('SELECT * FROM users WHERE id = $1', [order.contractor_id]);
+    const contractor = contractorResult.rows[0];
+
     const query = `
       INSERT INTO cmr_documents (
-        order_id, cmr_number, status
-      ) VALUES ($1, $2, 'created')
+        order_id, cmr_number,
+        sender_name, sender_address, sender_city, sender_postal_code, sender_country,
+        consignee_name, consignee_address, consignee_city, consignee_postal_code, consignee_country,
+        carrier_name,
+        status
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'created'
+      )
       RETURNING *
     `;
 
-    const result = await pool.query(query, [orderId, cmr_number]);
+    const values = [
+      orderId,
+      cmr_number,
+      // Sender (from pickup)
+      order.pickup_contact_name || 'Absender',
+      order.pickup_address,
+      order.pickup_city,
+      order.pickup_postal_code,
+      'Deutschland',
+      // Consignee (from delivery)
+      order.delivery_contact_name || 'Empfänger',
+      order.delivery_address,
+      order.delivery_city,
+      order.delivery_postal_code,
+      'Deutschland',
+      // Carrier
+      contractor ? (contractor.company_name || `${contractor.first_name} ${contractor.last_name}`) : 'Frachtführer'
+    ];
+
+    const result = await pool.query(query, values);
     return result.rows[0];
   }
 
