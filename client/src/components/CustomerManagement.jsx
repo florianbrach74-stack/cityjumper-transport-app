@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { User, Mail, Phone, Building, Ban, CheckCircle, FileText, Edit } from 'lucide-react';
 import InvoiceGenerator from './InvoiceGenerator';
+import CustomerOrdersModal from './CustomerOrdersModal';
 import api from '../services/api';
 
-const CustomerManagement = ({ users, onUpdateAccountStatus, onViewOrders, onReload }) => {
+const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderDetails, onReload }) => {
   const [selectedCustomerForInvoice, setSelectedCustomerForInvoice] = useState(null);
   const [invoiceOrder, setInvoiceOrder] = useState(null);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [editFormData, setEditFormData] = useState({});
+  const [selectedCustomerForOrders, setSelectedCustomerForOrders] = useState(null);
 
   const customers = users.filter(u => u.role === 'customer');
 
@@ -265,30 +267,34 @@ const CustomerManagement = ({ users, onUpdateAccountStatus, onViewOrders, onRelo
 
                     {/* Actions */}
                     <div className="flex space-x-2">
-                      <button
-                        onClick={() => onViewOrders(customer.id)}
-                        className="flex-1 px-3 py-2 text-sm border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50"
-                      >
-                        <FileText className="h-4 w-4 inline mr-1" />
-                        Aufträge ansehen
-                      </button>
+                      {editingCustomer !== customer.id && (
+                        <>
+                          <button
+                            onClick={() => setSelectedCustomerForOrders(customer)}
+                            className="flex-1 px-3 py-2 text-sm border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50"
+                          >
+                            <FileText className="h-4 w-4 inline mr-1" />
+                            Aufträge ansehen
+                          </button>
                       
-                      {customer.account_status === 'active' ? (
-                        <button
-                          onClick={() => handleAccountStatusChange(customer.id, 'suspended')}
-                          className="px-3 py-2 text-sm border border-red-600 text-red-600 rounded-lg hover:bg-red-50"
-                        >
-                          <Ban className="h-4 w-4 inline mr-1" />
-                          Deaktivieren
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleAccountStatusChange(customer.id, 'active')}
-                          className="px-3 py-2 text-sm border border-green-600 text-green-600 rounded-lg hover:bg-green-50"
-                        >
-                          <CheckCircle className="h-4 w-4 inline mr-1" />
-                          Aktivieren
-                        </button>
+                          {customer.account_status === 'active' ? (
+                            <button
+                              onClick={() => handleAccountStatusChange(customer.id, 'suspended')}
+                              className="px-3 py-2 text-sm border border-red-600 text-red-600 rounded-lg hover:bg-red-50"
+                            >
+                              <Ban className="h-4 w-4 inline mr-1" />
+                              Deaktivieren
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleAccountStatusChange(customer.id, 'active')}
+                              className="px-3 py-2 text-sm border border-green-600 text-green-600 rounded-lg hover:bg-green-50"
+                            >
+                              <CheckCircle className="h-4 w-4 inline mr-1" />
+                              Aktivieren
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -298,6 +304,16 @@ const CustomerManagement = ({ users, onUpdateAccountStatus, onViewOrders, onRelo
           </div>
         )}
       </div>
+
+      {/* Customer Orders Modal */}
+      {selectedCustomerForOrders && (
+        <CustomerOrdersModal
+          customer={selectedCustomerForOrders}
+          orders={orders}
+          onClose={() => setSelectedCustomerForOrders(null)}
+          onViewDetails={onViewOrderDetails}
+        />
+      )}
 
       {/* Invoice Generator Modal */}
       {invoiceOrder && (

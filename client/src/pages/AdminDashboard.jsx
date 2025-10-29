@@ -581,8 +581,9 @@ export default function AdminDashboard() {
         {activeTab === 'customers' && (
           <CustomerManagement
             users={users}
+            orders={orders}
             onUpdateAccountStatus={updateAccountStatus}
-            onViewOrders={viewCustomerOrders}
+            onViewOrderDetails={setSelectedOrderForDetails}
             onReload={loadData}
           />
         )}
