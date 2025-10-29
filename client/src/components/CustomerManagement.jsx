@@ -31,13 +31,13 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
 
   const saveEdit = async (customerId) => {
     try {
-      await api.put('/users/profile', editFormData);
+      await api.patch(`/admin/users/${customerId}/profile`, editFormData);
       alert('Kundendaten erfolgreich aktualisiert!');
       setEditingCustomer(null);
       if (onReload) onReload();
     } catch (error) {
       console.error('Error updating customer:', error);
-      alert('Fehler beim Aktualisieren der Kundendaten');
+      alert('Fehler beim Aktualisieren der Kundendaten: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -116,8 +116,19 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
                         )}
                       </div>
                       <div className="text-right">
-                        {getAccountStatusBadge(customer.account_status)}
-                        <p className="text-xs text-gray-500 mt-2">
+                        <div className="flex items-center justify-end space-x-2 mb-2">
+                          {getAccountStatusBadge(customer.account_status)}
+                          {editingCustomer !== customer.id && (
+                            <button
+                              onClick={() => startEdit(customer)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Bearbeiten"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500">
                           ID: #{customer.id}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -229,17 +240,9 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
                       </div>
                     ) : customer.company_name ? (
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="text-sm font-medium text-blue-900">
-                            📋 Firmendaten (Rechnungsstellung)
-                          </h4>
-                          <button
-                            onClick={() => startEdit(customer)}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <h4 className="text-sm font-medium text-blue-900 mb-2">
+                          📋 Firmendaten (Rechnungsstellung)
+                        </h4>
                         <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
                           {customer.company_address && (
                             <div>

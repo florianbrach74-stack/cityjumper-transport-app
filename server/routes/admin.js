@@ -414,6 +414,58 @@ router.post('/orders/:id/approve-waiting-time', adminAuth, async (req, res) => {
   }
 });
 
+// Update user profile (admin only)
+router.patch('/users/:id/profile', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    const allowedFields = [
+      'first_name', 'last_name', 'email', 'phone',
+      'company_name', 'company_address', 'company_postal_code', 
+      'company_city', 'company_country', 'tax_id', 'vat_id'
+    ];
+    
+    const updateFields = [];
+    const values = [];
+    let paramCount = 1;
+    
+    for (const [key, value] of Object.entries(updates)) {
+      if (allowedFields.includes(key)) {
+        updateFields.push(`${key} = $${paramCount}`);
+        values.push(value);
+        paramCount++;
+      }
+    }
+    
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+    
+    values.push(id);
+    const query = `
+      UPDATE users 
+      SET ${updateFields.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ 
+      message: 'User profile updated successfully',
+      user: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Update user profile error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Suspend/Activate user account
 router.patch('/users/:id/account-status', adminAuth, async (req, res) => {
   try {
