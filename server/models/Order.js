@@ -8,6 +8,7 @@ class Order {
       pickup_city,
       pickup_postal_code,
       pickup_country,
+      pickup_company,
       pickup_date,
       pickup_time,
       pickup_contact_name,
@@ -16,6 +17,7 @@ class Order {
       delivery_city,
       delivery_postal_code,
       delivery_country,
+      delivery_company,
       delivery_date,
       delivery_time,
       delivery_contact_name,
@@ -33,22 +35,22 @@ class Order {
 
     const query = `
       INSERT INTO transport_orders (
-        customer_id, pickup_address, pickup_city, pickup_postal_code, pickup_country,
+        customer_id, pickup_address, pickup_city, pickup_postal_code, pickup_country, pickup_company,
         pickup_date, pickup_time, pickup_contact_name, pickup_contact_phone,
-        delivery_address, delivery_city, delivery_postal_code, delivery_country,
+        delivery_address, delivery_city, delivery_postal_code, delivery_country, delivery_company,
         delivery_date, delivery_time, delivery_contact_name, delivery_contact_phone,
         vehicle_type, weight, length, width, height, pallets, description,
         special_requirements, price, distance_km, duration_minutes, route_geometry, status
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
-        $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, 'pending'
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+        $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, 'pending'
       ) RETURNING *
     `;
 
     const values = [
-      customer_id, pickup_address, pickup_city, pickup_postal_code, pickup_country || 'Deutschland',
+      customer_id, pickup_address, pickup_city, pickup_postal_code, pickup_country || 'Deutschland', pickup_company || null,
       pickup_date, pickup_time, pickup_contact_name, pickup_contact_phone,
-      delivery_address, delivery_city, delivery_postal_code, delivery_country || 'Deutschland',
+      delivery_address, delivery_city, delivery_postal_code, delivery_country || 'Deutschland', delivery_company || null,
       delivery_date, delivery_time, delivery_contact_name, delivery_contact_phone,
       vehicle_type, weight, length, width, height, pallets, description,
       special_requirements, price, orderData.distance_km, orderData.duration_minutes, orderData.route_geometry || null,

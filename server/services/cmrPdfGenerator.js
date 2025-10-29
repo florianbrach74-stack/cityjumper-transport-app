@@ -40,23 +40,41 @@ class CMRPdfGenerator {
 
         doc.moveDown(3);
 
-        // Box 1: Sender (Absender) - Use contact name from order
+        // Box 1: Sender (Absender) - Show company name and/or contact person
         this.drawBox(doc, 30, 150, 260, 80);
         doc.fontSize(8).font('Helvetica-Bold').text('1. Absender (Name, Anschrift, Land)', 35, 155);
-        doc.fontSize(9).font('Helvetica')
-          .text(order.pickup_contact_name || cmrData.sender_name, 35, 170)
-          .text(cmrData.sender_address, 35, 183)
-          .text(`${cmrData.sender_postal_code} ${cmrData.sender_city}`, 35, 196)
-          .text(cmrData.sender_country, 35, 209);
+        let senderY = 170;
+        doc.fontSize(9).font('Helvetica');
+        if (order.pickup_company) {
+          doc.text(order.pickup_company, 35, senderY);
+          senderY += 13;
+        }
+        if (order.pickup_contact_name) {
+          doc.fontSize(8).text(`Kontakt: ${order.pickup_contact_name}`, 35, senderY);
+          senderY += 13;
+        }
+        doc.fontSize(9)
+          .text(cmrData.sender_address, 35, senderY)
+          .text(`${cmrData.sender_postal_code} ${cmrData.sender_city}`, 35, senderY + 13)
+          .text(cmrData.sender_country, 35, senderY + 26);
 
-        // Box 2: Consignee (Empfänger) - Use contact name from order
+        // Box 2: Consignee (Empfänger) - Show company name and/or contact person
         this.drawBox(doc, 30, 235, 260, 80);
         doc.fontSize(8).font('Helvetica-Bold').text('2. Empfänger (Name, Anschrift, Land)', 35, 240);
-        doc.fontSize(9).font('Helvetica')
-          .text(order.delivery_contact_name || cmrData.consignee_name, 35, 255)
-          .text(cmrData.consignee_address, 35, 268)
-          .text(`${cmrData.consignee_postal_code} ${cmrData.consignee_city}`, 35, 281)
-          .text(cmrData.consignee_country, 35, 294);
+        let consigneeY = 255;
+        doc.fontSize(9).font('Helvetica');
+        if (order.delivery_company) {
+          doc.text(order.delivery_company, 35, consigneeY);
+          consigneeY += 13;
+        }
+        if (order.delivery_contact_name) {
+          doc.fontSize(8).text(`Kontakt: ${order.delivery_contact_name}`, 35, consigneeY);
+          consigneeY += 13;
+        }
+        doc.fontSize(9)
+          .text(cmrData.consignee_address, 35, consigneeY)
+          .text(`${cmrData.consignee_postal_code} ${cmrData.consignee_city}`, 35, consigneeY + 13)
+          .text(cmrData.consignee_country, 35, consigneeY + 26);
 
         // Box 3: Place of Delivery
         this.drawBox(doc, 30, 320, 260, 40);

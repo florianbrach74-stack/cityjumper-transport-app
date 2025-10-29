@@ -287,12 +287,24 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700">Firma (optional)</label>
+                <input
+                  type="text"
+                  name="pickup_company"
+                  value={formData.pickup_company || ''}
+                  onChange={handleChange}
+                  placeholder="z.B. Amazon GmbH"
+                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700">Kontaktperson</label>
                 <input
                   type="text"
                   name="pickup_contact_name"
                   value={formData.pickup_contact_name}
                   onChange={handleChange}
+                  placeholder="z.B. Fr. Müller"
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
@@ -354,12 +366,24 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                 </div>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700">Firma (optional)</label>
+                <input
+                  type="text"
+                  name="delivery_company"
+                  value={formData.delivery_company || ''}
+                  onChange={handleChange}
+                  placeholder="z.B. IKEA Berlin"
+                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700">Kontaktperson</label>
                 <input
                   type="text"
                   name="delivery_contact_name"
                   value={formData.delivery_contact_name}
                   onChange={handleChange}
+                  placeholder="z.B. Hr. Schmidt"
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
