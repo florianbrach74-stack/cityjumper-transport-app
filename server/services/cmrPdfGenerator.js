@@ -214,19 +214,29 @@ class CMRPdfGenerator {
           doc.fontSize(10).text(`Zugestellt am: ${cmrData.consignee_signed_at ? new Date(cmrData.consignee_signed_at).toLocaleString('de-DE') : ''}`, 30, 85);
           
           try {
-            if (cmrData.consignee_photo.startsWith('data:image')) {
+            if (cmrData.consignee_photo && cmrData.consignee_photo.startsWith('data:image')) {
               const base64Data = cmrData.consignee_photo.split(',')[1];
               const imgBuffer = Buffer.from(base64Data, 'base64');
-              // Add photo centered on page
+              
+              // Determine image dimensions to fit properly
+              const maxWidth = 535;
+              const maxHeight = 600;
+              
+              // Add photo with proper sizing
               doc.image(imgBuffer, 30, 110, { 
-                width: 535,
-                fit: [535, 600],
-                align: 'center'
+                fit: [maxWidth, maxHeight],
+                align: 'center',
+                valign: 'center'
               });
+              
+              console.log('✅ Delivery photo added to CMR PDF');
+            } else {
+              console.log('⚠️ No valid photo data found');
+              doc.fontSize(10).text('Kein Foto verfügbar', 30, 110);
             }
           } catch (err) {
-            console.error('Error adding delivery photo:', err);
-            doc.fontSize(10).text('Foto konnte nicht geladen werden', 30, 110);
+            console.error('❌ Error adding delivery photo:', err.message);
+            doc.fontSize(10).text(`Foto konnte nicht geladen werden: ${err.message}`, 30, 110);
           }
         }
 
