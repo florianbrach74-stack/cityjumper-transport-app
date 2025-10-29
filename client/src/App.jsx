@@ -9,6 +9,7 @@ import CustomerDashboard from './pages/CustomerDashboard';
 import ContractorDashboard from './pages/ContractorDashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ContractorOrdersView from './pages/ContractorOrdersView';
 import CMRSignature from './pages/CMRSignature';
 import VerificationPage from './pages/VerificationPage';
 import Settings from './pages/Settings';
@@ -67,6 +68,15 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/contractor/:contractorId/orders"
+            element={
+              <ProtectedRoute>
+                <ContractorOrdersView />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
