@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { ordersAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { X, MapPin, Calendar, Truck, Package, AlertCircle } from 'lucide-react';
 import AddressSearch from './AddressSearch';
 import RouteMap from './RouteMap';
 
 const CreateOrderModal = ({ onClose, onSuccess }) => {
+  const { user } = useAuth();
+  
   // Check for pending order data
   const pendingOrder = JSON.parse(localStorage.getItem('pendingOrder') || '{}');
   
@@ -13,14 +16,15 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const currentTime = new Date().toTimeString().slice(0, 5);
 
   const [formData, setFormData] = useState({
-    pickup_address: pendingOrder.pickupAddress || '',
-    pickup_city: pendingOrder.pickupLocation?.city || '',
-    pickup_postal_code: pendingOrder.pickupLocation?.postalCode || '',
+    pickup_address: pendingOrder.pickupAddress || (user?.company_address || ''),
+    pickup_city: pendingOrder.pickupLocation?.city || (user?.company_city || ''),
+    pickup_postal_code: pendingOrder.pickupLocation?.postalCode || (user?.company_postal_code || ''),
     pickup_country: 'Deutschland',
+    pickup_company: user?.company_name || '',
     pickup_date: today,
     pickup_time: currentTime,
-    pickup_contact_name: '',
-    pickup_contact_phone: '',
+    pickup_contact_name: user?.company_name ? `${user.first_name} ${user.last_name}` : '',
+    pickup_contact_phone: user?.phone || '',
     delivery_address: pendingOrder.deliveryAddress || '',
     delivery_city: pendingOrder.deliveryLocation?.city || '',
     delivery_postal_code: pendingOrder.deliveryLocation?.postalCode || '',

@@ -14,7 +14,14 @@ const Register = () => {
     last_name: '',
     company_name: '',
     phone: '',
+    company_address: '',
+    company_postal_code: '',
+    company_city: '',
+    company_country: 'Deutschland',
+    tax_id: '',
+    vat_id: '',
   });
+  const [showCompanyDetails, setShowCompanyDetails] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
@@ -200,6 +207,87 @@ const Register = () => {
                 </div>
               </div>
             </div>
+
+            {/* Company Details Toggle */}
+            {formData.company_name && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCompanyDetails(!showCompanyDetails)}
+                  className="w-full flex items-center justify-between text-left"
+                >
+                  <span className="text-sm font-medium text-blue-900">
+                    📋 Erweiterte Firmendaten (für Rechnungsstellung)
+                  </span>
+                  <span className="text-blue-600">{showCompanyDetails ? '▼' : '▶'}</span>
+                </button>
+                
+                {showCompanyDetails && (
+                  <div className="mt-4 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Firmenadresse</label>
+                      <input
+                        name="company_address"
+                        type="text"
+                        value={formData.company_address}
+                        onChange={handleChange}
+                        placeholder="Straße und Hausnummer"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">PLZ</label>
+                        <input
+                          name="company_postal_code"
+                          type="text"
+                          value={formData.company_postal_code}
+                          onChange={handleChange}
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Stadt</label>
+                        <input
+                          name="company_city"
+                          type="text"
+                          value={formData.company_city}
+                          onChange={handleChange}
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Steuernummer</label>
+                        <input
+                          name="tax_id"
+                          type="text"
+                          value={formData.tax_id}
+                          onChange={handleChange}
+                          placeholder="Optional"
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">USt-IdNr.</label>
+                        <input
+                          name="vat_id"
+                          type="text"
+                          value={formData.vat_id}
+                          onChange={handleChange}
+                          placeholder="Optional"
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Diese Daten werden für die Rechnungsstellung verwendet und können später im Profil bearbeitet werden.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Email */}
             <div>
