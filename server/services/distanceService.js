@@ -101,7 +101,7 @@ async function calculateDistanceAndDuration(
     }
 
     // Small delay to respect rate limits (1 request per second for Nominatim)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1100));
 
     // Calculate route
     const routeData = await calculateRoute(startCoords, endCoords);
