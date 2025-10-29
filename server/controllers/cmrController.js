@@ -85,15 +85,7 @@ const getCMRByOrderId = async (req, res) => {
     
     console.log('📄 Fetching CMR for order:', orderId);
     
-    const cmr = await CMR.findByOrderId(orderId);
-    if (!cmr) {
-      console.error('❌ CMR not found for order:', orderId);
-      return res.status(404).json({ error: 'CMR document not found' });
-    }
-
-    console.log('✅ CMR found, ID:', cmr.id);
-
-    // Check authorization
+    // Check authorization first
     const order = await Order.findById(orderId);
     if (!order) {
       console.error('❌ Order not found:', orderId);
@@ -106,6 +98,30 @@ const getCMRByOrderId = async (req, res) => {
     ) {
       console.error('❌ Access denied for user:', req.user.id);
       return res.status(403).json({ error: 'Access denied' });
+    }
+
+    let cmr = await CMR.findByOrderId(orderId);
+    
+    // If CMR doesn't exist and order has a contractor, create it
+    if (!cmr && order.contractor_id) {
+      console.log('⚠️ CMR not found, creating it now for order:', orderId);
+      try {
+        cmr = await CMR.createFromOrder(orderId);
+        console.log('✅ CMR created, ID:', cmr.id);
+        
+        // Generate PDF
+        const CMRPdfGenerator = require('../services/cmrPdfGenerator');
+        await CMRPdfGenerator.generateCMR(cmr, order);
+        console.log('✅ CMR PDF generated');
+      } catch (createError) {
+        console.error('❌ Failed to create CMR:', createError.message);
+        return res.status(500).json({ error: 'Failed to create CMR document' });
+      }
+    } else if (!cmr) {
+      console.error('❌ CMR not found and no contractor assigned for order:', orderId);
+      return res.status(404).json({ error: 'CMR document not found' });
+    } else {
+      console.log('✅ CMR found, ID:', cmr.id);
     }
 
     console.log('✅ Authorization passed, returning CMR');
