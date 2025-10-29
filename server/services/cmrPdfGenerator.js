@@ -143,7 +143,11 @@ class CMRPdfGenerator {
             console.error('Error adding sender signature image:', err);
             doc.fontSize(7).text('✓ Unterschrieben', 35, signatureY + 60);
           }
-          doc.fontSize(6).text(new Date(cmrData.sender_signed_at).toLocaleString('de-DE'), 35, signatureY + 80);
+          // Add sender name
+          if (cmrData.sender_name) {
+            doc.fontSize(7).font('Helvetica').text(cmrData.sender_name, 35, signatureY + 78);
+          }
+          doc.fontSize(6).text(new Date(cmrData.sender_signed_at).toLocaleString('de-DE'), 35, signatureY + 88);
         }
 
         // Box 23: Carrier Signature
@@ -161,7 +165,11 @@ class CMRPdfGenerator {
             console.error('Error adding carrier signature image:', err);
             doc.fontSize(7).text('✓ Unterschrieben', 215, signatureY + 60);
           }
-          doc.fontSize(6).text(new Date(cmrData.carrier_signed_at).toLocaleString('de-DE'), 215, signatureY + 80);
+          // Add carrier name
+          if (cmrData.carrier_name) {
+            doc.fontSize(7).font('Helvetica').text(cmrData.carrier_name, 215, signatureY + 78);
+          }
+          doc.fontSize(6).text(new Date(cmrData.carrier_signed_at).toLocaleString('de-DE'), 215, signatureY + 88);
         }
 
         // Box 24: Consignee Signature
@@ -180,10 +188,11 @@ class CMRPdfGenerator {
             console.error('Error adding signature image:', err);
             doc.fontSize(7).text('✓ Unterschrieben', 395, signatureY + 60);
           }
-          doc.fontSize(6).text(new Date(cmrData.consignee_signed_at).toLocaleString('de-DE'), 395, signatureY + 80);
-          if (cmrData.consignee_signed_name) {
-            doc.fontSize(7).text(cmrData.consignee_signed_name, 395, signatureY + 90);
+          // Add consignee name
+          if (cmrData.consignee_name) {
+            doc.fontSize(7).font('Helvetica').text(cmrData.consignee_name, 395, signatureY + 78);
           }
+          doc.fontSize(6).text(new Date(cmrData.consignee_signed_at).toLocaleString('de-DE'), 395, signatureY + 88);
         }
         if (cmrData.consignee_remarks) {
           doc.fontSize(6).text(`Bemerkungen: ${cmrData.consignee_remarks}`, 395, signatureY + 95, { width: 165 });
@@ -195,6 +204,31 @@ class CMRPdfGenerator {
           30, 750,
           { align: 'center' }
         );
+
+        // Add delivery photo on new page if available
+        if (cmrData.consignee_photo) {
+          doc.addPage();
+          doc.fontSize(16).font('Helvetica-Bold').text('Zustellnachweis - Foto', 30, 30);
+          doc.fontSize(10).font('Helvetica').text(`CMR Nr: ${cmrData.cmr_number}`, 30, 55);
+          doc.fontSize(10).text(`Empfänger: ${cmrData.consignee_name || 'Briefkasten'}`, 30, 70);
+          doc.fontSize(10).text(`Zugestellt am: ${cmrData.consignee_signed_at ? new Date(cmrData.consignee_signed_at).toLocaleString('de-DE') : ''}`, 30, 85);
+          
+          try {
+            if (cmrData.consignee_photo.startsWith('data:image')) {
+              const base64Data = cmrData.consignee_photo.split(',')[1];
+              const imgBuffer = Buffer.from(base64Data, 'base64');
+              // Add photo centered on page
+              doc.image(imgBuffer, 30, 110, { 
+                width: 535,
+                fit: [535, 600],
+                align: 'center'
+              });
+            }
+          } catch (err) {
+            console.error('Error adding delivery photo:', err);
+            doc.fontSize(10).text('Foto konnte nicht geladen werden', 30, 110);
+          }
+        }
 
         doc.end();
 
