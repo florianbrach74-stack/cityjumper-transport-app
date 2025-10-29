@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import api, { bidsAPI, verificationAPI } from '../services/api';
 import AssignOrderModal from '../components/AssignOrderModal';
 import CMRViewer from '../components/CMRViewer';
+import CustomerManagement from '../components/CustomerManagement';
+import DetailedOrderView from '../components/DetailedOrderView';
+import InvoiceGenerator from '../components/InvoiceGenerator';
 import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
@@ -19,6 +22,8 @@ export default function AdminDashboard() {
   const [bidsForOrder, setBidsForOrder] = useState([]);
   const [bidCounts, setBidCounts] = useState({});
   const [pendingApprovalOrders, setPendingApprovalOrders] = useState([]);
+  const [selectedOrderForDetails, setSelectedOrderForDetails] = useState(null);
+  const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -225,6 +230,29 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateAccountStatus = async (userId, accountStatus) => {
+    try {
+      await api.patch(`/admin/users/${userId}/account-status`, { account_status: accountStatus });
+      await loadData();
+      alert(`Account erfolgreich ${accountStatus === 'suspended' ? 'deaktiviert' : 'aktiviert'}!`);
+    } catch (error) {
+      console.error('Error updating account status:', error);
+      alert('Fehler beim Aktualisieren des Account-Status');
+    }
+  };
+
+  const viewCustomerOrders = (customerId) => {
+    // Filter orders by customer
+    const customerOrders = orders.filter(o => o.customer_id === customerId);
+    if (customerOrders.length === 0) {
+      alert('Dieser Kunde hat noch keine Aufträge');
+      return;
+    }
+    // Switch to orders tab and highlight customer orders
+    setActiveTab('orders');
+    // You could add additional filtering logic here
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       pending: 'bg-yellow-100 text-yellow-800',
@@ -321,6 +349,16 @@ export default function AdminDashboard() {
               Benutzer ({users.length})
             </button>
             <button
+              onClick={() => setActiveTab('customers')}
+              className={`${
+                activeTab === 'customers'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Kunden ({users.filter(u => u.role === 'customer').length})
+            </button>
+            <button
               onClick={() => setActiveTab('contractors')}
               className={`${
                 activeTab === 'contractors'
@@ -328,7 +366,7 @@ export default function AdminDashboard() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
-              Alle Auftragnehmer ({users.filter(u => u.role === 'contractor').length})
+              Auftragnehmer ({users.filter(u => u.role === 'contractor').length})
             </button>
             <button
               onClick={() => setActiveTab('approvals')}
@@ -407,7 +445,26 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex flex-col space-y-1">
-                          <div className="flex space-x-2">
+                          <button
+                            onClick={() => setSelectedOrderForDetails(order.id)}
+                            className="text-primary-600 hover:text-primary-900 font-medium text-left"
+                          >
+                            📋 Details ansehen
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const response = await api.get(`/admin/orders/${order.id}/details`);
+                                setSelectedOrderForInvoice(response.data.order);
+                              } catch (error) {
+                                alert('Fehler beim Laden der Auftragsdaten');
+                              }
+                            }}
+                            className="text-green-600 hover:text-green-900 font-medium text-left"
+                          >
+                            🧾 Rechnung erstellen
+                          </button>
+                          <div className="flex space-x-2 pt-1">
                             {order.status === 'pending' && (
                               <button
                                 onClick={() => viewBids(order)}
@@ -440,7 +497,7 @@ export default function AdminDashboard() {
                           </div>
                           <button
                             onClick={() => deleteOrder(order.id)}
-                            className="text-red-600 hover:text-red-900 text-left"
+                            className="text-red-600 hover:text-red-900 text-left text-xs"
                           >
                             Löschen
                           </button>
@@ -518,6 +575,15 @@ export default function AdminDashboard() {
               </table>
             </div>
           </div>
+        )}
+
+        {/* Customers Tab */}
+        {activeTab === 'customers' && (
+          <CustomerManagement
+            users={users}
+            onUpdateAccountStatus={updateAccountStatus}
+            onViewOrders={viewCustomerOrders}
+          />
         )}
 
         {/* All Contractors Tab */}
@@ -935,6 +1001,22 @@ export default function AdminDashboard() {
             setAssigningOrder(null);
             loadData();
           }}
+        />
+      )}
+
+      {/* Detailed Order View Modal */}
+      {selectedOrderForDetails && (
+        <DetailedOrderView
+          orderId={selectedOrderForDetails}
+          onClose={() => setSelectedOrderForDetails(null)}
+        />
+      )}
+
+      {/* Invoice Generator Modal */}
+      {selectedOrderForInvoice && (
+        <InvoiceGenerator
+          order={selectedOrderForInvoice}
+          onClose={() => setSelectedOrderForInvoice(null)}
         />
       )}
     </div>
