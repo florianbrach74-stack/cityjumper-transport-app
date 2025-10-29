@@ -504,7 +504,7 @@ const confirmPickup = async (req, res) => {
     
     console.log('💾 Updating CMR with signatures...');
     await pool.query(
-      `UPDATE cmr 
+      `UPDATE cmr_documents 
        SET sender_name = $1,
            sender_signature = $2,
            sender_signed_at = CURRENT_TIMESTAMP,
@@ -601,7 +601,7 @@ const confirmDelivery = async (req, res) => {
     // Update CMR with receiver signature
     const pool = require('../config/database');
     await pool.query(
-      `UPDATE cmr 
+      `UPDATE cmr_documents 
        SET consignee_name = $1,
            consignee_signature = $2,
            consignee_signed_at = CURRENT_TIMESTAMP
