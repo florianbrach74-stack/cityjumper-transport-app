@@ -435,7 +435,7 @@ const ContractorDashboard = () => {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
             >
               <Truck className="h-5 w-5" />
-              <span>Aktive Aufträge ({myOrders.filter(o => o.status !== 'completed').length})</span>
+              <span>Aktive Aufträge ({myOrders.filter(o => o.status !== 'delivered' && o.status !== 'completed').length})</span>
             </button>
             <button
               onClick={() => setActiveTab('my-bids')}
@@ -457,7 +457,7 @@ const ContractorDashboard = () => {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
             >
               <CheckCircle className="h-5 w-5" />
-              <span>Abgeschlossene Aufträge ({myOrders.filter(o => o.status === 'completed').length})</span>
+              <span>Abgeschlossene Aufträge ({myOrders.filter(o => o.status === 'delivered' || o.status === 'completed').length})</span>
             </button>
             <button
               onClick={() => setActiveTab('employees')}
@@ -505,7 +505,7 @@ const ContractorDashboard = () => {
           </div>
         ) : activeTab === 'my-orders' ? (
           <div>
-            {myOrders.filter(o => o.status !== 'completed').length === 0 ? (
+            {myOrders.filter(o => o.status !== 'delivered' && o.status !== 'completed').length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                 <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">Keine aktiven Aufträge</h3>
@@ -515,7 +515,7 @@ const ContractorDashboard = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {myOrders.filter(o => o.status !== 'completed').map((order) => (
+                {myOrders.filter(o => o.status !== 'delivered' && o.status !== 'completed').map((order) => (
                   <OrderCard key={order.id} order={order} showAcceptButton={false} />
                 ))}
               </div>
@@ -571,7 +571,7 @@ const ContractorDashboard = () => {
           </div>
         ) : activeTab === 'completed' ? (
           <div>
-            {myOrders.filter(o => o.status === 'completed').length === 0 ? (
+            {myOrders.filter(o => o.status === 'delivered' || o.status === 'completed').length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                 <CheckCircle className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">Keine abgeschlossenen Aufträge</h3>
@@ -581,7 +581,7 @@ const ContractorDashboard = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {myOrders.filter(o => o.status === 'completed').map((order) => (
+                {myOrders.filter(o => o.status === 'delivered' || o.status === 'completed').map((order) => (
                   <OrderCard key={order.id} order={order} showAcceptButton={false} />
                 ))}
               </div>
