@@ -46,6 +46,10 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
 - 🔒 **Datenschutz**: Auftragnehmer sehen nur PLZ bis zur Auftragsannahme
 - 📄 **CMR-Frachtbriefe**: Automatische PDF-Generierung mit QR-Codes
 - ✍️ **Digitale Signaturen**: Touch-optimierte Unterschrifts-Erfassung mit Empfänger-Name
+- 🏢 **Firmendaten-Verwaltung**: Vollständige Rechnungsinformationen für B2B & B2C
+- 💰 **MwSt.-Anzeige**: Alle Preise mit "zzgl. 19% MwSt." Hinweis
+- 🧾 **Rechnungs-Generator**: Professionelle PDF-Rechnungen mit Firmendaten
+- 👥 **Admin-Vollzugriff**: Komplette Kunden- & Auftragnehmer-Verwaltung
 
 ---
 
@@ -69,8 +73,12 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
 ### ⚙️ Settings & Profil-Verwaltung
 - **Profil-Einstellungen**
   - Vorname, Nachname, Email, Telefon bearbeiten
-  - Firmenname (für Auftragnehmer)
-  - Adresse, Stadt, PLZ verwalten
+  - **Privat/Firma Toggle**: Unterscheidung zwischen Privatkunden & Firmenkunden
+  - **Firmendaten für Rechnungsstellung**:
+    - Firmenname, Adresse, PLZ, Stadt, Land
+    - Steuernummer (optional)
+    - USt-IdNr (optional)
+  - **Auto-Fill**: Firmendaten werden automatisch in Aufträge übernommen
   - Passwort ändern mit Bestätigung
   
 - **Auftragnehmer-Verifizierung** 🔐
@@ -141,6 +149,21 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
     - Dokumente als PDF anzeigen (Base64)
     - Freigeben, Ablehnen oder Zurücksetzen
     - Passwort zurücksetzen für Benutzer
+  - **Kunden-Verwaltung** 🆕:
+    - Tab "Kunden" → Alle Kunden (Privat & Firma)
+    - **Firmendaten ansehen**: Adresse, Steuer-Nr, USt-ID
+    - **Bearbeiten**: Alle Kundendaten editierbar
+    - **Account-Status**: Aktivieren/Deaktivieren
+    - **Aufträge filtern**: Nur Aufträge des jeweiligen Kunden
+  - **Detaillierte Auftragsansicht** 🆕:
+    - Vollständige Kunden- & Auftragnehmer-Informationen
+    - Alle Firmendaten für Rechnungsstellung
+    - Routendetails, Sendungsdetails, Preisinformationen
+  - **Rechnungs-Generator** 🆕:
+    - Professionelle PDF-Rechnungen erstellen
+    - Automatische Übernahme aller Firmendaten
+    - Netto/Brutto-Berechnung (19% MwSt.)
+    - Druckfunktion
   - **Aufträge zuweisen**: An Auftragnehmer oder Mitarbeiter
   - **System-Verwaltung**: Alle Funktionen
   - Profil & Passwort ändern
@@ -173,6 +196,43 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
   - 📧 **Automatische Benachrichtigungen**: Kunde wird bei jedem Schritt informiert
   - 📄 **Vollständiges CMR**: Alle Unterschriften + Zeitstempel
   - 🚫 **Validierung**: Keine leeren Unterschriften möglich
+
+### 🏢 Firmendaten & Rechnungsstellung
+- **Privat/Firma Toggle**:
+  - Kunden können zwischen Privatkunde & Firmenkunde wählen
+  - Firmenkunden: Erweiterte Felder für Rechnungsdaten
+  - Privatkunden: Einfache Kontaktdaten
+  
+- **Firmendaten-Erfassung**:
+  - Firmenname (Pflichtfeld für Firmenkunden)
+  - Vollständige Adresse (Straße, PLZ, Stadt, Land)
+  - Steuernummer (optional)
+  - USt-IdNr (optional)
+  - Telefon & Email
+  
+- **Auto-Fill in Aufträgen**:
+  - Firmendaten werden automatisch in Pickup-Felder übernommen
+  - Kunde kann Daten für Drittpartei-Buchungen überschreiben
+  - Spart Zeit bei wiederkehrenden Aufträgen
+  
+- **Admin-Ansicht**:
+  - Alle Firmendaten für Rechnungsstellung sichtbar
+  - Bearbeitung durch Admin möglich
+  - Unterscheidung zwischen Privat- & Firmenkunden
+  
+- **Rechnungs-Generator** 🧾:
+  - **Automatische Datenübernahme**: Alle Firmendaten aus Auftrag
+  - **Professionelles Layout**: Firmen-Header, Rechnungsempfänger, Leistungserbringer
+  - **MwSt.-Berechnung**: Automatisch 19% MwSt. auf Nettobetrag
+  - **Detaillierte Positionen**: Transportdetails, Distanz, Fahrzeit, Wartezeit
+  - **Bankverbindung**: Zahlungsinformationen inkl. IBAN
+  - **Druckfunktion**: PDF-ready HTML für direkten Druck
+  - **Anpassbar**: Rechnungsnummer & Datum editierbar
+
+- **MwSt.-Anzeige**:
+  - Alle Preise für Kunden: "€228.89 (zzgl. 19% MwSt.)"
+  - Transparente Preisdarstellung
+  - Rechtlich korrekt für B2B & B2C
 
 ### 🔔 Benachrichtigungen
 - Email-Benachrichtigungen (optional)
@@ -302,6 +362,27 @@ npm run client  # Frontend auf :5173
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:5000
 - **API Health**: http://localhost:5000/api/health
+
+### 7️⃣ Test-Accounts
+
+**Admin:**
+```
+Email: admin@cityjumper.com
+Passwort: admin123
+```
+
+**Firmenkunde (mit vollständigen Firmendaten):**
+```
+Email: testkunde@firma.de
+Passwort: test123
+Firma: Test Transport GmbH
+```
+
+**Auftragnehmer:**
+```
+Email: contractor@example.com
+Passwort: contractor123
+```
 
 ---
 
