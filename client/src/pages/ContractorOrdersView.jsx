@@ -62,8 +62,8 @@ export default function ContractorOrdersView() {
     try {
       const response = await api.get(`/cmr/order/${orderId}`);
       if (response.data.cmr) {
-        // Get the base URL from the current API configuration
-        const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        // Use the production backend URL
+        const baseURL = 'https://cityjumper-api-production-01e4.up.railway.app';
         // Open CMR PDF in new tab
         window.open(`${baseURL}/api/cmr/${response.data.cmr.id}/pdf`, '_blank');
       } else {
