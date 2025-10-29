@@ -1,85 +1,127 @@
-/**
- * Simple distance and duration calculation service
- * Uses Haversine formula for straight-line distance and applies road factor
- */
+const axios = require('axios');
 
 /**
- * Get approximate coordinates for German postal code
+ * Geocode an address to coordinates using Nominatim (OpenStreetMap)
  */
-function getCoordinatesFromPostalCode(postalCode) {
-  const firstDigit = parseInt(postalCode.toString()[0]);
-  
-  // Approximate coordinates for German regions
-  const regionCoords = {
-    0: { lat: 51.5, lon: 10.5 },  // Sachsen, Thüringen
-    1: { lat: 52.5, lon: 13.4 },  // Berlin, Brandenburg
-    2: { lat: 53.5, lon: 10.0 },  // Hamburg, Schleswig-Holstein
-    3: { lat: 52.3, lon: 9.7 },   // Niedersachsen
-    4: { lat: 51.5, lon: 7.5 },   // NRW
-    5: { lat: 50.9, lon: 6.9 },   // NRW (Köln)
-    6: { lat: 50.1, lon: 8.7 },   // Hessen
-    7: { lat: 48.8, lon: 9.2 },   // Baden-Württemberg
-    8: { lat: 48.1, lon: 11.6 },  // Bayern (München)
-    9: { lat: 49.5, lon: 11.0 }   // Bayern (Nürnberg)
-  };
-  
-  return regionCoords[firstDigit] || { lat: 51.0, lon: 10.0 };
-}
-
-/**
- * Calculate straight-line distance using Haversine formula
- */
-function calculateStraightLineDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Earth's radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-  
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
-
-/**
- * Calculate distance and duration between two addresses
- * @param {string} pickupPostalCode - Pickup postal code
- * @param {string} deliveryPostalCode - Delivery postal code
- * @returns {{distance_km: number, duration_minutes: number}}
- */
-function calculateDistanceAndDuration(pickupPostalCode, deliveryPostalCode) {
+async function geocodeAddress(address, postalCode, city, country = 'Deutschland') {
   try {
-    // Get approximate coordinates
-    const originCoords = getCoordinatesFromPostalCode(pickupPostalCode);
-    const destCoords = getCoordinatesFromPostalCode(deliveryPostalCode);
+    const fullAddress = `${address}, ${postalCode} ${city}, ${country}`;
+    const url = 'https://nominatim.openstreetmap.org/search';
     
-    // Calculate straight-line distance
-    const straightLineDistance = calculateStraightLineDistance(
-      originCoords.lat, originCoords.lon,
-      destCoords.lat, destCoords.lon
-    );
-    
-    // Apply road factor (roads are not straight, typically 1.3x longer)
-    const roadFactor = 1.3;
-    const distance_km = Math.round(straightLineDistance * roadFactor * 10) / 10;
-    
-    // Estimate duration based on average speed
-    // Average: ~80 km/h for mixed routes (Autobahn + Landstraße)
-    const averageSpeed = 80; // km/h
-    const duration_hours = distance_km / averageSpeed;
-    const duration_minutes = Math.ceil(duration_hours * 60);
+    const response = await axios.get(url, {
+      params: {
+        q: fullAddress,
+        format: 'json',
+        limit: 1,
+        countrycodes: 'de'
+      },
+      headers: {
+        'User-Agent': 'CityJumper-Transport-App'
+      }
+    });
 
-    console.log(`📍 Distance: ${distance_km} km, Duration: ${duration_minutes} min`);
+    if (response.data && response.data.length > 0) {
+      const result = response.data[0];
+      return {
+        lat: parseFloat(result.lat),
+        lon: parseFloat(result.lon)
+      };
+    }
+    
+    console.warn(`⚠️ Could not geocode address: ${fullAddress}`);
+    return null;
+  } catch (error) {
+    console.error('❌ Geocoding error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Calculate route using OSRM (Open Source Routing Machine)
+ */
+async function calculateRoute(startCoords, endCoords) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${startCoords.lon},${startCoords.lat};${endCoords.lon},${endCoords.lat}`;
+    
+    const response = await axios.get(url, {
+      params: {
+        overview: 'full',
+        geometries: 'geojson'
+      }
+    });
+
+    if (response.data.code === 'Ok' && response.data.routes.length > 0) {
+      const route = response.data.routes[0];
+      return {
+        distance_km: (route.distance / 1000).toFixed(1), // meters to km
+        duration_minutes: Math.ceil(route.duration / 60), // seconds to minutes
+        geometry: route.geometry // GeoJSON for map display
+      };
+    }
+    
+    console.warn('⚠️ No route found');
+    return null;
+  } catch (error) {
+    console.error('❌ Routing error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Calculate distance and duration between two full addresses
+ * Uses real geocoding and routing APIs (OpenStreetMap)
+ * @param {string} pickupAddress - Full pickup address
+ * @param {string} pickupPostalCode - Pickup postal code
+ * @param {string} pickupCity - Pickup city
+ * @param {string} deliveryAddress - Full delivery address
+ * @param {string} deliveryPostalCode - Delivery postal code
+ * @param {string} deliveryCity - Delivery city
+ * @returns {Promise<{distance_km: number, duration_minutes: number, route_geometry: object}>}
+ */
+async function calculateDistanceAndDuration(
+  pickupAddress, 
+  pickupPostalCode, 
+  pickupCity,
+  deliveryAddress,
+  deliveryPostalCode,
+  deliveryCity
+) {
+  try {
+    console.log(`📍 Calculating route: ${pickupCity} → ${deliveryCity}`);
+    
+    // Geocode both addresses
+    const [startCoords, endCoords] = await Promise.all([
+      geocodeAddress(pickupAddress, pickupPostalCode, pickupCity),
+      geocodeAddress(deliveryAddress, deliveryPostalCode, deliveryCity)
+    ]);
+
+    if (!startCoords || !endCoords) {
+      console.warn('⚠️ Could not geocode addresses, skipping route calculation');
+      return { distance_km: null, duration_minutes: null, route_geometry: null };
+    }
+
+    // Small delay to respect rate limits (1 request per second for Nominatim)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Calculate route
+    const routeData = await calculateRoute(startCoords, endCoords);
+    
+    if (!routeData) {
+      console.warn('⚠️ Could not calculate route');
+      return { distance_km: null, duration_minutes: null, route_geometry: null };
+    }
+
+    console.log(`✅ Route: ${routeData.distance_km} km, ${routeData.duration_minutes} min`);
 
     return {
-      distance_km: distance_km,
-      duration_minutes: duration_minutes
+      distance_km: parseFloat(routeData.distance_km),
+      duration_minutes: routeData.duration_minutes,
+      route_geometry: routeData.geometry
     };
 
   } catch (error) {
     console.error('❌ Error calculating distance:', error.message);
-    return { distance_km: null, duration_minutes: null };
+    return { distance_km: null, duration_minutes: null, route_geometry: null };
   }
 }
 

@@ -43,15 +43,23 @@ const createOrder = async (req, res) => {
 
     console.log('Processed order data:', orderData);
     
-    // Calculate distance and duration
-    const { distance_km, duration_minutes } = calculateDistanceAndDuration(
+    // Calculate distance and duration using REAL addresses
+    const { distance_km, duration_minutes, route_geometry } = await calculateDistanceAndDuration(
+      orderData.pickup_address,
       orderData.pickup_postal_code,
-      orderData.delivery_postal_code
+      orderData.pickup_city,
+      orderData.delivery_address,
+      orderData.delivery_postal_code,
+      orderData.delivery_city
     );
     
     // Add to order data
     orderData.distance_km = distance_km;
     orderData.duration_minutes = duration_minutes;
+    // Store route geometry as JSON for later map display
+    if (route_geometry) {
+      orderData.route_geometry = JSON.stringify(route_geometry);
+    }
     
     const order = await Order.create(orderData);
     console.log('Order created successfully:', order.id);
