@@ -470,13 +470,34 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {users.map((user) => (
-                    <tr key={user.id}>
+                    <tr key={user.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{user.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.first_name} {user.last_name}
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <div>
+                          <div className="font-medium">{user.first_name} {user.last_name}</div>
+                          {user.phone && <div className="text-xs text-gray-500">{user.phone}</div>}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.company_name || '-'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {user.company_name ? (
+                          <div>
+                            <div className="font-medium">{user.company_name}</div>
+                            {user.company_address && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                📍 {user.company_address}<br/>
+                                {user.company_postal_code} {user.company_city}
+                              </div>
+                            )}
+                            {(user.tax_id || user.vat_id) && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {user.tax_id && <div>Steuer-Nr: {user.tax_id}</div>}
+                                {user.vat_id && <div>USt-ID: {user.vat_id}</div>}
+                              </div>
+                            )}
+                          </div>
+                        ) : '-'}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
                           value={user.role}
