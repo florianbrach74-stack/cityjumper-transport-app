@@ -412,4 +412,79 @@ router.post('/orders/:id/approve-waiting-time', adminAuth, async (req, res) => {
   }
 });
 
+// Suspend/Activate user account
+router.patch('/users/:id/account-status', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { account_status } = req.body;
+    
+    const validStatuses = ['active', 'suspended', 'deleted'];
+    if (!validStatuses.includes(account_status)) {
+      return res.status(400).json({ error: 'Invalid account status' });
+    }
+    
+    const result = await pool.query(
+      'UPDATE users SET account_status = $1 WHERE id = $2 RETURNING *',
+      [account_status, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ 
+      message: `Account ${account_status === 'suspended' ? 'suspended' : 'activated'} successfully`,
+      user: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Update account status error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get detailed order information (for admin view)
+router.get('/orders/:id/details', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(`
+      SELECT 
+        o.*,
+        c.id as customer_id,
+        c.email as customer_email,
+        c.first_name as customer_first_name,
+        c.last_name as customer_last_name,
+        c.phone as customer_phone,
+        c.company_name as customer_company,
+        c.company_address as customer_company_address,
+        c.company_city as customer_company_city,
+        c.company_postal_code as customer_company_postal_code,
+        c.tax_id as customer_tax_id,
+        c.vat_id as customer_vat_id,
+        ct.id as contractor_id,
+        ct.email as contractor_email,
+        ct.first_name as contractor_first_name,
+        ct.last_name as contractor_last_name,
+        ct.phone as contractor_phone,
+        ct.company_name as contractor_company,
+        ct.company_address as contractor_company_address,
+        ct.company_city as contractor_company_city,
+        ct.company_postal_code as contractor_company_postal_code
+      FROM transport_orders o
+      LEFT JOIN users c ON o.customer_id = c.id
+      LEFT JOIN users ct ON o.contractor_id = ct.id
+      WHERE o.id = $1
+    `, [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    res.json({ order: result.rows[0] });
+  } catch (error) {
+    console.error('Get order details error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
