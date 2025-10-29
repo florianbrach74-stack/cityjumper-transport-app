@@ -327,4 +327,89 @@ router.post('/orders/:id/assign', adminAuth, async (req, res) => {
   }
 });
 
+// Get orders pending approval (with waiting time fees)
+router.get('/orders/pending-approval', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        o.*,
+        c.email as customer_email,
+        c.first_name as customer_first_name,
+        c.last_name as customer_last_name,
+        ct.email as contractor_email,
+        ct.first_name as contractor_first_name,
+        ct.last_name as contractor_last_name,
+        ct.company_name as contractor_company_name
+      FROM transport_orders o
+      LEFT JOIN users c ON o.customer_id = c.id
+      LEFT JOIN users ct ON o.contractor_id = ct.id
+      WHERE o.status = 'pending_approval'
+      ORDER BY o.updated_at DESC
+    `);
+    
+    res.json({ orders: result.rows });
+  } catch (error) {
+    console.error('Get pending approval orders error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Approve waiting time fee
+router.post('/orders/:id/approve-waiting-time', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { approved } = req.body; // true or false
+    
+    console.log(`⏱️ Admin ${approved ? 'approving' : 'rejecting'} waiting time for order #${id}`);
+    
+    if (approved) {
+      // Approve and move to completed
+      const result = await pool.query(
+        `UPDATE transport_orders 
+         SET status = 'completed',
+             waiting_time_approved = true,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1 
+         RETURNING *`,
+        [id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+      
+      console.log(`✅ Waiting time approved for order #${id}, fee: €${result.rows[0].waiting_time_fee}`);
+      res.json({ 
+        message: 'Waiting time approved',
+        order: result.rows[0] 
+      });
+    } else {
+      // Reject - set fee to 0 and move to completed
+      const result = await pool.query(
+        `UPDATE transport_orders 
+         SET status = 'completed',
+             waiting_time_approved = false,
+             waiting_time_fee = 0,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1 
+         RETURNING *`,
+        [id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+      
+      console.log(`❌ Waiting time rejected for order #${id}`);
+      res.json({ 
+        message: 'Waiting time rejected',
+        order: result.rows[0] 
+      });
+    }
+  } catch (error) {
+    console.error('Approve waiting time error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

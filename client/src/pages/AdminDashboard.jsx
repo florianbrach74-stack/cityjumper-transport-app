@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [selectedOrderForBids, setSelectedOrderForBids] = useState(null);
   const [bidsForOrder, setBidsForOrder] = useState([]);
   const [bidCounts, setBidCounts] = useState({});
+  const [pendingApprovalOrders, setPendingApprovalOrders] = useState([]);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -31,14 +32,16 @@ export default function AdminDashboard() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ordersRes, usersRes, statsRes] = await Promise.all([
+      const [ordersRes, usersRes, statsRes, pendingApprovalRes] = await Promise.all([
         api.get('/admin/orders'),
         api.get('/admin/users'),
-        api.get('/admin/stats')
+        api.get('/admin/stats'),
+        api.get('/admin/orders/pending-approval')
       ]);
       setOrders(ordersRes.data.orders);
       setUsers(usersRes.data.users);
       setStats(statsRes.data);
+      setPendingApprovalOrders(pendingApprovalRes.data.orders);
       
       // Load bid counts for pending orders
       const pendingOrders = ordersRes.data.orders.filter(o => o.status === 'pending');
@@ -140,6 +143,23 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error rejecting bid:', error);
       alert('Fehler beim Ablehnen der Bewerbung');
+    }
+  };
+
+  const approveWaitingTime = async (orderId, approved) => {
+    const message = approved 
+      ? 'Möchten Sie die Wartezeit-Vergütung freigeben?' 
+      : 'Möchten Sie die Wartezeit-Vergütung ablehnen?';
+    
+    if (!confirm(message)) return;
+    
+    try {
+      await api.post(`/admin/orders/${orderId}/approve-waiting-time`, { approved });
+      await loadData();
+      alert(approved ? 'Wartezeit-Vergütung freigegeben!' : 'Wartezeit-Vergütung abgelehnt.');
+    } catch (error) {
+      console.error('Error approving waiting time:', error);
+      alert('Fehler beim Bearbeiten der Wartezeit-Vergütung');
     }
   };
 
@@ -309,6 +329,21 @@ export default function AdminDashboard() {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               Alle Auftragnehmer ({users.filter(u => u.role === 'contractor').length})
+            </button>
+            <button
+              onClick={() => setActiveTab('approvals')}
+              className={`${
+                activeTab === 'approvals'
+                  ? 'border-orange-500 text-orange-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-1`}
+            >
+              <span>⏱️ Freigaben</span>
+              {pendingApprovalOrders.length > 0 && (
+                <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-orange-600 rounded-full">
+                  {pendingApprovalOrders.length}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setActiveTab('verifications')}
@@ -555,6 +590,80 @@ export default function AdminDashboard() {
                             ✗ Ablehnen
                           </button>
                         )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'approvals' && (
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold mb-4">⏱️ Wartezeit-Freigaben</h2>
+              {pendingApprovalOrders.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">Keine ausstehenden Freigaben</p>
+              ) : (
+                <div className="space-y-4">
+                  {pendingApprovalOrders.map((order) => (
+                    <div key={order.id} className="border rounded-lg p-4 bg-orange-50">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">
+                            Auftrag #{order.id}: {order.pickup_city} → {order.delivery_city}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            Auftragnehmer: {order.contractor_company_name || `${order.contractor_first_name} ${order.contractor_last_name}`}
+                          </p>
+                        </div>
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                          Wartet auf Freigabe
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-xs text-gray-500">Wartezeit Abholung</p>
+                          <p className="text-lg font-semibold">{order.pickup_waiting_minutes || 0} Min.</p>
+                        </div>
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-xs text-gray-500">Wartezeit Zustellung</p>
+                          <p className="text-lg font-semibold">{order.delivery_waiting_minutes || 0} Min.</p>
+                        </div>
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-xs text-gray-500">Gesamt Wartezeit</p>
+                          <p className="text-lg font-semibold text-orange-600">
+                            {(order.pickup_waiting_minutes || 0) + (order.delivery_waiting_minutes || 0)} Min.
+                          </p>
+                        </div>
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-xs text-gray-500">Berechnete Vergütung</p>
+                          <p className="text-lg font-semibold text-green-600">€{order.waiting_time_fee}</p>
+                        </div>
+                      </div>
+
+                      {order.waiting_time_notes && (
+                        <div className="bg-white p-3 rounded mb-4">
+                          <p className="text-xs text-gray-500 mb-1">Begründung:</p>
+                          <p className="text-sm text-gray-700">{order.waiting_time_notes}</p>
+                        </div>
+                      )}
+
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={() => approveWaitingTime(order.id, true)}
+                          className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                        >
+                          ✓ Freigeben (€{order.waiting_time_fee})
+                        </button>
+                        <button
+                          onClick={() => approveWaitingTime(order.id, false)}
+                          className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                        >
+                          ✗ Ablehnen
+                        </button>
                       </div>
                     </div>
                   ))}
