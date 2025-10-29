@@ -291,10 +291,10 @@ const Settings = () => {
               />
             </div>
 
-            {/* Business/Private Toggle */}
+            {/* Business/Private Toggle - For all users */}
             <div className="border-t pt-4">
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Kundentyp
+                {user?.role === 'contractor' ? 'Unternehmenstyp' : 'Kundentyp'}
               </label>
               <div className="flex gap-4">
                 <button

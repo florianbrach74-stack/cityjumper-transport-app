@@ -4,6 +4,7 @@ import { Truck, MapPin, Clock, Shield, Euro, ArrowRight, CheckCircle, LogIn, Log
 import AddressSearch from '../components/AddressSearch';
 import RouteMap from '../components/RouteMap';
 import Logo from '../components/Logo';
+import { formatPrice } from '../utils/formatPrice';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -434,11 +435,12 @@ export default function LandingPage() {
                 <div className="mt-6 bg-gradient-to-br from-primary-50 to-blue-50 border-2 border-primary-300 rounded-lg p-6 shadow-lg">
                   <div className="text-center">
                     <p className="text-sm font-medium text-gray-700 mb-2">💰 Empfohlener Preis</p>
-                    <p className="text-5xl font-bold text-primary-600 mb-2">
+                    <p className="text-5xl font-bold text-primary-600 mb-1">
                       €{calculatedPrice.recommendedPrice.toFixed(2)}
                     </p>
+                    <p className="text-sm text-gray-600 mb-4">zzgl. 19% MwSt.</p>
                     <p className="text-xs text-gray-500 mb-4">
-                      (Mindestpreis: €{calculatedPrice.minimumPrice.toFixed(2)})
+                      (Mindestpreis: €{calculatedPrice.minimumPrice.toFixed(2)} zzgl. MwSt.)
                     </p>
                     
                     <div className="bg-white rounded-lg p-4 mb-4 text-left">

@@ -514,7 +514,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Preis (€) *
+                  Preis (€) * <span className="text-xs text-gray-600">zzgl. 19% MwSt.</span>
                   <span className="text-xs text-gray-500 ml-2">(Automatisch berechnet, änderbar)</span>
                 </label>
                 <input

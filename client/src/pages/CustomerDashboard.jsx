@@ -3,6 +3,7 @@ import { ordersAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import CreateOrderModal from '../components/CreateOrderModal';
 import CMRViewer from '../components/CMRViewer';
+import { formatPrice } from '../utils/formatPrice';
 import { Plus, Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText } from 'lucide-react';
 
 const CustomerDashboard = () => {
@@ -261,7 +262,7 @@ const CustomerDashboard = () => {
                         {getStatusBadge(order.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {order.price ? `€${order.price}` : '-'}
+                        {order.price ? formatPrice(order.price) : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {(order.status === 'accepted' || order.status === 'in_transit' || order.status === 'completed') && (
