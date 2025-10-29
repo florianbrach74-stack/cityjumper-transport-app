@@ -20,20 +20,39 @@ const CMRSignature = ({ order, mode, onClose, onComplete }) => {
       const data = {};
 
       if (mode === 'pickup') {
-        if (!senderName || !senderSigRef.current?.isEmpty() === false || !carrierSigRef.current?.isEmpty() === false) {
-          alert('Bitte füllen Sie alle Felder aus und unterschreiben Sie.');
+        // Validate sender name and signatures
+        if (!senderName || !senderName.trim()) {
+          alert('Bitte geben Sie den Namen des Absenders ein.');
           setLoading(false);
           return;
         }
+        if (senderSigRef.current?.isEmpty()) {
+          alert('Bitte unterschreiben Sie als Absender.');
+          setLoading(false);
+          return;
+        }
+        if (carrierSigRef.current?.isEmpty()) {
+          alert('Bitte unterschreiben Sie als Frachtführer.');
+          setLoading(false);
+          return;
+        }
+        
         data.senderName = senderName;
         data.senderSignature = senderSigRef.current.toDataURL();
         data.carrierSignature = carrierSigRef.current.toDataURL();
       } else if (mode === 'delivery') {
-        if (!receiverName || !receiverSigRef.current?.isEmpty() === false) {
-          alert('Bitte füllen Sie alle Felder aus und unterschreiben Sie.');
+        // Validate receiver name and signature
+        if (!receiverName || !receiverName.trim()) {
+          alert('Bitte geben Sie den Namen des Empfängers ein.');
           setLoading(false);
           return;
         }
+        if (receiverSigRef.current?.isEmpty()) {
+          alert('Bitte lassen Sie den Empfänger unterschreiben.');
+          setLoading(false);
+          return;
+        }
+        
         data.receiverName = receiverName;
         data.receiverSignature = receiverSigRef.current.toDataURL();
       }
@@ -41,7 +60,7 @@ const CMRSignature = ({ order, mode, onClose, onComplete }) => {
       await onComplete(data);
     } catch (error) {
       console.error('Error submitting signatures:', error);
-      alert('Fehler beim Speichern der Unterschriften');
+      alert('Fehler beim Speichern der Unterschriften: ' + (error.message || 'Unbekannter Fehler'));
     } finally {
       setLoading(false);
     }
