@@ -462,23 +462,47 @@ const confirmPickup = async (req, res) => {
     const { senderName, senderSignature, carrierSignature } = req.body;
     const contractorId = req.user.id;
 
+    console.log('📦 Pickup confirmation started for order:', orderId);
+    console.log('Contractor ID:', contractorId);
+
+    // Validate input
+    if (!senderName || !senderSignature || !carrierSignature) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
     // Verify order belongs to this contractor
     const order = await Order.findById(orderId);
-    if (!order || order.contractor_id !== contractorId) {
+    if (!order) {
+      console.error('❌ Order not found:', orderId);
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    if (order.contractor_id !== contractorId) {
+      console.error('❌ Unauthorized access. Order contractor:', order.contractor_id, 'User:', contractorId);
       return res.status(403).json({ error: 'Unauthorized' });
     }
+
+    console.log('✅ Order verified, status:', order.status);
 
     // Get or create CMR
     let cmr = await CMR.findByOrderId(orderId);
     if (!cmr) {
+      console.log('📄 Creating new CMR for order:', orderId);
       cmr = await CMR.create(orderId);
     }
+    console.log('✅ CMR ready, ID:', cmr.id);
 
     // Get contractor details
     const contractor = await User.findById(contractorId);
+    if (!contractor) {
+      console.error('❌ Contractor not found:', contractorId);
+      return res.status(404).json({ error: 'Contractor not found' });
+    }
 
     // Update CMR with signatures
     const pool = require('../config/database');
+    const carrierName = contractor.company_name || `${contractor.first_name} ${contractor.last_name}`;
+    
+    console.log('💾 Updating CMR with signatures...');
     await pool.query(
       `UPDATE cmr 
        SET sender_name = $1,
@@ -491,18 +515,28 @@ const confirmPickup = async (req, res) => {
       [
         senderName,
         senderSignature,
-        contractor.company_name || `${contractor.first_name} ${contractor.last_name}`,
+        carrierName,
         carrierSignature,
         cmr.id
       ]
     );
+    console.log('✅ CMR signatures saved');
 
     // Update order status to picked_up
+    console.log('📊 Updating order status to picked_up...');
     await Order.updateStatus(orderId, 'picked_up');
+    console.log('✅ Order status updated');
 
     // Regenerate CMR PDF with signatures
+    console.log('📄 Regenerating CMR PDF...');
     const updatedCmr = await CMR.findByOrderId(orderId);
-    await CMRPdfGenerator.generateCMR(updatedCmr, order);
+    
+    try {
+      await CMRPdfGenerator.generateCMR(updatedCmr, order);
+      console.log('✅ CMR PDF generated');
+    } catch (pdfError) {
+      console.error('⚠️ CMR PDF generation failed (non-critical):', pdfError.message);
+    }
 
     // Send email to customer
     try {
