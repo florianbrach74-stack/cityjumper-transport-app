@@ -83,23 +83,35 @@ const getCMRByOrderId = async (req, res) => {
   try {
     const { orderId } = req.params;
     
+    console.log('📄 Fetching CMR for order:', orderId);
+    
     const cmr = await CMR.findByOrderId(orderId);
     if (!cmr) {
+      console.error('❌ CMR not found for order:', orderId);
       return res.status(404).json({ error: 'CMR document not found' });
     }
 
+    console.log('✅ CMR found, ID:', cmr.id);
+
     // Check authorization
     const order = await Order.findById(orderId);
+    if (!order) {
+      console.error('❌ Order not found:', orderId);
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
     if (
       req.user.role === 'customer' && order.customer_id !== req.user.id ||
       req.user.role === 'contractor' && order.contractor_id !== req.user.id
     ) {
+      console.error('❌ Access denied for user:', req.user.id);
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    console.log('✅ Authorization passed, returning CMR');
     res.json({ cmr });
   } catch (error) {
-    console.error('Get CMR error:', error);
+    console.error('❌ Get CMR error:', error);
     res.status(500).json({ error: 'Server error while fetching CMR' });
   }
 };
@@ -614,11 +626,20 @@ const confirmDelivery = async (req, res) => {
     console.log('✅ Receiver signature saved' + (deliveryPhoto ? ' with photo' : ''));
 
     // Update order status to delivered
+    console.log('📊 Updating order status to delivered...');
     await Order.updateStatus(orderId, 'delivered');
+    console.log('✅ Order status updated');
 
     // Regenerate CMR PDF with all signatures
+    console.log('📄 Regenerating CMR PDF...');
     const updatedCmr = await CMR.findByOrderId(orderId);
-    await CMRPdfGenerator.generateCMR(updatedCmr, order);
+    
+    try {
+      await CMRPdfGenerator.generateCMR(updatedCmr, order);
+      console.log('✅ CMR PDF generated');
+    } catch (pdfError) {
+      console.error('⚠️ CMR PDF generation failed (non-critical):', pdfError.message);
+    }
 
     // Send email to customer with CMR
     try {
