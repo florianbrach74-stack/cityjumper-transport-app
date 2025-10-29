@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ordersAPI, bidsAPI, verificationAPI } from '../services/api';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 import CMRViewer from '../components/CMRViewer';
 import CMRSignature from '../components/CMRSignature';
 import BidModal from '../components/BidModal';
 import EmployeeManagement from '../components/EmployeeManagement';
 import NotificationSettings from '../components/NotificationSettings';
+import { formatPrice } from '../utils/formatPrice';
 import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell } from 'lucide-react';
 
 const ContractorDashboard = () => {
@@ -346,13 +347,13 @@ const ContractorDashboard = () => {
           )}
           {order.price && (
             <div className="text-lg font-bold text-primary-600">
-              €{showAcceptButton ? (order.price * 0.85).toFixed(2) : order.price}
+              {formatPrice(showAcceptButton ? (order.price * 0.85) : order.price)}
               {showAcceptButton && (
                 <span className="text-xs text-gray-500 ml-1">(max.)</span>
               )}
               {!showAcceptButton && order.waiting_time_fee > 0 && order.waiting_time_approved && (
                 <span className="text-sm text-green-600 ml-2">
-                  + €{order.waiting_time_fee}
+                  + {formatPrice(order.waiting_time_fee)}
                 </span>
               )}
             </div>

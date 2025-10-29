@@ -15,7 +15,14 @@ const Settings = () => {
     last_name: '',
     email: '',
     phone: '',
+    is_business: false,
     company_name: '',
+    company_address: '',
+    company_city: '',
+    company_postal_code: '',
+    company_country: 'Deutschland',
+    tax_id: '',
+    vat_id: '',
     address: '',
     city: '',
     postal_code: '',
@@ -45,7 +52,14 @@ const Settings = () => {
       last_name: userData.last_name || '',
       email: userData.email || '',
       phone: userData.phone || '',
+      is_business: !!userData.company_name,
       company_name: userData.company_name || '',
+      company_address: userData.company_address || '',
+      company_city: userData.company_city || '',
+      company_postal_code: userData.company_postal_code || '',
+      company_country: userData.company_country || 'Deutschland',
+      tax_id: userData.tax_id || '',
+      vat_id: userData.vat_id || '',
       address: userData.address || '',
       city: userData.city || '',
       postal_code: userData.postal_code || '',
@@ -277,18 +291,130 @@ const Settings = () => {
               />
             </div>
 
-            {user?.role === 'contractor' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Building className="h-4 w-4 inline mr-1" />
-                  Firmenname
-                </label>
-                <input
-                  type="text"
-                  value={profileData.company_name}
-                  onChange={(e) => setProfileData({ ...profileData, company_name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                />
+            {/* Business/Private Toggle */}
+            <div className="border-t pt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Kundentyp
+              </label>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => setProfileData({ ...profileData, is_business: false })}
+                  className={`flex-1 p-3 border-2 rounded-lg transition-all ${
+                    !profileData.is_business
+                      ? 'border-primary-600 bg-primary-50 text-primary-700'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <User className="h-5 w-5 mx-auto mb-1" />
+                  <div className="text-sm font-medium">Privatkunde</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProfileData({ ...profileData, is_business: true })}
+                  className={`flex-1 p-3 border-2 rounded-lg transition-all ${
+                    profileData.is_business
+                      ? 'border-primary-600 bg-primary-50 text-primary-700'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <Building className="h-5 w-5 mx-auto mb-1" />
+                  <div className="text-sm font-medium">Firmenkunde</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Company Details - Only show if business */}
+            {profileData.is_business && (
+              <div className="border-t pt-4 space-y-4">
+                <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                  <Building className="h-5 w-5 mr-2" />
+                  Firmendaten (für Rechnungsstellung)
+                </h3>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Firmenname *
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.company_name}
+                    onChange={(e) => setProfileData({ ...profileData, company_name: e.target.value })}
+                    placeholder="z.B. Amazon GmbH"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Firmenadresse
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.company_address}
+                    onChange={(e) => setProfileData({ ...profileData, company_address: e.target.value })}
+                    placeholder="Straße und Hausnummer"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      PLZ
+                    </label>
+                    <input
+                      type="text"
+                      value={profileData.company_postal_code}
+                      onChange={(e) => setProfileData({ ...profileData, company_postal_code: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Stadt
+                    </label>
+                    <input
+                      type="text"
+                      value={profileData.company_city}
+                      onChange={(e) => setProfileData({ ...profileData, company_city: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Steuernummer (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={profileData.tax_id}
+                      onChange={(e) => setProfileData({ ...profileData, tax_id: e.target.value })}
+                      placeholder="123/456/789"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      USt-IdNr. (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={profileData.vat_id}
+                      onChange={(e) => setProfileData({ ...profileData, vat_id: e.target.value })}
+                      placeholder="DE123456789"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    💡 Diese Daten werden für die Rechnungsstellung verwendet und beim Erstellen von Aufträgen automatisch vorausgefüllt.
+                  </p>
+                </div>
               </div>
             )}
 
