@@ -62,8 +62,10 @@ export default function ContractorOrdersView() {
     try {
       const response = await api.get(`/cmr/order/${orderId}`);
       if (response.data.cmr) {
+        // Get the base URL from the current API configuration
+        const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         // Open CMR PDF in new tab
-        window.open(`${api.defaults.baseURL}/cmr/${response.data.cmr.id}/pdf`, '_blank');
+        window.open(`${baseURL}/api/cmr/${response.data.cmr.id}/pdf`, '_blank');
       } else {
         alert('CMR noch nicht verfügbar');
       }
