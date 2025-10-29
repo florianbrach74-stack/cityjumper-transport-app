@@ -8,9 +8,8 @@ const BidModal = ({ order, onClose, onSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Calculate max bid (85% of customer price)
-  const maxBid = order.price * 0.85;
-  const suggestedBid = maxBid;
+  // Suggested bid (80% of customer price as a guideline)
+  const suggestedBid = order.price * 0.80;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,11 +18,6 @@ const BidModal = ({ order, onClose, onSuccess }) => {
     const bidValue = parseFloat(bidAmount);
     if (isNaN(bidValue) || bidValue <= 0) {
       setError('Bitte geben Sie einen gültigen Preis ein');
-      return;
-    }
-
-    if (bidValue > maxBid) {
-      setError(`Ihr Gebot darf maximal ${maxBid.toFixed(2)}€ betragen`);
       return;
     }
 
@@ -72,7 +66,7 @@ const BidModal = ({ order, onClose, onSuccess }) => {
               <strong>Fahrzeug:</strong> {order.vehicle_type}
             </p>
             <p className="text-sm text-gray-600">
-              <strong>Max. Gebot:</strong> <span className="font-semibold text-primary-600">€{maxBid.toFixed(2)}</span>
+              <strong>Kundenpreis:</strong> <span className="font-semibold text-primary-600">€{order.price.toFixed(2)}</span>
             </p>
           </div>
 
@@ -87,10 +81,9 @@ const BidModal = ({ order, onClose, onSuccess }) => {
                 type="number"
                 step="0.01"
                 min="0"
-                max={maxBid}
                 value={bidAmount}
                 onChange={(e) => setBidAmount(e.target.value)}
-                placeholder={`Max. ${maxBid.toFixed(2)}€`}
+                placeholder="Ihr Preis-Angebot in €"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
               />
@@ -99,11 +92,11 @@ const BidModal = ({ order, onClose, onSuccess }) => {
                 onClick={() => setBidAmount(suggestedBid.toFixed(2))}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-primary-600 hover:text-primary-700"
               >
-                Max. verwenden
+                Vorschlag
               </button>
             </div>
             <p className="mt-1 text-xs text-gray-500">
-              Sie erhalten 85% des Kundenpreises (€{order.price})
+              Geben Sie Ihr gewünschtes Angebot ein
             </p>
           </div>
 
