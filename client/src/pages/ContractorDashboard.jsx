@@ -265,6 +265,49 @@ const ContractorDashboard = () => {
           </div>
         )}
 
+        {/* Waiting Time Notice for completed/delivered orders */}
+        {!showAcceptButton && (order.status === 'delivered' || order.status === 'completed' || order.status === 'pending_approval') && (
+          (order.pickup_waiting_minutes > 0 || order.delivery_waiting_minutes > 0) && (
+            <div className={`pt-3 border-t ${
+              order.status === 'pending_approval' ? 'bg-orange-50' : 
+              order.waiting_time_approved ? 'bg-green-50' : 'bg-gray-50'
+            } -mx-6 px-6 py-3`}>
+              <div className="flex items-start space-x-2">
+                <div className="flex-shrink-0">
+                  {order.status === 'pending_approval' ? '⏱️' : 
+                   order.waiting_time_approved ? '✅' : 'ℹ️'}
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-gray-900">
+                    Wartezeit-Vergütung
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    Abholung: {order.pickup_waiting_minutes || 0} Min. | 
+                    Zustellung: {order.delivery_waiting_minutes || 0} Min.
+                  </div>
+                  {order.waiting_time_fee > 0 && (
+                    <div className="text-sm font-semibold text-green-600 mt-1">
+                      Vergütung: €{order.waiting_time_fee}
+                    </div>
+                  )}
+                  <div className={`text-xs mt-2 px-3 py-2 rounded ${
+                    order.status === 'pending_approval' ? 'bg-orange-100 text-orange-800' :
+                    order.waiting_time_approved ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {order.status === 'pending_approval' ? (
+                      <>⚠️ <strong>Bitte noch nicht abrechnen!</strong> Wartezeit muss erst vom Admin freigegeben werden.</>
+                    ) : order.waiting_time_approved ? (
+                      <>✓ <strong>Freigegeben!</strong> Sie können die Wartezeit-Vergütung abrechnen.</>
+                    ) : (
+                      <>❌ Wartezeit-Vergütung wurde abgelehnt.</>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        )}
+
         {/* Price and Customer - Hide customer name for pending orders */}
         <div className="flex justify-between items-center pt-3 border-t">
           {!showAcceptButton && (
@@ -282,6 +325,11 @@ const ContractorDashboard = () => {
               €{showAcceptButton ? (order.price * 0.85).toFixed(2) : order.price}
               {showAcceptButton && (
                 <span className="text-xs text-gray-500 ml-1">(max.)</span>
+              )}
+              {!showAcceptButton && order.waiting_time_fee > 0 && order.waiting_time_approved && (
+                <span className="text-sm text-green-600 ml-2">
+                  + €{order.waiting_time_fee}
+                </span>
               )}
             </div>
           )}
@@ -457,7 +505,7 @@ const ContractorDashboard = () => {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
             >
               <CheckCircle className="h-5 w-5" />
-              <span>Abgeschlossene Aufträge ({myOrders.filter(o => o.status === 'delivered' || o.status === 'completed').length})</span>
+              <span>Abgeschlossene Aufträge ({myOrders.filter(o => o.status === 'delivered' || o.status === 'completed' || o.status === 'pending_approval').length})</span>
             </button>
             <button
               onClick={() => setActiveTab('employees')}
@@ -571,7 +619,7 @@ const ContractorDashboard = () => {
           </div>
         ) : activeTab === 'completed' ? (
           <div>
-            {myOrders.filter(o => o.status === 'delivered' || o.status === 'completed').length === 0 ? (
+            {myOrders.filter(o => o.status === 'delivered' || o.status === 'completed' || o.status === 'pending_approval').length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                 <CheckCircle className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">Keine abgeschlossenen Aufträge</h3>
@@ -581,7 +629,7 @@ const ContractorDashboard = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {myOrders.filter(o => o.status === 'delivered' || o.status === 'completed').map((order) => (
+                {myOrders.filter(o => o.status === 'delivered' || o.status === 'completed' || o.status === 'pending_approval').map((order) => (
                   <OrderCard key={order.id} order={order} showAcceptButton={false} />
                 ))}
               </div>
