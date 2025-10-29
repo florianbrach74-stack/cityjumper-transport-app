@@ -17,6 +17,7 @@ export default function AdminDashboard() {
   const [selectedOrderForCMR, setSelectedOrderForCMR] = useState(null);
   const [selectedOrderForBids, setSelectedOrderForBids] = useState(null);
   const [bidsForOrder, setBidsForOrder] = useState([]);
+  const [bidCounts, setBidCounts] = useState({});
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -38,6 +39,21 @@ export default function AdminDashboard() {
       setOrders(ordersRes.data.orders);
       setUsers(usersRes.data.users);
       setStats(statsRes.data);
+      
+      // Load bid counts for pending orders
+      const pendingOrders = ordersRes.data.orders.filter(o => o.status === 'pending');
+      const counts = {};
+      await Promise.all(
+        pendingOrders.map(async (order) => {
+          try {
+            const response = await bidsAPI.getBidsForOrder(order.id);
+            counts[order.id] = response.data.bids.length;
+          } catch (error) {
+            counts[order.id] = 0;
+          }
+        })
+      );
+      setBidCounts(counts);
     } catch (error) {
       console.error('Error loading admin data:', error);
       alert('Fehler beim Laden der Daten');
@@ -360,9 +376,14 @@ export default function AdminDashboard() {
                             {order.status === 'pending' && (
                               <button
                                 onClick={() => viewBids(order)}
-                                className="text-blue-600 hover:text-blue-900 font-medium"
+                                className="text-blue-600 hover:text-blue-900 font-medium flex items-center space-x-1"
                               >
-                                Bewerbungen
+                                <span>Bewerbungen</span>
+                                {bidCounts[order.id] > 0 && (
+                                  <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                                    {bidCounts[order.id]}
+                                  </span>
+                                )}
                               </button>
                             )}
                             {!order.contractor_id && order.status === 'pending' && (
