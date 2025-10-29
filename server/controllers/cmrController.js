@@ -673,16 +673,20 @@ const confirmDelivery = async (req, res) => {
     }
 
     // Calculate total waiting time and fee
+    // IMPORTANT: The 30 minutes free allowance applies to the TOTAL waiting time, not per location
     const totalPickupWaiting = order.pickup_waiting_minutes || 0;
-    const totalDeliveryWaiting = deliveryWaitingMinutes || 0;
+    const totalDeliveryWaiting = parseInt(deliveryWaitingMinutes) || 0;
     const totalWaitingMinutes = totalPickupWaiting + totalDeliveryWaiting;
     
     let waitingTimeFee = 0;
     if (totalWaitingMinutes > 30) {
-      const chargeableMinutes = totalWaitingMinutes - 30;
-      const blocks = Math.ceil(chargeableMinutes / 5);
-      waitingTimeFee = blocks * 3;
-      console.log(`⏱️ Total waiting time: ${totalWaitingMinutes} min, Fee: €${waitingTimeFee}`);
+      const chargeableMinutes = totalWaitingMinutes - 30; // Subtract 30 min free allowance from TOTAL
+      const blocks = Math.ceil(chargeableMinutes / 5); // Round up to nearest 5-minute block
+      waitingTimeFee = blocks * 3; // €3 per 5-minute block
+      console.log(`⏱️ Total waiting time: ${totalWaitingMinutes} min (Pickup: ${totalPickupWaiting}, Delivery: ${totalDeliveryWaiting})`);
+      console.log(`⏱️ Chargeable: ${chargeableMinutes} min (${blocks} blocks × €3) = €${waitingTimeFee}`);
+    } else {
+      console.log(`⏱️ Total waiting time: ${totalWaitingMinutes} min - within free 30 min allowance`);
     }
 
     // Update order status based on waiting time
@@ -754,7 +758,12 @@ const confirmDelivery = async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Confirm delivery error:', error);
-    res.status(500).json({ error: 'Server error while confirming delivery' });
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Server error while confirming delivery',
+      details: error.message 
+    });
   }
 };
 
