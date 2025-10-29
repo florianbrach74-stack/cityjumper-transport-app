@@ -9,11 +9,21 @@ const CMRSignature = ({ order, mode, onClose, onComplete }) => {
   const [receiverName, setReceiverName] = useState('');
   const [receiverSignature, setReceiverSignature] = useState(null);
   const [deliveryPhoto, setDeliveryPhoto] = useState(null);
+  const [waitingMinutes, setWaitingMinutes] = useState(0);
+  const [waitingNotes, setWaitingNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
   const senderSigRef = useRef(null);
   const carrierSigRef = useRef(null);
   const receiverSigRef = useRef(null);
+
+  // Calculate waiting time fee
+  const calculateWaitingFee = (minutes) => {
+    if (minutes <= 30) return 0;
+    const chargeableMinutes = minutes - 30;
+    const blocks = Math.ceil(chargeableMinutes / 5);
+    return blocks * 3;
+  };
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -41,6 +51,10 @@ const CMRSignature = ({ order, mode, onClose, onComplete }) => {
         data.senderName = senderName;
         data.senderSignature = senderSigRef.current.toDataURL();
         data.carrierSignature = carrierSigRef.current.toDataURL();
+        data.pickupWaitingMinutes = parseInt(waitingMinutes) || 0;
+        if (waitingNotes.trim()) {
+          data.waitingNotes = waitingNotes.trim();
+        }
       } else if (mode === 'delivery') {
         // Validate receiver name and signature
         if (!receiverName || !receiverName.trim()) {
@@ -58,6 +72,10 @@ const CMRSignature = ({ order, mode, onClose, onComplete }) => {
         data.receiverSignature = receiverSigRef.current.toDataURL();
         if (deliveryPhoto) {
           data.deliveryPhoto = deliveryPhoto;
+        }
+        data.deliveryWaitingMinutes = parseInt(waitingMinutes) || 0;
+        if (waitingNotes.trim()) {
+          data.waitingNotes = waitingNotes.trim();
         }
       }
 
@@ -162,6 +180,44 @@ const CMRSignature = ({ order, mode, onClose, onComplete }) => {
                   </button>
                 </div>
               </div>
+              
+              {/* Waiting Time for Pickup */}
+              <div className="border rounded-lg p-4 mt-4 bg-yellow-50">
+                <h4 className="font-medium text-gray-900 mb-3">⏱️ Wartezeit (optional)</h4>
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Wartezeit in Minuten
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={waitingMinutes}
+                    onChange={(e) => setWaitingMinutes(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="0"
+                  />
+                  <p className="mt-1 text-xs text-gray-600">
+                    Erste 30 Min. inklusive, danach je 5 Min. = €3
+                  </p>
+                  {waitingMinutes > 30 && (
+                    <p className="mt-1 text-sm font-semibold text-green-600">
+                      Vergütung: €{calculateWaitingFee(waitingMinutes)} (nach Admin-Freigabe)
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Grund der Wartezeit
+                  </label>
+                  <textarea
+                    value={waitingNotes}
+                    onChange={(e) => setWaitingNotes(e.target.value)}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="z.B. Absender nicht vor Ort, Laderampe besetzt..."
+                  />
+                </div>
+              </div>
             </>
           )}
 
@@ -239,6 +295,44 @@ const CMRSignature = ({ order, mode, onClose, onComplete }) => {
                     </button>
                   </div>
                 )}
+              </div>
+              
+              {/* Waiting Time for Delivery */}
+              <div className="border rounded-lg p-4 mt-4 bg-yellow-50">
+                <h4 className="font-medium text-gray-900 mb-3">⏱️ Wartezeit (optional)</h4>
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Wartezeit in Minuten
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={waitingMinutes}
+                    onChange={(e) => setWaitingMinutes(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="0"
+                  />
+                  <p className="mt-1 text-xs text-gray-600">
+                    Erste 30 Min. inklusive, danach je 5 Min. = €3
+                  </p>
+                  {waitingMinutes > 30 && (
+                    <p className="mt-1 text-sm font-semibold text-green-600">
+                      Vergütung: €{calculateWaitingFee(waitingMinutes)} (nach Admin-Freigabe)
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Grund der Wartezeit
+                  </label>
+                  <textarea
+                    value={waitingNotes}
+                    onChange={(e) => setWaitingNotes(e.target.value)}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="z.B. Empfänger nicht vor Ort, Entladung verzögert..."
+                  />
+                </div>
               </div>
             </div>
           )}

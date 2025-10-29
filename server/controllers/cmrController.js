@@ -487,11 +487,12 @@ const downloadCMRPdf = async (req, res) => {
 const confirmPickup = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { senderName, senderSignature, carrierSignature } = req.body;
+    const { senderName, senderSignature, carrierSignature, pickupWaitingMinutes, waitingNotes } = req.body;
     const contractorId = req.user.id;
 
     console.log('📦 Pickup confirmation started for order:', orderId);
     console.log('Contractor ID:', contractorId);
+    console.log('Pickup waiting time:', pickupWaitingMinutes, 'minutes');
 
     // Validate input
     if (!senderName || !senderSignature || !carrierSignature) {
@@ -549,6 +550,19 @@ const confirmPickup = async (req, res) => {
       ]
     );
     console.log('✅ CMR signatures saved');
+
+    // Update order with waiting time if provided
+    if (pickupWaitingMinutes && pickupWaitingMinutes > 0) {
+      console.log('⏱️ Saving pickup waiting time...');
+      await pool.query(
+        `UPDATE transport_orders 
+         SET pickup_waiting_minutes = $1,
+             waiting_time_notes = $2
+         WHERE id = $3`,
+        [pickupWaitingMinutes, waitingNotes || null, orderId]
+      );
+      console.log(`✅ Pickup waiting time saved: ${pickupWaitingMinutes} minutes`);
+    }
 
     // Update order status to picked_up
     console.log('📊 Updating order status to picked_up...');
@@ -611,10 +625,11 @@ const confirmPickup = async (req, res) => {
 const confirmDelivery = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { receiverName, receiverSignature, deliveryPhoto } = req.body;
+    const { receiverName, receiverSignature, deliveryPhoto, deliveryWaitingMinutes, waitingNotes } = req.body;
     const contractorId = req.user.id;
 
     console.log('📦 Delivery confirmation started for order:', orderId);
+    console.log('Delivery waiting time:', deliveryWaitingMinutes, 'minutes');
 
     // Verify order belongs to this contractor
     const order = await Order.findById(orderId);
@@ -641,10 +656,53 @@ const confirmDelivery = async (req, res) => {
     );
     console.log('✅ Receiver signature saved' + (deliveryPhoto ? ' with photo' : ''));
 
-    // Update order status to delivered
-    console.log('📊 Updating order status to delivered...');
-    await Order.updateStatus(orderId, 'delivered');
-    console.log('✅ Order status updated');
+    // Update order with delivery waiting time if provided
+    if (deliveryWaitingMinutes && deliveryWaitingMinutes > 0) {
+      console.log('⏱️ Saving delivery waiting time...');
+      const existingNotes = order.waiting_time_notes || '';
+      const combinedNotes = existingNotes ? `${existingNotes}\n${waitingNotes || ''}` : (waitingNotes || '');
+      
+      await pool.query(
+        `UPDATE transport_orders 
+         SET delivery_waiting_minutes = $1,
+             waiting_time_notes = $2
+         WHERE id = $3`,
+        [deliveryWaitingMinutes, combinedNotes, orderId]
+      );
+      console.log(`✅ Delivery waiting time saved: ${deliveryWaitingMinutes} minutes`);
+    }
+
+    // Calculate total waiting time and fee
+    const totalPickupWaiting = order.pickup_waiting_minutes || 0;
+    const totalDeliveryWaiting = deliveryWaitingMinutes || 0;
+    const totalWaitingMinutes = totalPickupWaiting + totalDeliveryWaiting;
+    
+    let waitingTimeFee = 0;
+    if (totalWaitingMinutes > 30) {
+      const chargeableMinutes = totalWaitingMinutes - 30;
+      const blocks = Math.ceil(chargeableMinutes / 5);
+      waitingTimeFee = blocks * 3;
+      console.log(`⏱️ Total waiting time: ${totalWaitingMinutes} min, Fee: €${waitingTimeFee}`);
+    }
+
+    // Update order status based on waiting time
+    let newStatus = 'delivered';
+    if (waitingTimeFee > 0) {
+      newStatus = 'pending_approval'; // Needs admin approval for waiting time fee
+      console.log('📊 Order requires admin approval for waiting time fee');
+      
+      await pool.query(
+        `UPDATE transport_orders 
+         SET status = $1,
+             waiting_time_fee = $2
+         WHERE id = $3`,
+        [newStatus, waitingTimeFee, orderId]
+      );
+    } else {
+      await Order.updateStatus(orderId, 'delivered');
+    }
+    
+    console.log(`✅ Order status updated to: ${newStatus}`);
 
     // Regenerate CMR PDF with all signatures
     console.log('📄 Regenerating CMR PDF...');
