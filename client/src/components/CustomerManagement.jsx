@@ -238,12 +238,17 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
                           </div>
                         </div>
                       </div>
-                    ) : customer.company_name ? (
+                    ) : (customer.company_name || customer.company_address || customer.tax_id || customer.vat_id) ? (
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
                         <h4 className="text-sm font-medium text-blue-900 mb-2">
-                          📋 Firmendaten (Rechnungsstellung)
+                          📋 {customer.company_name ? 'Firmendaten' : 'Zusätzliche Daten'} (Rechnungsstellung)
                         </h4>
                         <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
+                          {customer.company_name && (
+                            <div className="col-span-2">
+                              <span className="text-blue-600">Firma:</span> {customer.company_name}
+                            </div>
+                          )}
                           {customer.company_address && (
                             <div>
                               <span className="text-blue-600">Adresse:</span> {customer.company_address}
