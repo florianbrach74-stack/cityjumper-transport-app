@@ -40,20 +40,20 @@ class CMRPdfGenerator {
 
         doc.moveDown(3);
 
-        // Box 1: Sender (Absender)
+        // Box 1: Sender (Absender) - Use contact name from order
         this.drawBox(doc, 30, 150, 260, 80);
         doc.fontSize(8).font('Helvetica-Bold').text('1. Absender (Name, Anschrift, Land)', 35, 155);
         doc.fontSize(9).font('Helvetica')
-          .text(cmrData.sender_name, 35, 170)
+          .text(order.pickup_contact_name || cmrData.sender_name, 35, 170)
           .text(cmrData.sender_address, 35, 183)
           .text(`${cmrData.sender_postal_code} ${cmrData.sender_city}`, 35, 196)
           .text(cmrData.sender_country, 35, 209);
 
-        // Box 2: Consignee (Empfänger)
+        // Box 2: Consignee (Empfänger) - Use contact name from order
         this.drawBox(doc, 30, 235, 260, 80);
         doc.fontSize(8).font('Helvetica-Bold').text('2. Empfänger (Name, Anschrift, Land)', 35, 240);
         doc.fontSize(9).font('Helvetica')
-          .text(cmrData.consignee_name, 35, 255)
+          .text(order.delivery_contact_name || cmrData.consignee_name, 35, 255)
           .text(cmrData.consignee_address, 35, 268)
           .text(`${cmrData.consignee_postal_code} ${cmrData.consignee_city}`, 35, 281)
           .text(cmrData.consignee_country, 35, 294);
@@ -143,9 +143,9 @@ class CMRPdfGenerator {
             console.error('Error adding sender signature image:', err);
             doc.fontSize(7).text('✓ Unterschrieben', 35, signatureY + 60);
           }
-          // Add sender name
-          if (cmrData.sender_name) {
-            doc.fontSize(7).font('Helvetica').text(cmrData.sender_name, 35, signatureY + 78);
+          // Add signer name (person who actually signed)
+          if (cmrData.sender_signer_name || cmrData.sender_signed_name) {
+            doc.fontSize(7).font('Helvetica').text(cmrData.sender_signer_name || cmrData.sender_signed_name, 35, signatureY + 78);
           }
           doc.fontSize(6).text(new Date(cmrData.sender_signed_at).toLocaleString('de-DE'), 35, signatureY + 88);
         }
@@ -188,9 +188,9 @@ class CMRPdfGenerator {
             console.error('Error adding signature image:', err);
             doc.fontSize(7).text('✓ Unterschrieben', 395, signatureY + 60);
           }
-          // Add consignee name
-          if (cmrData.consignee_name) {
-            doc.fontSize(7).font('Helvetica').text(cmrData.consignee_name, 395, signatureY + 78);
+          // Add signer name (person who actually signed)
+          if (cmrData.consignee_signer_name || cmrData.consignee_signed_name) {
+            doc.fontSize(7).font('Helvetica').text(cmrData.consignee_signer_name || cmrData.consignee_signed_name, 395, signatureY + 78);
           }
           doc.fontSize(6).text(new Date(cmrData.consignee_signed_at).toLocaleString('de-DE'), 395, signatureY + 88);
         }

@@ -149,7 +149,8 @@ class CMR {
       case 'sender':
         query = `
           UPDATE cmr_documents
-          SET sender_signature = $1, sender_signed_at = $2, sender_signature_location = $3, sender_signed_name = $4
+          SET sender_signature = $1, sender_signed_at = $2, sender_signature_location = $3, 
+              sender_signed_name = $4, sender_signer_name = $4
           WHERE id = $5
           RETURNING *
         `;
@@ -170,7 +171,7 @@ class CMR {
           UPDATE cmr_documents
           SET consignee_signature = $1, consignee_signed_at = $2, 
               consignee_signature_location = $3, consignee_remarks = $4,
-              consignee_signed_name = $5, consignee_photo = $6,
+              consignee_signed_name = $5, consignee_signer_name = $5, consignee_photo = $6,
               status = 'signed', delivered_at = $2
           WHERE id = $7
           RETURNING *
