@@ -8,8 +8,13 @@ const BidModal = ({ order, onClose, onSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Safety check
+  if (!order) {
+    return null;
+  }
+
   // Suggested bid (80% of customer price as a guideline)
-  const suggestedBid = order.price * 0.80;
+  const suggestedBid = order.price ? order.price * 0.80 : 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,7 +71,7 @@ const BidModal = ({ order, onClose, onSuccess }) => {
               <strong>Fahrzeug:</strong> {order.vehicle_type}
             </p>
             <p className="text-sm text-gray-600">
-              <strong>Kundenpreis:</strong> <span className="font-semibold text-primary-600">€{order.price.toFixed(2)}</span>
+              <strong>Kundenpreis:</strong> <span className="font-semibold text-primary-600">€{order.price ? order.price.toFixed(2) : '0.00'}</span>
             </p>
           </div>
 
