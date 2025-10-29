@@ -487,7 +487,7 @@ const confirmPickup = async (req, res) => {
     let cmr = await CMR.findByOrderId(orderId);
     if (!cmr) {
       console.log('📄 Creating new CMR for order:', orderId);
-      cmr = await CMR.create(orderId);
+      cmr = await CMR.createFromOrder(orderId);
     }
     console.log('✅ CMR ready, ID:', cmr.id);
 

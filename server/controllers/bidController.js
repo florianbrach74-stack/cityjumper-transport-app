@@ -133,7 +133,7 @@ const acceptBid = async (req, res) => {
     const CMRPdfGenerator = require('../services/cmrPdfGenerator');
     
     try {
-      const cmr = await CMR.create(order.id);
+      const cmr = await CMR.createFromOrder(order.id);
       await CMRPdfGenerator.generateCMR(cmr, order);
       console.log(`✅ CMR document created for order #${order.id}`);
     } catch (cmrError) {

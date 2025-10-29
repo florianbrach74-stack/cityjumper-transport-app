@@ -75,6 +75,23 @@ class CMR {
     return result.rows[0];
   }
 
+  // Create CMR from order ID only (minimal creation)
+  static async createFromOrder(orderId) {
+    // Generate CMR number
+    const cmrNumberResult = await pool.query('SELECT generate_cmr_number() as cmr_number');
+    const cmr_number = cmrNumberResult.rows[0].cmr_number;
+
+    const query = `
+      INSERT INTO cmr_documents (
+        order_id, cmr_number, status
+      ) VALUES ($1, $2, 'created')
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [orderId, cmr_number]);
+    return result.rows[0];
+  }
+
   static async findByOrderId(orderId) {
     const query = 'SELECT * FROM cmr_documents WHERE order_id = $1';
     const result = await pool.query(query, [orderId]);
