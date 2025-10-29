@@ -583,8 +583,10 @@ const confirmPickup = async (req, res) => {
 const confirmDelivery = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { receiverName, receiverSignature } = req.body;
+    const { receiverName, receiverSignature, deliveryPhoto } = req.body;
     const contractorId = req.user.id;
+
+    console.log('📦 Delivery confirmation started for order:', orderId);
 
     // Verify order belongs to this contractor
     const order = await Order.findById(orderId);
@@ -598,16 +600,18 @@ const confirmDelivery = async (req, res) => {
       return res.status(404).json({ error: 'CMR not found' });
     }
 
-    // Update CMR with receiver signature
+    // Update CMR with receiver signature and optional photo
     const pool = require('../config/database');
     await pool.query(
       `UPDATE cmr_documents 
        SET consignee_name = $1,
            consignee_signature = $2,
-           consignee_signed_at = CURRENT_TIMESTAMP
+           consignee_signed_at = CURRENT_TIMESTAMP,
+           consignee_photo = $4
        WHERE id = $3`,
-      [receiverName, receiverSignature, cmr.id]
+      [receiverName, receiverSignature, cmr.id, deliveryPhoto || null]
     );
+    console.log('✅ Receiver signature saved' + (deliveryPhoto ? ' with photo' : ''));
 
     // Update order status to delivered
     await Order.updateStatus(orderId, 'delivered');

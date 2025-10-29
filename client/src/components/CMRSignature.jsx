@@ -8,6 +8,7 @@ const CMRSignature = ({ order, mode, onClose, onComplete }) => {
   const [carrierSignature, setCarrierSignature] = useState(null);
   const [receiverName, setReceiverName] = useState('');
   const [receiverSignature, setReceiverSignature] = useState(null);
+  const [deliveryPhoto, setDeliveryPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const senderSigRef = useRef(null);
@@ -55,6 +56,9 @@ const CMRSignature = ({ order, mode, onClose, onComplete }) => {
         
         data.receiverName = receiverName;
         data.receiverSignature = receiverSigRef.current.toDataURL();
+        if (deliveryPhoto) {
+          data.deliveryPhoto = deliveryPhoto;
+        }
       }
 
       await onComplete(data);
@@ -173,10 +177,10 @@ const CMRSignature = ({ order, mode, onClose, onComplete }) => {
                   value={receiverName}
                   onChange={(e) => setReceiverName(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  placeholder="Vollständiger Name"
+                  placeholder="Vollständiger Name (oder 'Briefkasten' bei Einwurf)"
                 />
               </div>
-              <div>
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Unterschrift Empfänger *
                 </label>
@@ -194,6 +198,47 @@ const CMRSignature = ({ order, mode, onClose, onComplete }) => {
                 >
                   Unterschrift löschen
                 </button>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Zustellfoto (optional)
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Bei Briefkasteneinwurf: Foto vom Briefkasten mit Paket
+                </p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      // Check file size (max 5MB)
+                      if (file.size > 5 * 1024 * 1024) {
+                        alert('Foto ist zu groß! Maximale Größe: 5 MB');
+                        e.target.value = '';
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setDeliveryPhoto(reader.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                />
+                {deliveryPhoto && (
+                  <div className="mt-2">
+                    <img src={deliveryPhoto} alt="Zustellfoto" className="max-w-full h-40 rounded-lg" />
+                    <button
+                      onClick={() => setDeliveryPhoto(null)}
+                      className="mt-1 text-sm text-red-600 hover:text-red-700"
+                    >
+                      Foto entfernen
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
