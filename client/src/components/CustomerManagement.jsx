@@ -1,12 +1,48 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Building, Ban, CheckCircle, FileText } from 'lucide-react';
+import { User, Mail, Phone, Building, Ban, CheckCircle, FileText, Edit } from 'lucide-react';
 import InvoiceGenerator from './InvoiceGenerator';
+import api from '../services/api';
 
-const CustomerManagement = ({ users, onUpdateAccountStatus, onViewOrders }) => {
+const CustomerManagement = ({ users, onUpdateAccountStatus, onViewOrders, onReload }) => {
   const [selectedCustomerForInvoice, setSelectedCustomerForInvoice] = useState(null);
   const [invoiceOrder, setInvoiceOrder] = useState(null);
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
 
   const customers = users.filter(u => u.role === 'customer');
+
+  const startEdit = (customer) => {
+    setEditingCustomer(customer.id);
+    setEditFormData({
+      first_name: customer.first_name || '',
+      last_name: customer.last_name || '',
+      email: customer.email || '',
+      phone: customer.phone || '',
+      company_name: customer.company_name || '',
+      company_address: customer.company_address || '',
+      company_postal_code: customer.company_postal_code || '',
+      company_city: customer.company_city || '',
+      tax_id: customer.tax_id || '',
+      vat_id: customer.vat_id || '',
+    });
+  };
+
+  const saveEdit = async (customerId) => {
+    try {
+      await api.put('/users/profile', editFormData);
+      alert('Kundendaten erfolgreich aktualisiert!');
+      setEditingCustomer(null);
+      if (onReload) onReload();
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      alert('Fehler beim Aktualisieren der Kundendaten');
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingCustomer(null);
+    setEditFormData({});
+  };
 
   const handleAccountStatusChange = async (userId, newStatus) => {
     const statusText = newStatus === 'suspended' ? 'deaktivieren' : 'aktivieren';
@@ -88,12 +124,120 @@ const CustomerManagement = ({ users, onUpdateAccountStatus, onViewOrders }) => {
                       </div>
                     </div>
 
-                    {/* Company Details */}
-                    {customer.company_name && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                        <h4 className="text-sm font-medium text-blue-900 mb-2">
-                          📋 Firmendaten (Rechnungsstellung)
+                    {/* Company Details or Edit Form */}
+                    {editingCustomer === customer.id ? (
+                      <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-3">
+                        <h4 className="text-sm font-medium text-gray-900 mb-3">
+                          ✏️ Kundendaten bearbeiten
                         </h4>
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Vorname</label>
+                              <input
+                                type="text"
+                                value={editFormData.first_name}
+                                onChange={(e) => setEditFormData({...editFormData, first_name: e.target.value})}
+                                className="w-full px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Nachname</label>
+                              <input
+                                type="text"
+                                value={editFormData.last_name}
+                                onChange={(e) => setEditFormData({...editFormData, last_name: e.target.value})}
+                                className="w-full px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Firmenname</label>
+                            <input
+                              type="text"
+                              value={editFormData.company_name}
+                              onChange={(e) => setEditFormData({...editFormData, company_name: e.target.value})}
+                              className="w-full px-2 py-1 text-sm border rounded"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Firmenadresse</label>
+                            <input
+                              type="text"
+                              value={editFormData.company_address}
+                              onChange={(e) => setEditFormData({...editFormData, company_address: e.target.value})}
+                              className="w-full px-2 py-1 text-sm border rounded"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">PLZ</label>
+                              <input
+                                type="text"
+                                value={editFormData.company_postal_code}
+                                onChange={(e) => setEditFormData({...editFormData, company_postal_code: e.target.value})}
+                                className="w-full px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Stadt</label>
+                              <input
+                                type="text"
+                                value={editFormData.company_city}
+                                onChange={(e) => setEditFormData({...editFormData, company_city: e.target.value})}
+                                className="w-full px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Steuer-Nr</label>
+                              <input
+                                type="text"
+                                value={editFormData.tax_id}
+                                onChange={(e) => setEditFormData({...editFormData, tax_id: e.target.value})}
+                                className="w-full px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">USt-IdNr</label>
+                              <input
+                                type="text"
+                                value={editFormData.vat_id}
+                                onChange={(e) => setEditFormData({...editFormData, vat_id: e.target.value})}
+                                className="w-full px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex space-x-2 pt-2">
+                            <button
+                              onClick={() => saveEdit(customer.id)}
+                              className="flex-1 px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                            >
+                              Speichern
+                            </button>
+                            <button
+                              onClick={cancelEdit}
+                              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                            >
+                              Abbrechen
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : customer.company_name ? (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="text-sm font-medium text-blue-900">
+                            📋 Firmendaten (Rechnungsstellung)
+                          </h4>
+                          <button
+                            onClick={() => startEdit(customer)}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                        </div>
                         <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
                           {customer.company_address && (
                             <div>
@@ -117,7 +261,7 @@ const CustomerManagement = ({ users, onUpdateAccountStatus, onViewOrders }) => {
                           )}
                         </div>
                       </div>
-                    )}
+                    ) : null}
 
                     {/* Actions */}
                     <div className="flex space-x-2">

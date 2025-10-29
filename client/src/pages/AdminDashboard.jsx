@@ -583,6 +583,7 @@ export default function AdminDashboard() {
             users={users}
             onUpdateAccountStatus={updateAccountStatus}
             onViewOrders={viewCustomerOrders}
+            onReload={loadData}
           />
         )}
 
