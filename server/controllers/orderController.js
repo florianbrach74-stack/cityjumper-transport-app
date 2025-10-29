@@ -4,6 +4,7 @@ const User = require('../models/User');
 const { sendEmail, emailTemplates } = require('../config/email');
 const { createCMRForOrder } = require('./cmrController');
 const { sendNewOrderNotification } = require('../utils/emailService');
+const { calculateDistanceAndDuration } = require('../services/distanceService');
 const pool = require('../config/database');
 
 const createOrder = async (req, res) => {
@@ -41,6 +42,17 @@ const createOrder = async (req, res) => {
     };
 
     console.log('Processed order data:', orderData);
+    
+    // Calculate distance and duration
+    const { distance_km, duration_minutes } = calculateDistanceAndDuration(
+      orderData.pickup_postal_code,
+      orderData.delivery_postal_code
+    );
+    
+    // Add to order data
+    orderData.distance_km = distance_km;
+    orderData.duration_minutes = duration_minutes;
+    
     const order = await Order.create(orderData);
     console.log('Order created successfully:', order.id);
 

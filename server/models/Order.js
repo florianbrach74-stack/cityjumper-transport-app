@@ -38,10 +38,10 @@ class Order {
         delivery_address, delivery_city, delivery_postal_code, delivery_country,
         delivery_date, delivery_time, delivery_contact_name, delivery_contact_phone,
         vehicle_type, weight, length, width, height, pallets, description,
-        special_requirements, price, status
+        special_requirements, price, distance_km, duration_minutes, status
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
-        $18, $19, $20, $21, $22, $23, $24, $25, $26, 'pending'
+        $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, 'pending'
       ) RETURNING *
     `;
 
@@ -51,7 +51,7 @@ class Order {
       delivery_address, delivery_city, delivery_postal_code, delivery_country || 'Deutschland',
       delivery_date, delivery_time, delivery_contact_name, delivery_contact_phone,
       vehicle_type, weight, length, width, height, pallets, description,
-      special_requirements, price,
+      special_requirements, price, orderData.distance_km, orderData.duration_minutes,
     ];
 
     const result = await pool.query(query, values);

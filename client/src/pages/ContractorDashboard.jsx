@@ -240,6 +240,30 @@ const ContractorDashboard = () => {
           </div>
         </div>
 
+        {/* Distance and Duration */}
+        {(order.distance_km || order.duration_minutes) && (
+          <div className="grid grid-cols-2 gap-4 pt-3 border-t bg-blue-50 -mx-6 px-6 py-3">
+            {order.distance_km && (
+              <div className="text-sm">
+                <div className="text-gray-500 flex items-center">
+                  <span className="mr-1">🛣️</span> Entfernung
+                </div>
+                <div className="font-semibold text-blue-600">{order.distance_km} km</div>
+              </div>
+            )}
+            {order.duration_minutes && (
+              <div className="text-sm">
+                <div className="text-gray-500 flex items-center">
+                  <span className="mr-1">⏱️</span> Fahrzeit
+                </div>
+                <div className="font-semibold text-blue-600">
+                  {Math.floor(order.duration_minutes / 60)}h {order.duration_minutes % 60}min
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Additional Details - Only for accepted orders */}
         {!showAcceptButton && (order.weight || order.pallets || order.description) && (
           <div className="pt-3 border-t">
