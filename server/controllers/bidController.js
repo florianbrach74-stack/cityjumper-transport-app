@@ -37,13 +37,8 @@ const createBid = async (req, res) => {
       return res.status(400).json({ error: 'You have already applied for this order' });
     }
 
-    // Calculate max bid (85% of customer price)
-    const maxBid = order.price * 0.85;
-    if (bidAmount > maxBid) {
-      return res.status(400).json({ 
-        error: `Bid amount cannot exceed ${maxBid.toFixed(2)}€ (85% of customer price)` 
-      });
-    }
+    // No limit on bid amount - contractor can offer any price they want
+    // (Previously limited to 85% of customer price)
 
     // Create bid
     const bid = await OrderBid.create(orderId, contractorId, bidAmount, message);

@@ -16,8 +16,8 @@ const BidModal = ({ order, onClose, onSuccess }) => {
   // Ensure price is a number
   const orderPrice = parseFloat(order.price) || 0;
   
-  // Suggested bid (80% of customer price as a guideline)
-  const suggestedBid = orderPrice * 0.80;
+  // Suggested bid (85% of customer price - contractor doesn't see the actual customer price)
+  const suggestedBid = orderPrice * 0.85;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -74,7 +74,10 @@ const BidModal = ({ order, onClose, onSuccess }) => {
               <strong>Fahrzeug:</strong> {order.vehicle_type}
             </p>
             <p className="text-sm text-gray-600">
-              <strong>Kundenpreis:</strong> <span className="font-semibold text-primary-600">€{orderPrice.toFixed(2)}</span>
+              <strong>Vorgeschlagener Preis:</strong> <span className="font-semibold text-primary-600">€{suggestedBid.toFixed(2)}</span>
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Sie können jeden beliebigen Preis anbieten
             </p>
           </div>
 
