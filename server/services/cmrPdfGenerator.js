@@ -162,8 +162,8 @@ class CMRPdfGenerator {
             doc.fontSize(7).text('✓ Unterschrieben', 35, signatureY + 60);
           }
           // Add signer name (person who actually signed)
-          if (cmrData.sender_signer_name || cmrData.sender_signed_name) {
-            doc.fontSize(7).font('Helvetica').text(cmrData.sender_signer_name || cmrData.sender_signed_name, 35, signatureY + 78);
+          if (cmrData.sender_signed_name) {
+            doc.fontSize(7).font('Helvetica').text(cmrData.sender_signed_name, 35, signatureY + 78);
           }
           doc.fontSize(6).text(new Date(cmrData.sender_signed_at).toLocaleString('de-DE'), 35, signatureY + 88);
         }
@@ -207,8 +207,8 @@ class CMRPdfGenerator {
             doc.fontSize(7).text('✓ Unterschrieben', 395, signatureY + 60);
           }
           // Add signer name (person who actually signed)
-          if (cmrData.consignee_signer_name || cmrData.consignee_signed_name) {
-            doc.fontSize(7).font('Helvetica').text(cmrData.consignee_signer_name || cmrData.consignee_signed_name, 395, signatureY + 78);
+          if (cmrData.consignee_signed_name) {
+            doc.fontSize(7).font('Helvetica').text(cmrData.consignee_signed_name, 395, signatureY + 78);
           }
           doc.fontSize(6).text(new Date(cmrData.consignee_signed_at).toLocaleString('de-DE'), 395, signatureY + 88);
         }

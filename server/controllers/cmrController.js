@@ -534,7 +534,7 @@ const confirmPickup = async (req, res) => {
     console.log('💾 Updating CMR with signatures...');
     await pool.query(
       `UPDATE cmr_documents 
-       SET sender_name = $1,
+       SET sender_signed_name = $1,
            sender_signature = $2,
            sender_signed_at = CURRENT_TIMESTAMP,
            carrier_name = $3,
@@ -647,7 +647,7 @@ const confirmDelivery = async (req, res) => {
     const pool = require('../config/database');
     await pool.query(
       `UPDATE cmr_documents 
-       SET consignee_name = $1,
+       SET consignee_signed_name = $1,
            consignee_signature = $2,
            consignee_signed_at = CURRENT_TIMESTAMP,
            consignee_photo = $4
