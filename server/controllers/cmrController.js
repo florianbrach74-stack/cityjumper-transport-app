@@ -557,7 +557,7 @@ const confirmPickup = async (req, res) => {
       await pool.query(
         `UPDATE transport_orders 
          SET pickup_waiting_minutes = $1,
-             waiting_time_notes = $2
+             pickup_waiting_notes = $2
          WHERE id = $3`,
         [pickupWaitingMinutes, waitingNotes || null, orderId]
       );
@@ -659,15 +659,12 @@ const confirmDelivery = async (req, res) => {
     // Update order with delivery waiting time if provided
     if (deliveryWaitingMinutes && deliveryWaitingMinutes > 0) {
       console.log('⏱️ Saving delivery waiting time...');
-      const existingNotes = order.waiting_time_notes || '';
-      const combinedNotes = existingNotes ? `${existingNotes}\n${waitingNotes || ''}` : (waitingNotes || '');
-      
       await pool.query(
         `UPDATE transport_orders 
          SET delivery_waiting_minutes = $1,
-             waiting_time_notes = $2
+             delivery_waiting_notes = $2
          WHERE id = $3`,
-        [deliveryWaitingMinutes, combinedNotes, orderId]
+        [deliveryWaitingMinutes, waitingNotes || null, orderId]
       );
       console.log(`✅ Delivery waiting time saved: ${deliveryWaitingMinutes} minutes`);
     }

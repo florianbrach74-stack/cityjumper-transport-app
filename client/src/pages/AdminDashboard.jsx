@@ -733,10 +733,20 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      {order.waiting_time_notes && (
-                        <div className="bg-white p-3 rounded mb-4">
-                          <p className="text-xs text-gray-500 mb-1">Begründung:</p>
-                          <p className="text-sm text-gray-700">{order.waiting_time_notes}</p>
+                      {(order.pickup_waiting_notes || order.delivery_waiting_notes) && (
+                        <div className="bg-white p-3 rounded mb-4 space-y-2">
+                          {order.pickup_waiting_notes && (
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Begründung Abholung:</p>
+                              <p className="text-sm text-gray-700">{order.pickup_waiting_notes}</p>
+                            </div>
+                          )}
+                          {order.delivery_waiting_notes && (
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Begründung Zustellung:</p>
+                              <p className="text-sm text-gray-700">{order.delivery_waiting_notes}</p>
+                            </div>
+                          )}
                         </div>
                       )}
 
