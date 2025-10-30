@@ -361,15 +361,22 @@ const ContractorDashboard = () => {
             </div>
           )}
           {order.price && (
-            <div className="text-lg font-bold text-primary-600">
-              {formatPrice(showAcceptButton ? (order.price * 0.85) : order.price)}
-              {showAcceptButton && (
-                <span className="text-xs text-gray-500 ml-1">(max.)</span>
-              )}
-              {!showAcceptButton && order.waiting_time_fee > 0 && order.waiting_time_approved && (
-                <span className="text-sm text-green-600 ml-2">
-                  + {formatPrice(order.waiting_time_fee)}
-                </span>
+            <div className="space-y-2">
+              <div className="text-lg font-bold text-primary-600">
+                {formatPrice(showAcceptButton ? (order.price * 0.85) : order.price)}
+                {showAcceptButton && (
+                  <span className="text-xs text-gray-500 ml-1">(max.)</span>
+                )}
+                {!showAcceptButton && order.waiting_time_fee > 0 && order.waiting_time_approved && (
+                  <span className="text-sm text-green-600 ml-2">
+                    + {formatPrice(order.waiting_time_fee)}
+                  </span>
+                )}
+              </div>
+              {order.price_updated_at && new Date(order.price_updated_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) && (
+                <div className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-bold bg-gradient-to-r from-green-400 to-green-600 text-white shadow-lg animate-pulse border-2 border-green-700">
+                  ⬆️ NEUER PREIS! Kunde hat Preis erhöht
+                </div>
               )}
             </div>
           )}

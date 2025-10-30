@@ -75,6 +75,14 @@ router.put('/:id/price', authorizeRole('customer'), async (req, res) => {
     // Calculate contractor price (85% of customer price, 15% platform commission)
     const contractorPrice = Math.round(price * 0.85 * 100) / 100;
 
+    // Store original price if this is the first update
+    if (!order.minimum_price_at_creation) {
+      await pool.query(
+        'UPDATE transport_orders SET minimum_price_at_creation = $1 WHERE id = $2',
+        [order.price, id]
+      );
+    }
+
     // Update price, contractor_price, and price_updated_at
     await pool.query(
       'UPDATE transport_orders SET price = $1, contractor_price = $2, price_updated_at = NOW(), updated_at = NOW() WHERE id = $3',

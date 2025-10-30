@@ -454,6 +454,11 @@ export default function AdminDashboard() {
                               </span>
                             )}
                           </div>
+                          {order.price_updated_at && order.minimum_price_at_creation && (
+                            <div className="text-xs text-gray-500">
+                              Ursprünglich: €{parseFloat(order.minimum_price_at_creation).toFixed(2)} → Erhöht um €{(parseFloat(order.price) - parseFloat(order.minimum_price_at_creation)).toFixed(2)}
+                            </div>
+                          )}
                           <div className="text-xs text-gray-600" title="Auftragnehmer-Preis (85%)">
                             🚚 €{order.contractor_price || (order.price * 0.85).toFixed(2)}
                           </div>
