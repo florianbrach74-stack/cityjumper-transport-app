@@ -265,7 +265,63 @@ const CustomerDashboard = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <div className="flex flex-col space-y-1">
-                          <span>{order.price ? formatPrice(order.price) : '-'}</span>
+                          <span className="font-semibold">{order.price ? formatPrice(order.price) : '-'}</span>
+                          
+                          {/* Wartezeit-Gebühr für abgeschlossene Aufträge */}
+                          {order.status === 'completed' && order.waiting_time_fee > 0 && order.waiting_time_approved && (
+                            <div className="text-xs bg-yellow-50 border border-yellow-200 rounded p-3 mt-2 space-y-2">
+                              <div className="font-semibold text-yellow-900 border-b border-yellow-300 pb-1">
+                                ⏱️ Wartezeit-Vergütung
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="bg-white p-2 rounded">
+                                  <p className="text-xs text-gray-500">Abholung</p>
+                                  <p className="font-semibold">{order.pickup_waiting_minutes || 0} Min.</p>
+                                </div>
+                                <div className="bg-white p-2 rounded">
+                                  <p className="text-xs text-gray-500">Zustellung</p>
+                                  <p className="font-semibold">{order.delivery_waiting_minutes || 0} Min.</p>
+                                </div>
+                              </div>
+                              
+                              {/* Begründungen */}
+                              {(order.pickup_waiting_notes || order.delivery_waiting_notes || order.waiting_time_notes) && (
+                                <div className="bg-white p-2 rounded space-y-1">
+                                  {order.pickup_waiting_notes && order.pickup_waiting_minutes > 0 && (
+                                    <div>
+                                      <p className="text-xs text-gray-500 font-medium">Begründung Abholung:</p>
+                                      <p className="text-xs text-gray-700">{order.pickup_waiting_notes}</p>
+                                    </div>
+                                  )}
+                                  {order.delivery_waiting_notes && order.delivery_waiting_minutes > 0 && (
+                                    <div>
+                                      <p className="text-xs text-gray-500 font-medium">Begründung Zustellung:</p>
+                                      <p className="text-xs text-gray-700">{order.delivery_waiting_notes}</p>
+                                    </div>
+                                  )}
+                                  {!order.pickup_waiting_notes && !order.delivery_waiting_notes && order.waiting_time_notes && (
+                                    <div>
+                                      <p className="text-xs text-gray-500 font-medium">Begründung:</p>
+                                      <p className="text-xs text-gray-700">{order.waiting_time_notes}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              
+                              <div className="bg-green-50 border border-green-200 p-2 rounded">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-gray-600">Zusätzliche Kosten:</span>
+                                  <span className="font-bold text-green-700">+€{order.waiting_time_fee.toFixed(2)}</span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  (Erste 30 Min. kostenlos, danach €3 pro 5 Min.)
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Preis erhöhen für ausstehende Aufträge */}
                           {order.status === 'pending' && (
                             <button
                               onClick={() => setSelectedOrderForPriceUpdate(order)}
