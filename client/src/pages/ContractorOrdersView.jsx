@@ -202,16 +202,24 @@ export default function ContractorOrdersView() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex items-center space-x-2">
-                          <span>€{order.price}</span>
+                          <span className="font-semibold">€{order.contractor_price || (order.price * 0.85).toFixed(2)}</span>
                           {order.is_partial_load && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800" title="Beiladung - Flexible Zustellung innerhalb 7 Tage">
                               📦 Beiladung
+                            </span>
+                          )}
+                          {order.price_updated_at && new Date(order.price_updated_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-800 animate-pulse" title="Preis wurde kürzlich erhöht">
+                              ⬆️ NEUER PREIS!
                             </span>
                           )}
                         </div>
                         {order.waiting_time_fee > 0 && order.waiting_time_approved && (
                           <span className="text-green-600 ml-1">+€{order.waiting_time_fee}</span>
                         )}
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          (Kundenpreis: €{order.price})
+                        </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {(order.pickup_waiting_minutes > 0 || order.delivery_waiting_minutes > 0) ? (

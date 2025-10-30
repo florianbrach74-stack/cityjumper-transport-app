@@ -33,6 +33,9 @@ class Order {
       price,
     } = orderData;
 
+    // Calculate contractor price (85% of customer price, 15% platform commission)
+    const contractorPrice = price ? Math.round(price * 0.85 * 100) / 100 : null;
+
     const query = `
       INSERT INTO transport_orders (
         customer_id, pickup_address, pickup_city, pickup_postal_code, pickup_country, pickup_company,
@@ -40,10 +43,10 @@ class Order {
         delivery_address, delivery_city, delivery_postal_code, delivery_country, delivery_company,
         delivery_date, delivery_time, delivery_contact_name, delivery_contact_phone,
         vehicle_type, weight, length, width, height, pallets, description,
-        special_requirements, price, distance_km, duration_minutes, route_geometry, status
+        special_requirements, price, contractor_price, distance_km, duration_minutes, route_geometry, status
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-        $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, 'pending'
+        $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, 'pending'
       ) RETURNING *
     `;
 
@@ -53,7 +56,7 @@ class Order {
       delivery_address, delivery_city, delivery_postal_code, delivery_country || 'Deutschland', delivery_company || null,
       delivery_date, delivery_time, delivery_contact_name, delivery_contact_phone,
       vehicle_type, weight, length, width, height, pallets, description,
-      special_requirements, price, orderData.distance_km, orderData.duration_minutes, orderData.route_geometry || null,
+      special_requirements, price, contractorPrice, orderData.distance_km, orderData.duration_minutes, orderData.route_geometry || null,
     ];
 
     const result = await pool.query(query, values);
