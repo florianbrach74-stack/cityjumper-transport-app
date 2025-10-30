@@ -443,7 +443,17 @@ export default function AdminDashboard() {
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order.price ? `€${order.price}` : '-'}
+                        <div className="flex flex-col">
+                          <div className="font-semibold text-blue-600" title="Kundenpreis">
+                            👤 €{order.price || '-'}
+                          </div>
+                          <div className="text-xs text-gray-600" title="Auftragnehmer-Preis (85%)">
+                            🚚 €{order.contractor_price || (order.price * 0.85).toFixed(2)}
+                          </div>
+                          <div className="text-xs text-green-600 font-medium" title="Plattform-Provision (15%)">
+                            💰 €{((order.price || 0) * 0.15).toFixed(2)}
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex flex-col space-y-1">

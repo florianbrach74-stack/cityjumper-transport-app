@@ -217,9 +217,6 @@ export default function ContractorOrdersView() {
                         {order.waiting_time_fee > 0 && order.waiting_time_approved && (
                           <span className="text-green-600 ml-1">+€{order.waiting_time_fee}</span>
                         )}
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          (Kundenpreis: €{order.price})
-                        </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {(order.pickup_waiting_minutes > 0 || order.delivery_waiting_minutes > 0) ? (
