@@ -55,6 +55,8 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const [pickupStops, setPickupStops] = useState([]);
   const [deliveryStops, setDeliveryStops] = useState([]);
   const [extraStopsFee, setExtraStopsFee] = useState(0);
+  const [showPartialLoadDialog, setShowPartialLoadDialog] = useState(false);
+  const [isPartialLoad, setIsPartialLoad] = useState(false);
 
   const vehicleTypes = [
     'Kleintransporter (bis 2 Paletten)',
@@ -188,9 +190,9 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     e.preventDefault();
     setError('');
     
-    // Prüfe Mindestlohn
-    if (priceWarning) {
-      setError('Der Preis unterschreitet den Mindestlohn. Bitte erhöhen Sie den Preis auf mindestens €' + minimumPrice.toFixed(2));
+    // Prüfe Mindestlohn - zeige Beiladungs-Dialog wenn unterschritten
+    if (priceWarning && !isPartialLoad) {
+      setShowPartialLoadDialog(true);
       return;
     }
     
@@ -212,6 +214,9 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         // Multi-Stop-Daten
         pickup_stops: pickupStops.length > 0 ? pickupStops : undefined,
         delivery_stops: deliveryStops.length > 0 ? deliveryStops : undefined,
+        // Beiladungs-Daten
+        is_partial_load: isPartialLoad,
+        minimum_price_at_creation: minimumPrice,
       };
 
       console.log('Sending order data:', orderData);
@@ -664,6 +669,102 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
           </div>
         </form>
       </div>
+
+      {/* Beiladungs-Bestätigungsdialog */}
+      {showPartialLoadDialog && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-[60] flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+            <div className="mb-4">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-8 w-8 text-orange-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  ⚠️ Mindestlohn-Unterschreitung
+                </h3>
+              </div>
+              
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-orange-900 mb-2">
+                  <strong>Ihr Preis:</strong> €{parseFloat(formData.price).toFixed(2)}
+                </p>
+                <p className="text-sm text-orange-900 mb-2">
+                  <strong>Mindestpreis:</strong> €{minimumPrice?.toFixed(2)}
+                </p>
+                <p className="text-sm text-orange-900">
+                  <strong>Differenz:</strong> €{(minimumPrice - parseFloat(formData.price)).toFixed(2)} zu niedrig
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
+                    <Package className="h-5 w-5 mr-2" />
+                    Option: Beiladung (Flexible Zustellung)
+                  </h4>
+                  <p className="text-sm text-blue-800 mb-3">
+                    Wir können versuchen, Ihren Auftrag innerhalb der kommenden <strong>7 Tage als Beiladung</strong> unterzubringen. 
+                    Dies bedeutet, dass Ihr Transport mit anderen Aufträgen kombiniert wird, um Kosten zu sparen.
+                  </p>
+                  <ul className="text-sm text-blue-800 space-y-1 ml-4 list-disc">
+                    <li>Zustellung innerhalb von 7 Tagen (nicht garantiert am Wunschtermin)</li>
+                    <li>Transport wird mit anderen Aufträgen kombiniert</li>
+                    <li>Niedrigerer Preis möglich</li>
+                    <li>Auftragnehmer sehen, dass es sich um eine Beiladung handelt</li>
+                  </ul>
+                </div>
+
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-green-900 mb-2">
+                    Alternative: Preis anpassen
+                  </h4>
+                  <p className="text-sm text-green-800">
+                    Erhöhen Sie den Preis auf mindestens €{minimumPrice?.toFixed(2)}, um eine garantierte 
+                    Direktfahrt zum Wunschtermin zu erhalten.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPartialLoadDialog(false);
+                  // Preis auf Mindestpreis setzen
+                  setFormData(prev => ({
+                    ...prev,
+                    price: minimumPrice.toFixed(2)
+                  }));
+                  setPriceWarning('');
+                }}
+                className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+              >
+                ✓ Preis auf €{minimumPrice?.toFixed(2)} erhöhen
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPartialLoad(true);
+                  setShowPartialLoadDialog(false);
+                  // Trigger submit again
+                  document.querySelector('form').requestSubmit();
+                }}
+                className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
+              >
+                📦 Als Beiladung fortfahren
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPartialLoadDialog(false)}
+                className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+              >
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

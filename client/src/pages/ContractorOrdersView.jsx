@@ -201,7 +201,14 @@ export default function ContractorOrdersView() {
                         {getStatusBadge(order.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        €{order.price}
+                        <div className="flex items-center space-x-2">
+                          <span>€{order.price}</span>
+                          {order.is_partial_load && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800" title="Beiladung - Flexible Zustellung innerhalb 7 Tage">
+                              📦 Beiladung
+                            </span>
+                          )}
+                        </div>
                         {order.waiting_time_fee > 0 && order.waiting_time_approved && (
                           <span className="text-green-600 ml-1">+€{order.waiting_time_fee}</span>
                         )}

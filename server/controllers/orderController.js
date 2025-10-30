@@ -39,7 +39,17 @@ const createOrder = async (req, res) => {
       pallets: req.body.pallets || null,
       description: req.body.description || '',
       special_requirements: req.body.special_requirements || '',
+      // Beiladungs-Daten
+      is_partial_load: req.body.is_partial_load || false,
+      minimum_price_at_creation: req.body.minimum_price_at_creation || null,
     };
+    
+    // Wenn Beiladung, setze Deadline auf 7 Tage
+    if (orderData.is_partial_load) {
+      const deadline = new Date();
+      deadline.setDate(deadline.getDate() + 7);
+      orderData.partial_load_deadline = deadline.toISOString().split('T')[0];
+    }
 
     console.log('Processed order data:', orderData);
     
