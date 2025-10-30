@@ -48,6 +48,7 @@ export const ordersAPI = {
   acceptOrder: (id) => api.post(`/orders/${id}/accept`),
   getOrder: (id) => api.get(`/orders/${id}`),
   updateOrderStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
+  updateOrderPrice: (id, newPrice) => api.put(`/orders/${id}/price`, { price: newPrice }),
 };
 
 // Bids API

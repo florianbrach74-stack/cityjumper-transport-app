@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ordersAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import CreateOrderModal from '../components/CreateOrderModal';
+import UpdatePriceModal from '../components/UpdatePriceModal';
 import CMRViewer from '../components/CMRViewer';
 import { formatPrice } from '../utils/formatPrice';
-import { Plus, Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText } from 'lucide-react';
+import { Plus, Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText, TrendingUp } from 'lucide-react';
 
 const CustomerDashboard = () => {
   const [orders, setOrders] = useState([]);
@@ -12,6 +13,7 @@ const CustomerDashboard = () => {
   const [activeTab, setActiveTab] = useState('active');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedOrderForCMR, setSelectedOrderForCMR] = useState(null);
+  const [selectedOrderForPriceUpdate, setSelectedOrderForPriceUpdate] = useState(null);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -262,7 +264,18 @@ const CustomerDashboard = () => {
                         {getStatusBadge(order.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {order.price ? formatPrice(order.price) : '-'}
+                        <div className="flex items-center space-x-2">
+                          <span>{order.price ? formatPrice(order.price) : '-'}</span>
+                          {order.status === 'pending' && (
+                            <button
+                              onClick={() => setSelectedOrderForPriceUpdate(order)}
+                              className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                              title="Preis erhöhen"
+                            >
+                              <TrendingUp className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {(order.status === 'accepted' || order.status === 'in_transit' || order.status === 'completed') && (
@@ -297,6 +310,18 @@ const CustomerDashboard = () => {
         <CMRViewer
           orderId={selectedOrderForCMR}
           onClose={() => setSelectedOrderForCMR(null)}
+        />
+      )}
+
+      {/* Update Price Modal */}
+      {selectedOrderForPriceUpdate && (
+        <UpdatePriceModal
+          order={selectedOrderForPriceUpdate}
+          onClose={() => setSelectedOrderForPriceUpdate(null)}
+          onSuccess={() => {
+            setSelectedOrderForPriceUpdate(null);
+            fetchOrders();
+          }}
         />
       )}
     </div>
