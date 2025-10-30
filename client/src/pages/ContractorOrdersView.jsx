@@ -201,22 +201,24 @@ export default function ContractorOrdersView() {
                         {getStatusBadge(order.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-semibold">€{order.contractor_price || (order.price * 0.85).toFixed(2)}</span>
-                          {order.is_partial_load && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800" title="Beiladung - Flexible Zustellung innerhalb 7 Tage">
-                              📦 Beiladung
-                            </span>
-                          )}
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-semibold text-lg">€{order.contractor_price || (order.price * 0.85).toFixed(2)}</span>
+                            {order.is_partial_load && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800" title="Beiladung - Flexible Zustellung innerhalb 7 Tage">
+                                📦 Beiladung
+                              </span>
+                            )}
+                          </div>
                           {order.price_updated_at && new Date(order.price_updated_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-800 animate-pulse" title="Preis wurde kürzlich erhöht">
-                              ⬆️ NEUER PREIS!
-                            </span>
+                            <div className="inline-flex items-center px-3 py-1 rounded-md text-sm font-bold bg-gradient-to-r from-green-400 to-green-600 text-white shadow-lg animate-pulse border-2 border-green-700" title="Preis wurde kürzlich erhöht">
+                              ⬆️ NEUER PREIS! +€{(parseFloat(order.price) - parseFloat(order.price || 0) * 0.85).toFixed(2)}
+                            </div>
+                          )}
+                          {order.waiting_time_fee > 0 && order.waiting_time_approved && (
+                            <span className="text-green-600 text-xs">+€{order.waiting_time_fee} Wartezeit</span>
                           )}
                         </div>
-                        {order.waiting_time_fee > 0 && order.waiting_time_approved && (
-                          <span className="text-green-600 ml-1">+€{order.waiting_time_fee}</span>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {(order.pickup_waiting_minutes > 0 || order.delivery_waiting_minutes > 0) ? (

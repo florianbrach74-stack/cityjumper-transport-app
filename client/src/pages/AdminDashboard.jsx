@@ -443,9 +443,16 @@ export default function AdminDashboard() {
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex flex-col">
-                          <div className="font-semibold text-blue-600" title="Kundenpreis">
-                            👤 €{order.price || '-'}
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <div className="font-semibold text-blue-600" title="Kundenpreis">
+                              👤 €{order.price || '-'}
+                            </div>
+                            {order.price_updated_at && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-orange-100 text-orange-800 border border-orange-300" title={`Preis erhöht am ${new Date(order.price_updated_at).toLocaleString('de-DE')}`}>
+                                ⬆️ ERHÖHT
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-gray-600" title="Auftragnehmer-Preis (85%)">
                             🚚 €{order.contractor_price || (order.price * 0.85).toFixed(2)}
