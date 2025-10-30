@@ -264,15 +264,16 @@ const CustomerDashboard = () => {
                         {getStatusBadge(order.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-col space-y-1">
                           <span>{order.price ? formatPrice(order.price) : '-'}</span>
                           {order.status === 'pending' && (
                             <button
                               onClick={() => setSelectedOrderForPriceUpdate(order)}
-                              className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
-                              title="Preis erhöhen"
+                              className="text-green-600 hover:text-green-800 text-xs font-medium flex items-center space-x-1 hover:underline"
+                              title="Preis erhöhen um schneller einen Auftragnehmer zu finden"
                             >
-                              <TrendingUp className="h-4 w-4" />
+                              <TrendingUp className="h-3 w-3" />
+                              <span>Preis erhöhen</span>
                             </button>
                           )}
                         </div>
