@@ -1,5 +1,16 @@
 const nodemailer = require('nodemailer');
 
+// Email disclaimer for all templates
+const getEmailDisclaimer = () => `
+  <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
+    <p style="margin: 0; color: #92400e; font-size: 14px;">
+      <strong>⚠️ Wichtiger Hinweis:</strong> CityJumper ist eine Vermittlungsplattform. 
+      Wir garantieren keine Auftragsübernahme. 
+      <strong>Tipp:</strong> Höhere Preise erhöhen die Wahrscheinlichkeit einer schnellen Übernahme.
+    </p>
+  </div>
+`;
+
 // Create transporter only if email credentials are provided
 let transporter = null;
 
@@ -44,6 +55,8 @@ const sendNewOrderNotification = async (contractorEmail, orderData) => {
         <p style="color: #6b7280; font-size: 14px;">
           <strong>Hinweis:</strong> Die genauen Kundendaten (Name, vollständige Adresse) werden erst nach Zuweisung durch den Administrator sichtbar.
         </p>
+        
+        ${getEmailDisclaimer()}
         
         <a href="${process.env.FRONTEND_URL || 'https://cityjumper-transport.vercel.app'}/dashboard" 
            style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
@@ -106,6 +119,8 @@ const sendOrderAssignmentNotification = async (contractorEmail, orderData) => {
           ${orderData.description ? `<p><strong>Beschreibung:</strong> ${orderData.description}</p>` : ''}
           ${orderData.special_requirements ? `<p><strong>Besondere Anforderungen:</strong> ${orderData.special_requirements}</p>` : ''}
         </div>
+        
+        ${getEmailDisclaimer()}
         
         <a href="${process.env.FRONTEND_URL || 'https://cityjumper-transport.vercel.app'}/dashboard" 
            style="display: inline-block; background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
