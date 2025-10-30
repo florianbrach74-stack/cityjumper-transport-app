@@ -162,7 +162,7 @@ const CustomerDashboard = () => {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
             >
               <Truck className="h-5 w-5" />
-              <span>Aktive Aufträge ({orders.filter(o => o.status !== 'completed').length})</span>
+              <span>Aktive Aufträge ({orders.filter(o => o.status !== 'completed' && o.status !== 'pending_approval').length})</span>
             </button>
             <button
               onClick={() => setActiveTab('completed')}
