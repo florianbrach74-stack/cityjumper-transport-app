@@ -22,7 +22,7 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
 
     onStopsChange([...stops, { ...newStop }]);
     
-    // Reset form
+    // Reset form but keep it open for adding more stops
     setNewStop({
       address: '',
       city: '',
@@ -32,7 +32,8 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
       contact_phone: '',
       notes: ''
     });
-    setShowAddForm(false);
+    // Keep form open so user can add multiple stops easily
+    // setShowAddForm(false); // Commented out to keep form open
   };
 
   const handleRemoveStop = (index) => {
@@ -55,17 +56,22 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
-        <h5 className="font-medium text-gray-900">
-          Zusätzliche {typeLabel}en ({stops.length})
-        </h5>
+        <div>
+          <h5 className="font-medium text-gray-900">
+            Zusätzliche {typeLabel}en ({stops.length})
+          </h5>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Sie können beliebig viele {typeLabel}en hinzufügen (je +6€)
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => setShowAddForm(!showAddForm)}
-          className={`px-3 py-1.5 bg-${typeColor}-600 text-white rounded-md hover:bg-${typeColor}-700 text-sm flex items-center space-x-1`}
+          className={`px-3 py-1.5 bg-${typeColor}-600 text-white rounded-md hover:bg-${typeColor}-700 text-sm flex items-center space-x-1 flex-shrink-0`}
         >
           {showAddForm ? (
             <>
-              <span>✕ Abbrechen</span>
+              <span>✕ Schließen</span>
             </>
           ) : (
             <>
@@ -147,13 +153,25 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
             />
           </div>
 
-          <button
-            type="button"
-            onClick={handleAddStop}
-            className={`w-full px-4 py-2 bg-${typeColor}-600 text-white rounded-md hover:bg-${typeColor}-700 font-medium`}
-          >
-            {typeLabel} hinzufügen
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleAddStop}
+              className={`flex-1 px-4 py-2 bg-${typeColor}-600 text-white rounded-md hover:bg-${typeColor}-700 font-medium flex items-center justify-center space-x-2`}
+            >
+              <Plus className="h-4 w-4" />
+              <span>{typeLabel} hinzufügen</span>
+            </button>
+            {stops.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowAddForm(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium"
+              >
+                Fertig
+              </button>
+            )}
+          </div>
         </div>
       )}
 
