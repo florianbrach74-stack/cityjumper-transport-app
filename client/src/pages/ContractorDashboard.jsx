@@ -352,7 +352,7 @@ const ContractorDashboard = () => {
         <div className="flex justify-between items-center pt-3 border-t">
           {!showAcceptButton && (
             <div className="text-sm text-gray-600">
-              Kunde: {order.customer_company || `${order.customer_first_name} ${order.customer_last_name}`}
+              Kunde: {(order.customer_company && order.customer_company.trim()) || `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || 'Unbekannt'}
             </div>
           )}
           {showAcceptButton && (
