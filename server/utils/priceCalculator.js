@@ -1,20 +1,25 @@
 /**
  * Berechnet den Mindestpreis basierend auf Distanz und Fahrzeit
- * Formel: (Distanz × 0,50€) + (Fahrzeit in Stunden × 18€)
+ * Formel: 
+ * - Unter 100km: (Distanz × 0,50€) + (Fahrzeit × 22,50€/h) + 6€ Startgebühr
+ * - Über 100km: (Distanz × 0,70€) + (Fahrzeit × 22,50€/h) + 6€ Startgebühr
  * 
  * @param {number} distanceKm - Distanz in Kilometern
  * @param {number} durationMinutes - Fahrzeit in Minuten
  * @returns {number} Mindestpreis in Euro (gerundet auf 2 Dezimalstellen)
  */
 const calculateMinimumPrice = (distanceKm, durationMinutes) => {
-  const PRICE_PER_KM = 0.50; // 50 Cent pro Kilometer
-  const HOURLY_RATE = 18.00; // 18€ pro Stunde (Mindestlohn)
+  const PRICE_PER_KM_SHORT = 0.50; // 50 Cent pro Kilometer (unter 100km)
+  const PRICE_PER_KM_LONG = 0.70; // 70 Cent pro Kilometer (über 100km)
+  const HOURLY_RATE = 22.50; // 22,50€ pro Stunde
+  const START_FEE = 6.00; // 6€ Startgebühr
   
-  const distanceCost = distanceKm * PRICE_PER_KM;
+  const pricePerKm = distanceKm > 100 ? PRICE_PER_KM_LONG : PRICE_PER_KM_SHORT;
+  const distanceCost = distanceKm * pricePerKm;
   const durationHours = durationMinutes / 60;
   const timeCost = durationHours * HOURLY_RATE;
   
-  const minimumPrice = distanceCost + timeCost;
+  const minimumPrice = distanceCost + timeCost + START_FEE;
   
   return Math.round(minimumPrice * 100) / 100; // Runden auf 2 Dezimalstellen
 };
@@ -46,6 +51,7 @@ const calculateRecommendedPrice = (distanceKm, durationMinutes) => {
 const validatePrice = (proposedPrice, distanceKm, durationMinutes) => {
   const minimumPrice = calculateMinimumPrice(distanceKm, durationMinutes);
   const difference = proposedPrice - minimumPrice;
+  const pricePerKm = distanceKm > 100 ? 0.70 : 0.50;
   
   if (proposedPrice >= minimumPrice) {
     return {
@@ -53,7 +59,7 @@ const validatePrice = (proposedPrice, distanceKm, durationMinutes) => {
       minimumPrice,
       proposedPrice,
       difference,
-      message: 'Preis ist akzeptabel und hält Mindestlohn ein'
+      message: 'Preis ist akzeptabel'
     };
   } else {
     return {
@@ -61,7 +67,7 @@ const validatePrice = (proposedPrice, distanceKm, durationMinutes) => {
       minimumPrice,
       proposedPrice,
       difference,
-      message: `Preis ist zu niedrig. Mindestpreis: €${minimumPrice.toFixed(2)} (Mindestlohn-Berechnung: ${distanceKm}km × €0,50 + ${Math.round(durationMinutes)}min × €18/h)`
+      message: `Preis ist zu niedrig. Mindestpreis: €${minimumPrice.toFixed(2)} (Berechnung: ${distanceKm}km × €${pricePerKm} + ${Math.round(durationMinutes)}min × €22,50/h + €6 Startgebühr)`
     };
   }
 };
@@ -74,13 +80,16 @@ const validatePrice = (proposedPrice, distanceKm, durationMinutes) => {
  * @returns {object} Detaillierte Preisinformationen
  */
 const calculatePriceBreakdown = (distanceKm, durationMinutes) => {
-  const PRICE_PER_KM = 0.50;
-  const HOURLY_RATE = 18.00;
+  const PRICE_PER_KM_SHORT = 0.50;
+  const PRICE_PER_KM_LONG = 0.70;
+  const HOURLY_RATE = 22.50;
+  const START_FEE = 6.00;
   
-  const distanceCost = distanceKm * PRICE_PER_KM;
+  const pricePerKm = distanceKm > 100 ? PRICE_PER_KM_LONG : PRICE_PER_KM_SHORT;
+  const distanceCost = distanceKm * pricePerKm;
   const durationHours = durationMinutes / 60;
   const timeCost = durationHours * HOURLY_RATE;
-  const minimumPrice = distanceCost + timeCost;
+  const minimumPrice = distanceCost + timeCost + START_FEE;
   const recommendedPrice = minimumPrice * 1.2;
   
   return {
@@ -89,11 +98,14 @@ const calculatePriceBreakdown = (distanceKm, durationMinutes) => {
     durationHours: Math.round(durationHours * 100) / 100,
     distanceCost: Math.round(distanceCost * 100) / 100,
     timeCost: Math.round(timeCost * 100) / 100,
+    startFee: START_FEE,
     minimumPrice: Math.round(minimumPrice * 100) / 100,
     recommendedPrice: Math.round(recommendedPrice * 100) / 100,
     breakdown: {
-      perKm: PRICE_PER_KM,
-      perHour: HOURLY_RATE
+      perKm: pricePerKm,
+      perHour: HOURLY_RATE,
+      startFee: START_FEE,
+      isLongDistance: distanceKm > 100
     }
   };
 };
