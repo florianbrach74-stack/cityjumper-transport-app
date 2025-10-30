@@ -10,6 +10,7 @@ const {
   createOrderValidation,
 } = require('../controllers/orderController');
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
+const pool = require('../config/database');
 
 // All routes require authentication
 router.use(authenticateToken);
@@ -45,7 +46,7 @@ router.put('/:id/price', authorizeRole('customer'), async (req, res) => {
     }
 
     // Get order
-    const orderResult = await req.app.locals.pool.query(
+    const orderResult = await pool.query(
       'SELECT * FROM transport_orders WHERE id = $1',
       [id]
     );
@@ -75,7 +76,7 @@ router.put('/:id/price', authorizeRole('customer'), async (req, res) => {
     const contractorPrice = Math.round(price * 0.85 * 100) / 100;
 
     // Update price, contractor_price, and price_updated_at
-    await req.app.locals.pool.query(
+    await pool.query(
       'UPDATE transport_orders SET price = $1, contractor_price = $2, price_updated_at = NOW(), updated_at = NOW() WHERE id = $3',
       [price, contractorPrice, id]
     );
