@@ -23,7 +23,8 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     pickup_country: 'Deutschland',
     pickup_company: user?.company_name || '',
     pickup_date: today,
-    pickup_time: currentTime,
+    pickup_time_from: currentTime,
+    pickup_time_to: '',
     pickup_contact_name: user?.company_name ? `${user.first_name} ${user.last_name}` : '',
     pickup_contact_phone: user?.phone || '',
     delivery_address: pendingOrder.deliveryAddress || '',
@@ -31,7 +32,8 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     delivery_postal_code: pendingOrder.deliveryLocation?.postalCode || '',
     delivery_country: 'Deutschland',
     delivery_date: today, // Standard: Direktfahrt = gleiches Datum
-    delivery_time: currentTime, // Standard: Direktfahrt = gleiche Zeit
+    delivery_time_from: currentTime,
+    delivery_time_to: '',
     delivery_contact_name: '',
     delivery_contact_phone: '',
     vehicle_type: pendingOrder.vehicleType || 'Kleintransporter',
@@ -204,7 +206,8 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         ...formData,
         // Wenn Lieferdatum/zeit fehlt, nutze Abholdatum/zeit
         delivery_date: formData.delivery_date || formData.pickup_date,
-        delivery_time: formData.delivery_time || formData.pickup_time,
+        delivery_time_from: formData.delivery_time_from || formData.pickup_time_from,
+        delivery_time_to: formData.delivery_time_to || formData.pickup_time_to,
         weight: formData.weight ? parseFloat(formData.weight) : null,
         length: formData.length ? parseFloat(formData.length) : null,
         width: formData.width ? parseFloat(formData.width) : null,
@@ -320,14 +323,27 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Uhrzeit</label>
+                <label className="block text-sm font-medium text-gray-700">Zeitfenster Von</label>
                 <input
                   type="time"
-                  name="pickup_time"
-                  value={formData.pickup_time}
+                  name="pickup_time_from"
+                  value={formData.pickup_time_from}
                   onChange={handleChange}
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="z.B. 11:00"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Zeitfenster Bis (optional)</label>
+                <input
+                  type="time"
+                  name="pickup_time_to"
+                  value={formData.pickup_time_to}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="z.B. 13:00"
+                />
+                <p className="text-xs text-gray-500 mt-1">Leer lassen für feste Zeit</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Firma (optional)</label>
@@ -405,6 +421,40 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                     onChange={handleChange}
                     className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                     readOnly
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Datum</label>
+                  <input
+                    type="date"
+                    name="delivery_date"
+                    value={formData.delivery_date}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Zeitfenster Von</label>
+                  <input
+                    type="time"
+                    name="delivery_time_from"
+                    value={formData.delivery_time_from}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="z.B. 14:00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Zeitfenster Bis (optional)</label>
+                  <input
+                    type="time"
+                    name="delivery_time_to"
+                    value={formData.delivery_time_to}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="z.B. 16:00"
                   />
                 </div>
               </div>
@@ -700,16 +750,17 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
                     <Package className="h-5 w-5 mr-2" />
-                    Option: Beiladung (Flexible Zustellung)
+                    Option: Beiladung (Flexible Abholung & Zustellung)
                   </h4>
                   <p className="text-sm text-blue-800 mb-3">
-                    Wir können versuchen, Ihren Auftrag innerhalb der kommenden <strong>7 Tage als Beiladung</strong> unterzubringen. 
-                    Dies bedeutet, dass Ihr Transport mit anderen Aufträgen kombiniert wird, um Kosten zu sparen.
+                    Wir <strong>vermitteln</strong> Ihren Auftrag als Beiladung an Auftragnehmer. 
+                    Ihr Transport wird mit anderen Aufträgen kombiniert, um Kosten zu sparen.
                   </p>
                   <ul className="text-sm text-blue-800 space-y-1 ml-4 list-disc">
-                    <li>Zustellung innerhalb von 7 Tagen (nicht garantiert am Wunschtermin)</li>
+                    <li><strong>Flexible Abholung & Zustellung</strong> innerhalb von 7 Tagen</li>
+                    <li><strong>Keine Garantie</strong> für Auftragsübernahme - wir vermitteln nur</li>
+                    <li>Sie können den Preis jederzeit erhöhen, um schneller einen Auftragnehmer zu finden</li>
                     <li>Transport wird mit anderen Aufträgen kombiniert</li>
-                    <li>Niedrigerer Preis möglich</li>
                     <li>Auftragnehmer sehen, dass es sich um eine Beiladung handelt</li>
                   </ul>
                 </div>
