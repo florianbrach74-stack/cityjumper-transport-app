@@ -10,6 +10,21 @@ import NotificationSettings from '../components/NotificationSettings';
 import { formatPrice } from '../utils/formatPrice';
 import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell } from 'lucide-react';
 
+// API helpers
+const ordersAPI = {
+  getAvailableOrders: () => api.get('/orders/available'),
+  getOrders: () => api.get('/orders'),
+  updateOrderStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+};
+
+const bidsAPI = {
+  getMyBids: () => api.get('/bids/my-bids'),
+};
+
+const verificationAPI = {
+  getStatus: () => api.get('/contractors/verification-status'),
+};
+
 const ContractorDashboard = () => {
   const navigate = useNavigate();
   const [availableOrders, setAvailableOrders] = useState([]);
