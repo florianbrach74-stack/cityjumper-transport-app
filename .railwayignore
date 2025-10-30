@@ -1,0 +1,27 @@
+# Ignore client directory - it's deployed separately on Vercel
+client/
+
+# Ignore development files
+*.md
+.git/
+.gitignore
+.env.example
+
+# Ignore test files
+test/
+*.test.js
+
+# Ignore documentation
+docs/
+DEPLOYMENT.md
+PUBLISH_NOW.md
+QUICK_START_NEW.md
+ADMIN_EDIT_FEATURES.md
+
+# Ignore SQL migration scripts (already run)
+*.sql
+run_*.js
+
+# Ignore local development
+node_modules/
+.DS_Store
