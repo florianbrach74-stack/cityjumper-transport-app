@@ -32,7 +32,7 @@ const CustomerDashboard = () => {
         total: ordersData.length,
         pending: ordersData.filter((o) => o.status === 'pending').length,
         accepted: ordersData.filter((o) => o.status === 'accepted' || o.status === 'in_transit').length,
-        completed: ordersData.filter((o) => o.status === 'completed').length,
+        completed: ordersData.filter((o) => o.status === 'completed' || o.status === 'pending_approval').length,
       });
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -265,10 +265,10 @@ const CustomerDashboard = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <div className="flex flex-col space-y-1">
-                          <span className="font-semibold">{order.price ? formatPrice(order.price) : '-'}</span>
+                          <span className="font-semibold">{order.price ? formatPrice(parseFloat(order.price)) : '-'}</span>
                           
                           {/* Wartezeit-Gebühr für abgeschlossene Aufträge */}
-                          {(order.status === 'completed' || order.status === 'pending_approval') && order.waiting_time_fee && order.waiting_time_fee > 0 && (
+                          {(order.status === 'completed' || order.status === 'pending_approval') && order.waiting_time_fee && parseFloat(order.waiting_time_fee) > 0 && (
                             <div className="text-xs bg-yellow-50 border border-yellow-200 rounded p-3 mt-2 space-y-2">
                               <div className="font-semibold text-yellow-900 border-b border-yellow-300 pb-1">
                                 ⏱️ Wartezeit-Vergütung
@@ -312,7 +312,7 @@ const CustomerDashboard = () => {
                               <div className="bg-green-50 border border-green-200 p-2 rounded">
                                 <div className="flex justify-between items-center">
                                   <span className="text-xs text-gray-600">Zusätzliche Kosten:</span>
-                                  <span className="font-bold text-green-700">+€{(order.waiting_time_fee || 0).toFixed(2)}</span>
+                                  <span className="font-bold text-green-700">+€{parseFloat(order.waiting_time_fee || 0).toFixed(2)}</span>
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
                                   (Erste 30 Min. kostenlos, danach €3 pro 5 Min.)
