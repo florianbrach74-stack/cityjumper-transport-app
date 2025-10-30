@@ -541,4 +541,286 @@ router.get('/orders/:id/details', adminAuth, async (req, res) => {
   }
 });
 
+// Update completed order (admin only) - allows editing price, waiting time, etc.
+router.patch('/orders/:id/completed-order-edit', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      price, 
+      pickup_waiting_minutes, 
+      delivery_waiting_minutes,
+      pickup_waiting_notes,
+      delivery_waiting_notes,
+      clarification_minutes,
+      clarification_notes,
+      waiting_time_fee
+    } = req.body;
+    
+    const adminId = req.user.id;
+    
+    // Get current order data for edit history
+    const currentOrder = await pool.query(
+      'SELECT * FROM transport_orders WHERE id = $1',
+      [id]
+    );
+    
+    if (currentOrder.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    const oldData = currentOrder.rows[0];
+    const changes = {};
+    
+    // Build update query dynamically
+    const updateFields = [];
+    const values = [];
+    let paramCount = 1;
+    
+    if (price !== undefined && price !== oldData.price) {
+      updateFields.push(`price = $${paramCount}`);
+      values.push(price);
+      changes.price = { old: oldData.price, new: price };
+      paramCount++;
+    }
+    
+    if (pickup_waiting_minutes !== undefined && pickup_waiting_minutes !== oldData.pickup_waiting_minutes) {
+      updateFields.push(`pickup_waiting_minutes = $${paramCount}`);
+      values.push(pickup_waiting_minutes);
+      changes.pickup_waiting_minutes = { old: oldData.pickup_waiting_minutes, new: pickup_waiting_minutes };
+      paramCount++;
+    }
+    
+    if (delivery_waiting_minutes !== undefined && delivery_waiting_minutes !== oldData.delivery_waiting_minutes) {
+      updateFields.push(`delivery_waiting_minutes = $${paramCount}`);
+      values.push(delivery_waiting_minutes);
+      changes.delivery_waiting_minutes = { old: oldData.delivery_waiting_minutes, new: delivery_waiting_minutes };
+      paramCount++;
+    }
+    
+    if (pickup_waiting_notes !== undefined) {
+      updateFields.push(`pickup_waiting_notes = $${paramCount}`);
+      values.push(pickup_waiting_notes);
+      paramCount++;
+    }
+    
+    if (delivery_waiting_notes !== undefined) {
+      updateFields.push(`delivery_waiting_notes = $${paramCount}`);
+      values.push(delivery_waiting_notes);
+      paramCount++;
+    }
+    
+    if (clarification_minutes !== undefined) {
+      updateFields.push(`clarification_minutes = $${paramCount}`);
+      values.push(clarification_minutes);
+      changes.clarification_minutes = { old: oldData.clarification_minutes, new: clarification_minutes };
+      paramCount++;
+    }
+    
+    if (clarification_notes !== undefined) {
+      updateFields.push(`clarification_notes = $${paramCount}`);
+      values.push(clarification_notes);
+      paramCount++;
+    }
+    
+    if (waiting_time_fee !== undefined && waiting_time_fee !== oldData.waiting_time_fee) {
+      updateFields.push(`waiting_time_fee = $${paramCount}`);
+      values.push(waiting_time_fee);
+      changes.waiting_time_fee = { old: oldData.waiting_time_fee, new: waiting_time_fee };
+      paramCount++;
+    }
+    
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: 'No changes to update' });
+    }
+    
+    // Add edit tracking
+    updateFields.push(`last_edited_by = $${paramCount}`);
+    values.push(adminId);
+    paramCount++;
+    
+    updateFields.push(`last_edited_at = CURRENT_TIMESTAMP`);
+    
+    // Add to edit history
+    const editEntry = {
+      timestamp: new Date().toISOString(),
+      admin_id: adminId,
+      changes: changes
+    };
+    
+    const currentHistory = oldData.edit_history || [];
+    const newHistory = [...currentHistory, editEntry];
+    
+    updateFields.push(`edit_history = $${paramCount}`);
+    values.push(JSON.stringify(newHistory));
+    paramCount++;
+    
+    values.push(id);
+    
+    const query = `
+      UPDATE transport_orders 
+      SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, values);
+    
+    console.log(`✏️ Admin #${adminId} edited completed order #${id}:`, changes);
+    
+    res.json({ 
+      message: 'Order updated successfully',
+      order: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Update completed order error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add additional stop to order (admin only)
+router.post('/orders/:id/additional-stop', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      address, 
+      city, 
+      postal_code, 
+      country, 
+      contact_name, 
+      contact_phone, 
+      notes,
+      stop_type // 'pickup' or 'delivery'
+    } = req.body;
+    
+    const adminId = req.user.id;
+    
+    if (!address || !city) {
+      return res.status(400).json({ error: 'Address and city are required' });
+    }
+    
+    // Get current additional stops
+    const currentOrder = await pool.query(
+      'SELECT additional_stops, edit_history FROM transport_orders WHERE id = $1',
+      [id]
+    );
+    
+    if (currentOrder.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    const currentStops = currentOrder.rows[0].additional_stops || [];
+    const newStop = {
+      id: Date.now(),
+      address,
+      city,
+      postal_code,
+      country: country || 'Deutschland',
+      contact_name,
+      contact_phone,
+      notes,
+      stop_type: stop_type || 'delivery',
+      added_at: new Date().toISOString(),
+      added_by: adminId
+    };
+    
+    const updatedStops = [...currentStops, newStop];
+    
+    // Add to edit history
+    const editEntry = {
+      timestamp: new Date().toISOString(),
+      admin_id: adminId,
+      changes: {
+        additional_stop_added: {
+          address: `${address}, ${city}`,
+          type: stop_type
+        }
+      }
+    };
+    
+    const currentHistory = currentOrder.rows[0].edit_history || [];
+    const newHistory = [...currentHistory, editEntry];
+    
+    const result = await pool.query(
+      `UPDATE transport_orders 
+       SET additional_stops = $1,
+           edit_history = $2,
+           last_edited_by = $3,
+           last_edited_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $4
+       RETURNING *`,
+      [JSON.stringify(updatedStops), JSON.stringify(newHistory), adminId, id]
+    );
+    
+    console.log(`📍 Admin #${adminId} added additional stop to order #${id}: ${city}`);
+    
+    res.json({ 
+      message: 'Additional stop added successfully',
+      order: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Add additional stop error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Remove additional stop from order (admin only)
+router.delete('/orders/:id/additional-stop/:stopId', adminAuth, async (req, res) => {
+  try {
+    const { id, stopId } = req.params;
+    const adminId = req.user.id;
+    
+    const currentOrder = await pool.query(
+      'SELECT additional_stops, edit_history FROM transport_orders WHERE id = $1',
+      [id]
+    );
+    
+    if (currentOrder.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    const currentStops = currentOrder.rows[0].additional_stops || [];
+    const updatedStops = currentStops.filter(stop => stop.id !== parseInt(stopId));
+    
+    if (currentStops.length === updatedStops.length) {
+      return res.status(404).json({ error: 'Stop not found' });
+    }
+    
+    // Add to edit history
+    const removedStop = currentStops.find(stop => stop.id === parseInt(stopId));
+    const editEntry = {
+      timestamp: new Date().toISOString(),
+      admin_id: adminId,
+      changes: {
+        additional_stop_removed: {
+          address: `${removedStop.address}, ${removedStop.city}`
+        }
+      }
+    };
+    
+    const currentHistory = currentOrder.rows[0].edit_history || [];
+    const newHistory = [...currentHistory, editEntry];
+    
+    const result = await pool.query(
+      `UPDATE transport_orders 
+       SET additional_stops = $1,
+           edit_history = $2,
+           last_edited_by = $3,
+           last_edited_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $4
+       RETURNING *`,
+      [JSON.stringify(updatedStops), JSON.stringify(newHistory), adminId, id]
+    );
+    
+    res.json({ 
+      message: 'Additional stop removed successfully',
+      order: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Remove additional stop error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

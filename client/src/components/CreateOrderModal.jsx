@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { X, MapPin, Calendar, Truck, Package, AlertCircle } from 'lucide-react';
 import AddressSearch from './AddressSearch';
 import RouteMap from './RouteMap';
+import MultiStopManager from './MultiStopManager';
 
 const CreateOrderModal = ({ onClose, onSuccess }) => {
   const { user } = useAuth();
@@ -51,6 +52,9 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const [routeInfo, setRouteInfo] = useState(pendingOrder.routeInfo || null);
   const [priceWarning, setPriceWarning] = useState('');
   const [minimumPrice, setMinimumPrice] = useState(null);
+  const [pickupStops, setPickupStops] = useState([]);
+  const [deliveryStops, setDeliveryStops] = useState([]);
+  const [extraStopsFee, setExtraStopsFee] = useState(0);
 
   const vehicleTypes = [
     'Kleintransporter (bis 2 Paletten)',
@@ -67,11 +71,18 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
 
     const PRICE_PER_KM = 0.50;
     const HOURLY_RATE = 18.00;
+    const EXTRA_STOP_FEE = 6.00;
     
     const distanceCost = routeInfo.distance * PRICE_PER_KM;
     const durationHours = routeInfo.durationMinutes / 60;
     const timeCost = durationHours * HOURLY_RATE;
-    const calculatedMinimumPrice = distanceCost + timeCost;
+    
+    // Berechne Extra-Stop-Gebühr
+    const totalExtraStops = pickupStops.length + deliveryStops.length;
+    const extraStopsCost = totalExtraStops * EXTRA_STOP_FEE;
+    setExtraStopsFee(extraStopsCost);
+    
+    const calculatedMinimumPrice = distanceCost + timeCost + extraStopsCost;
     
     setMinimumPrice(calculatedMinimumPrice);
     
@@ -82,6 +93,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       setPriceWarning(
         `⚠️ ACHTUNG: Der Preis unterschreitet den Mindestlohn! ` +
         `Mindestpreis: €${calculatedMinimumPrice.toFixed(2)} ` +
+        `(inkl. ${totalExtraStops} Extra-Stops à €6) ` +
         `(Sie sind €${difference.toFixed(2)} zu niedrig)`
       );
       return false;
@@ -134,11 +146,18 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       try {
         const PRICE_PER_KM = 0.50;
         const HOURLY_RATE = 18.00;
+        const EXTRA_STOP_FEE = 6.00;
         
         const distanceCost = routeData.distance * PRICE_PER_KM;
         const durationHours = routeData.durationMinutes / 60;
         const timeCost = durationHours * HOURLY_RATE;
-        const calculatedMinimumPrice = distanceCost + timeCost;
+        
+        // Berechne Extra-Stop-Gebühr
+        const totalExtraStops = pickupStops.length + deliveryStops.length;
+        const extraStopsCost = totalExtraStops * EXTRA_STOP_FEE;
+        setExtraStopsFee(extraStopsCost);
+        
+        const calculatedMinimumPrice = distanceCost + timeCost + extraStopsCost;
         const recommendedPrice = calculatedMinimumPrice * 1.2;
         
         setMinimumPrice(calculatedMinimumPrice);
@@ -152,6 +171,13 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       }
     }
   };
+  
+  // Aktualisiere Preis wenn Stops sich ändern
+  useEffect(() => {
+    if (routeInfo && formData.price) {
+      validatePrice(formData.price);
+    }
+  }, [pickupStops.length, deliveryStops.length]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -178,6 +204,9 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         height: formData.height ? parseFloat(formData.height) : null,
         pallets: formData.pallets ? parseInt(formData.pallets) : null,
         price: formData.price ? parseFloat(formData.price) : null,
+        // Multi-Stop-Daten
+        pickup_stops: pickupStops.length > 0 ? pickupStops : undefined,
+        delivery_stops: deliveryStops.length > 0 ? deliveryStops : undefined,
       };
 
       console.log('Sending order data:', orderData);
@@ -402,6 +431,46 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Multi-Stop Manager */}
+          <div className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border-2 border-dashed border-gray-300">
+            <div className="mb-4">
+              <h4 className="text-lg font-medium text-gray-900 mb-2">
+                🚚 Multi-Stop-Auftrag (Optional)
+              </h4>
+              <p className="text-sm text-gray-600">
+                Fügen Sie zusätzliche Abhol- oder Zustelladressen hinzu. 
+                <strong className="text-blue-600"> Jeder zusätzliche Stop kostet 6€ extra.</strong>
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white p-4 rounded-lg border border-blue-200">
+                <MultiStopManager
+                  type="pickup"
+                  stops={pickupStops}
+                  onStopsChange={setPickupStops}
+                />
+              </div>
+              
+              <div className="bg-white p-4 rounded-lg border border-green-200">
+                <MultiStopManager
+                  type="delivery"
+                  stops={deliveryStops}
+                  onStopsChange={setDeliveryStops}
+                />
+              </div>
+            </div>
+            
+            {(pickupStops.length > 0 || deliveryStops.length > 0) && (
+              <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-sm font-medium text-yellow-900">
+                  💰 Extra-Stops-Gebühr: {pickupStops.length + deliveryStops.length} Stops × 6€ = 
+                  <span className="text-lg font-bold ml-2">€{extraStopsFee.toFixed(2)}</span>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Route Map */}

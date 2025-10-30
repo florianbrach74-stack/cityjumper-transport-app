@@ -52,10 +52,18 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 API available at http://localhost:${PORT}/api`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Run auto-migration
+  try {
+    const autoMigrate = require('./migrations/auto_migrate');
+    await autoMigrate();
+  } catch (error) {
+    console.log('⚠️  Auto-migration skipped (database may not be ready yet)');
+  }
 });
 
 module.exports = app;

@@ -77,19 +77,22 @@ const validatePrice = (proposedPrice, distanceKm, durationMinutes) => {
  * 
  * @param {number} distanceKm - Distanz in Kilometern
  * @param {number} durationMinutes - Fahrzeit in Minuten
+ * @param {number} extraStopsCount - Anzahl zusätzlicher Stops (optional)
  * @returns {object} Detaillierte Preisinformationen
  */
-const calculatePriceBreakdown = (distanceKm, durationMinutes) => {
+const calculatePriceBreakdown = (distanceKm, durationMinutes, extraStopsCount = 0) => {
   const PRICE_PER_KM_SHORT = 0.50;
   const PRICE_PER_KM_LONG = 0.70;
   const HOURLY_RATE = 22.50;
   const START_FEE = 6.00;
+  const EXTRA_STOP_FEE = 6.00; // 6€ pro zusätzlichem Stop
   
   const pricePerKm = distanceKm > 100 ? PRICE_PER_KM_LONG : PRICE_PER_KM_SHORT;
   const distanceCost = distanceKm * pricePerKm;
   const durationHours = durationMinutes / 60;
   const timeCost = durationHours * HOURLY_RATE;
-  const minimumPrice = distanceCost + timeCost + START_FEE;
+  const extraStopsCost = extraStopsCount * EXTRA_STOP_FEE;
+  const minimumPrice = distanceCost + timeCost + START_FEE + extraStopsCost;
   const recommendedPrice = minimumPrice * 1.2;
   
   return {
@@ -99,20 +102,45 @@ const calculatePriceBreakdown = (distanceKm, durationMinutes) => {
     distanceCost: Math.round(distanceCost * 100) / 100,
     timeCost: Math.round(timeCost * 100) / 100,
     startFee: START_FEE,
+    extraStopsCount,
+    extraStopsCost: Math.round(extraStopsCost * 100) / 100,
     minimumPrice: Math.round(minimumPrice * 100) / 100,
     recommendedPrice: Math.round(recommendedPrice * 100) / 100,
     breakdown: {
       perKm: pricePerKm,
       perHour: HOURLY_RATE,
       startFee: START_FEE,
+      extraStopFee: EXTRA_STOP_FEE,
       isLongDistance: distanceKm > 100
     }
   };
+};
+
+/**
+ * Berechnet Preis für Multi-Stop-Aufträge
+ * 
+ * @param {Array} stops - Array von Stops mit {distanceKm, durationMinutes}
+ * @returns {object} Preisinformationen für Multi-Stop-Route
+ */
+const calculateMultiStopPrice = (stops) => {
+  if (!stops || stops.length === 0) {
+    return calculatePriceBreakdown(0, 0, 0);
+  }
+  
+  // Summiere alle Distanzen und Fahrzeiten
+  const totalDistance = stops.reduce((sum, stop) => sum + (stop.distanceKm || 0), 0);
+  const totalDuration = stops.reduce((sum, stop) => sum + (stop.durationMinutes || 0), 0);
+  
+  // Extra Stops = Anzahl der Stops minus 1 (der erste Stop ist im Grundpreis enthalten)
+  const extraStopsCount = Math.max(0, stops.length - 1);
+  
+  return calculatePriceBreakdown(totalDistance, totalDuration, extraStopsCount);
 };
 
 module.exports = {
   calculateMinimumPrice,
   calculateRecommendedPrice,
   validatePrice,
-  calculatePriceBreakdown
+  calculatePriceBreakdown,
+  calculateMultiStopPrice
 };

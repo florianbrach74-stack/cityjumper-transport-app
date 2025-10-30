@@ -6,6 +6,7 @@ import CMRViewer from '../components/CMRViewer';
 import CustomerManagement from '../components/CustomerManagement';
 import DetailedOrderView from '../components/DetailedOrderView';
 import InvoiceGenerator from '../components/InvoiceGenerator';
+import AdminOrderEditModal from '../components/AdminOrderEditModal';
 import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
@@ -24,6 +25,7 @@ export default function AdminDashboard() {
   const [pendingApprovalOrders, setPendingApprovalOrders] = useState([]);
   const [selectedOrderForDetails, setSelectedOrderForDetails] = useState(null);
   const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null);
+  const [editingOrderFull, setEditingOrderFull] = useState(null);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -450,6 +452,19 @@ export default function AdminDashboard() {
                             className="text-primary-600 hover:text-primary-900 font-medium text-left"
                           >
                             📋 Details ansehen
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const response = await api.get(`/admin/orders/${order.id}/details`);
+                                setEditingOrderFull(response.data.order);
+                              } catch (error) {
+                                alert('Fehler beim Laden der Auftragsdaten');
+                              }
+                            }}
+                            className="text-blue-600 hover:text-blue-900 font-medium text-left"
+                          >
+                            ✏️ Bearbeiten
                           </button>
                           <button
                             onClick={async () => {
@@ -1036,6 +1051,18 @@ export default function AdminDashboard() {
         <InvoiceGenerator
           order={selectedOrderForInvoice}
           onClose={() => setSelectedOrderForInvoice(null)}
+        />
+      )}
+
+      {/* Admin Order Edit Modal */}
+      {editingOrderFull && (
+        <AdminOrderEditModal
+          order={editingOrderFull}
+          onClose={() => setEditingOrderFull(null)}
+          onSuccess={() => {
+            setEditingOrderFull(null);
+            loadData();
+          }}
         />
       )}
     </div>

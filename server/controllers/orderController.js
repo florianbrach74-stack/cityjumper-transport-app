@@ -43,23 +43,80 @@ const createOrder = async (req, res) => {
 
     console.log('Processed order data:', orderData);
     
-    // Calculate distance and duration using REAL addresses
-    const { distance_km, duration_minutes, route_geometry } = await calculateDistanceAndDuration(
-      orderData.pickup_address,
-      orderData.pickup_postal_code,
-      orderData.pickup_city,
-      orderData.delivery_address,
-      orderData.delivery_postal_code,
-      orderData.delivery_city
-    );
+    // Handle multi-stop orders
+    const pickupStops = req.body.pickup_stops || [];
+    const deliveryStops = req.body.delivery_stops || [];
     
-    // Add to order data
-    orderData.distance_km = distance_km;
-    orderData.duration_minutes = duration_minutes;
-    // Store route geometry as JSON for later map display
-    if (route_geometry) {
-      orderData.route_geometry = JSON.stringify(route_geometry);
+    let totalDistance = 0;
+    let totalDuration = 0;
+    let routeSegments = [];
+    
+    if (pickupStops.length > 0 || deliveryStops.length > 0) {
+      // Multi-stop order
+      console.log('Processing multi-stop order:', { pickupStops: pickupStops.length, deliveryStops: deliveryStops.length });
+      
+      // Build complete route: all pickups, then all deliveries
+      const allStops = [
+        ...pickupStops.map(s => ({ ...s, type: 'pickup' })),
+        ...deliveryStops.map(s => ({ ...s, type: 'delivery' }))
+      ];
+      
+      // Calculate distance/duration for each segment
+      for (let i = 0; i < allStops.length; i++) {
+        const fromStop = i === 0 ? {
+          address: orderData.pickup_address,
+          postal_code: orderData.pickup_postal_code,
+          city: orderData.pickup_city
+        } : allStops[i - 1];
+        
+        const toStop = allStops[i];
+        
+        const segment = await calculateDistanceAndDuration(
+          fromStop.address,
+          fromStop.postal_code,
+          fromStop.city,
+          toStop.address,
+          toStop.postal_code,
+          toStop.city
+        );
+        
+        totalDistance += segment.distance_km;
+        totalDuration += segment.duration_minutes;
+        routeSegments.push(segment);
+      }
+      
+      // Store stops in database
+      orderData.pickup_stops = JSON.stringify(pickupStops);
+      orderData.delivery_stops = JSON.stringify(deliveryStops);
+      
+      // Calculate extra stops (total stops - 1, since first is included in base price)
+      const totalStops = pickupStops.length + deliveryStops.length;
+      orderData.extra_stops_count = Math.max(0, totalStops);
+      orderData.extra_stops_fee = orderData.extra_stops_count * 6.00; // 6€ per extra stop
+      
+      console.log(`Multi-stop: ${totalStops} stops, ${orderData.extra_stops_count} extra, fee: €${orderData.extra_stops_fee}`);
+    } else {
+      // Single pickup/delivery
+      const { distance_km, duration_minutes, route_geometry } = await calculateDistanceAndDuration(
+        orderData.pickup_address,
+        orderData.pickup_postal_code,
+        orderData.pickup_city,
+        orderData.delivery_address,
+        orderData.delivery_postal_code,
+        orderData.delivery_city
+      );
+      
+      totalDistance = distance_km;
+      totalDuration = duration_minutes;
+      
+      if (route_geometry) {
+        orderData.route_geometry = JSON.stringify(route_geometry);
+      }
     }
+    
+    // Add calculated values to order data
+    orderData.distance_km = totalDistance;
+    orderData.duration_minutes = totalDuration;
     
     const order = await Order.create(orderData);
     console.log('Order created successfully:', order.id);
