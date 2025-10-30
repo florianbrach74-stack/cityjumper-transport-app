@@ -70,7 +70,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     }
 
     const PRICE_PER_KM = 0.50;
-    const HOURLY_RATE = 18.00;
+    const HOURLY_RATE = 22.50;
     const EXTRA_STOP_FEE = 6.00;
     
     const distanceCost = routeInfo.distance * PRICE_PER_KM;
@@ -145,7 +145,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     if (routeData && !formData.price) {
       try {
         const PRICE_PER_KM = 0.50;
-        const HOURLY_RATE = 18.00;
+        const HOURLY_RATE = 22.50;
         const EXTRA_STOP_FEE = 6.00;
         
         const distanceCost = routeData.distance * PRICE_PER_KM;
@@ -172,8 +172,13 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     }
   };
   
-  // Aktualisiere Preis wenn Stops sich ändern
+  // Aktualisiere Preis und Extra-Stops-Gebühr wenn Stops sich ändern
   useEffect(() => {
+    const EXTRA_STOP_FEE = 6.00;
+    const totalExtraStops = pickupStops.length + deliveryStops.length;
+    const calculatedFee = totalExtraStops * EXTRA_STOP_FEE;
+    setExtraStopsFee(calculatedFee);
+    
     if (routeInfo && formData.price) {
       validatePrice(formData.price);
     }
@@ -600,12 +605,9 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                   }`}
                 />
                 {priceWarning && (
-                  <div className="mt-2 p-3 bg-red-100 border-2 border-red-500 rounded-lg">
-                    <p className="text-sm font-semibold text-red-800">
-                      {priceWarning}
-                    </p>
-                    <p className="text-xs text-red-700 mt-1">
-                      📊 Berechnung: {routeInfo?.distance}km × €0,50 + {(routeInfo?.durationMinutes / 60).toFixed(2)}h × €18/h = €{minimumPrice?.toFixed(2)}
+                  <div className="bg-red-50 border border-red-200 rounded p-2 mt-2">
+                    <p className="text-xs text-red-700">
+                      📊 Berechnung: {routeInfo?.distance}km × €0,50 + {(routeInfo?.durationMinutes / 60).toFixed(2)}h × €22,50/h + {pickupStops.length + deliveryStops.length} Extra-Stops × €6 = €{minimumPrice?.toFixed(2)}
                     </p>
                   </div>
                 )}
@@ -615,7 +617,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  💡 Basierend auf Mindestlohn-Kalkulation (€0,50/km + €18/h)
+                  💡 Basierend auf Mindestlohn-Kalkulation (€0,50/km + €22,50/h + Extra-Stops)
                 </p>
               </div>
               <div className="md:col-span-2">
