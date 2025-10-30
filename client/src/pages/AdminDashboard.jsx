@@ -733,18 +733,25 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      {(order.pickup_waiting_notes || order.delivery_waiting_notes) && (
+                      {(order.pickup_waiting_notes || order.delivery_waiting_notes || order.waiting_time_notes) && (
                         <div className="bg-white p-3 rounded mb-4 space-y-2">
-                          {order.pickup_waiting_notes && (
+                          {order.pickup_waiting_notes && order.pickup_waiting_minutes > 0 && (
                             <div>
                               <p className="text-xs text-gray-500 mb-1">Begründung Abholung:</p>
-                              <p className="text-sm text-gray-700">{order.pickup_waiting_notes}</p>
+                              <p className="text-sm text-gray-700 whitespace-pre-line">{order.pickup_waiting_notes}</p>
                             </div>
                           )}
-                          {order.delivery_waiting_notes && (
+                          {order.delivery_waiting_notes && order.delivery_waiting_minutes > 0 && (
                             <div>
                               <p className="text-xs text-gray-500 mb-1">Begründung Zustellung:</p>
-                              <p className="text-sm text-gray-700">{order.delivery_waiting_notes}</p>
+                              <p className="text-sm text-gray-700 whitespace-pre-line">{order.delivery_waiting_notes}</p>
+                            </div>
+                          )}
+                          {/* Fallback for old data format */}
+                          {!order.pickup_waiting_notes && !order.delivery_waiting_notes && order.waiting_time_notes && (
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Begründung:</p>
+                              <p className="text-sm text-gray-700 whitespace-pre-line">{order.waiting_time_notes}</p>
                             </div>
                           )}
                         </div>
