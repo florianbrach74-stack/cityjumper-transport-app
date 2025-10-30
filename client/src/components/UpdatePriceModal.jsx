@@ -3,9 +3,12 @@ import { X, TrendingUp, AlertCircle } from 'lucide-react';
 import { ordersAPI } from '../services/api';
 
 export default function UpdatePriceModal({ order, onClose, onSuccess }) {
-  const [newPrice, setNewPrice] = useState(order.price);
+  const [newPrice, setNewPrice] = useState(parseFloat(order.price));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const currentPrice = parseFloat(order.price);
+  const minimumPrice = order.minimum_price_at_creation ? parseFloat(order.minimum_price_at_creation) : null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -13,13 +16,13 @@ export default function UpdatePriceModal({ order, onClose, onSuccess }) {
 
     const priceValue = parseFloat(newPrice);
     
-    if (priceValue <= order.price) {
+    if (priceValue <= currentPrice) {
       setError('Der neue Preis muss höher sein als der aktuelle Preis.');
       return;
     }
 
-    if (order.minimum_price_at_creation && priceValue < order.minimum_price_at_creation) {
-      setError(`Der Preis sollte mindestens €${order.minimum_price_at_creation.toFixed(2)} betragen (Mindestlohn).`);
+    if (minimumPrice && priceValue < minimumPrice) {
+      setError(`Der Preis sollte mindestens €${minimumPrice.toFixed(2)} betragen (Mindestlohn).`);
       return;
     }
 
@@ -37,8 +40,8 @@ export default function UpdatePriceModal({ order, onClose, onSuccess }) {
     }
   };
 
-  const priceIncrease = parseFloat(newPrice) - order.price;
-  const percentageIncrease = ((priceIncrease / order.price) * 100).toFixed(1);
+  const priceIncrease = parseFloat(newPrice) - currentPrice;
+  const percentageIncrease = ((priceIncrease / currentPrice) * 100).toFixed(1);
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
@@ -70,12 +73,12 @@ export default function UpdatePriceModal({ order, onClose, onSuccess }) {
           <div className="bg-gray-50 rounded-lg p-3 mb-3">
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm text-gray-600">Aktueller Preis:</span>
-              <span className="text-lg font-semibold text-gray-900">€{order.price.toFixed(2)}</span>
+              <span className="text-lg font-semibold text-gray-900">€{currentPrice.toFixed(2)}</span>
             </div>
-            {order.minimum_price_at_creation && (
+            {minimumPrice && (
               <div className="flex justify-between items-center text-xs text-gray-500">
                 <span>Mindestpreis:</span>
-                <span>€{order.minimum_price_at_creation.toFixed(2)}</span>
+                <span>€{minimumPrice.toFixed(2)}</span>
               </div>
             )}
           </div>
@@ -88,7 +91,7 @@ export default function UpdatePriceModal({ order, onClose, onSuccess }) {
               <input
                 type="number"
                 step="0.01"
-                min={order.price + 0.01}
+                min={currentPrice + 0.01}
                 value={newPrice}
                 onChange={(e) => setNewPrice(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-lg font-semibold"
