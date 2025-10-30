@@ -173,14 +173,14 @@ const CustomerDashboard = () => {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
             >
               <CheckCircle className="h-5 w-5" />
-              <span>Abgeschlossene Aufträge ({orders.filter(o => o.status === 'completed').length})</span>
+              <span>Abgeschlossene Aufträge ({orders.filter(o => o.status === 'completed' || o.status === 'pending_approval').length})</span>
             </button>
           </nav>
         </div>
 
         {/* Orders List */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {orders.filter(o => activeTab === 'active' ? o.status !== 'completed' : o.status === 'completed').length === 0 ? (
+          {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval') : (o.status === 'completed' || o.status === 'pending_approval')).length === 0 ? (
             <div className="text-center py-12">
               <Package className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">Keine Aufträge</h3>
@@ -229,7 +229,7 @@ const CustomerDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {orders.filter(o => activeTab === 'active' ? o.status !== 'completed' : o.status === 'completed').map((order) => (
+                  {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval') : (o.status === 'completed' || o.status === 'pending_approval')).map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">#{order.id}</div>
@@ -268,7 +268,7 @@ const CustomerDashboard = () => {
                           <span className="font-semibold">{order.price ? formatPrice(order.price) : '-'}</span>
                           
                           {/* Wartezeit-Gebühr für abgeschlossene Aufträge */}
-                          {order.status === 'completed' && order.waiting_time_fee > 0 && order.waiting_time_approved && (
+                          {(order.status === 'completed' || order.status === 'pending_approval') && order.waiting_time_fee && order.waiting_time_fee > 0 && (
                             <div className="text-xs bg-yellow-50 border border-yellow-200 rounded p-3 mt-2 space-y-2">
                               <div className="font-semibold text-yellow-900 border-b border-yellow-300 pb-1">
                                 ⏱️ Wartezeit-Vergütung
@@ -312,7 +312,7 @@ const CustomerDashboard = () => {
                               <div className="bg-green-50 border border-green-200 p-2 rounded">
                                 <div className="flex justify-between items-center">
                                   <span className="text-xs text-gray-600">Zusätzliche Kosten:</span>
-                                  <span className="font-bold text-green-700">+€{order.waiting_time_fee.toFixed(2)}</span>
+                                  <span className="font-bold text-green-700">+€{(order.waiting_time_fee || 0).toFixed(2)}</span>
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
                                   (Erste 30 Min. kostenlos, danach €3 pro 5 Min.)
@@ -335,7 +335,7 @@ const CustomerDashboard = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {(order.status === 'accepted' || order.status === 'in_transit' || order.status === 'completed') && (
+                        {(order.status === 'accepted' || order.status === 'in_transit' || order.status === 'completed' || order.status === 'pending_approval') && (
                           <button
                             onClick={() => setSelectedOrderForCMR(order.id)}
                             className="text-primary-600 hover:text-primary-900 flex items-center space-x-1"

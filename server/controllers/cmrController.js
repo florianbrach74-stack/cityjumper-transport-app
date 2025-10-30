@@ -687,7 +687,7 @@ const confirmDelivery = async (req, res) => {
     }
 
     // Update order status based on waiting time
-    let newStatus = 'delivered';
+    let newStatus = 'completed';
     if (waitingTimeFee > 0) {
       newStatus = 'pending_approval'; // Needs admin approval for waiting time fee
       console.log('📊 Order requires admin approval for waiting time fee');
@@ -700,7 +700,7 @@ const confirmDelivery = async (req, res) => {
         [newStatus, waitingTimeFee, orderId]
       );
     } else {
-      await Order.updateStatus(orderId, 'delivered');
+      await Order.updateStatus(orderId, 'completed');
     }
     
     console.log(`✅ Order status updated to: ${newStatus}`);
