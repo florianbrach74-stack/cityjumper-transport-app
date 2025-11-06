@@ -25,6 +25,14 @@ app.use((req, res, next) => {
 app.use('/auth', require('../server/routes/auth'));
 app.use('/orders', require('../server/routes/orders'));
 app.use('/cmr', require('../server/routes/cmr'));
+app.use('/pricing', require('../server/routes/pricing'));
+app.use('/reports', require('../server/routes/reports'));
+app.use('/admin', require('../server/routes/admin'));
+app.use('/bids', require('../server/routes/bids'));
+app.use('/verification', require('../server/routes/verification'));
+app.use('/users', require('../server/routes/users'));
+app.use('/contractors', require('../server/routes/contractors'));
+app.use('/employees', require('../server/routes/employees'));
 
 // Health check
 app.get('/health', (req, res) => {
