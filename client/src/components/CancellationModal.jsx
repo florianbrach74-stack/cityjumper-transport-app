@@ -1,0 +1,277 @@
+import { useState, useEffect } from 'react';
+import { X, AlertTriangle, DollarSign, User, FileText } from 'lucide-react';
+import axios from 'axios';
+
+export default function CancellationModal({ order, onClose, onSuccess }) {
+  const [cancelledBy, setCancelledBy] = useState('customer');
+  const [reason, setReason] = useState('');
+  const [contractorPenalty, setContractorPenalty] = useState('');
+  const [customerCompensation, setCustomerCompensation] = useState('');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState(null);
+
+  useEffect(() => {
+    if (cancelledBy === 'customer') {
+      fetchCancellationPreview();
+    }
+  }, []);
+
+  const fetchCancellationPreview = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/cancellation/${order.id}/cancellation-preview`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPreview(response.data.preview);
+    } catch (error) {
+      console.error('Error fetching preview:', error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const endpoint = cancelledBy === 'customer' 
+        ? `/api/cancellation/${order.id}/cancel-by-customer`
+        : `/api/cancellation/${order.id}/cancel-by-contractor`;
+
+      const data = cancelledBy === 'customer'
+        ? { reason }
+        : { 
+            reason, 
+            contractorPenalty: parseFloat(contractorPenalty) || 0,
+            customerCompensation: parseFloat(customerCompensation) || 0,
+            notes 
+          };
+
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}${endpoint}`,
+        data,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert('Stornierung erfolgreich durchgeführt');
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      alert(error.response?.data?.error || 'Fehler bei der Stornierung');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatPrice = (price) => `€${parseFloat(price || 0).toFixed(2)}`;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-red-50">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center">
+            <AlertTriangle className="h-6 w-6 mr-2 text-red-600" />
+            Auftrag stornieren #{order.id}
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Order Info */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="font-semibold text-gray-900 mb-2">Auftragsdetails</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600">Route:</span>
+                <p className="font-medium">{order.pickup_city} → {order.delivery_city}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Preis:</span>
+                <p className="font-medium">{formatPrice(order.price)}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Abholung:</span>
+                <p className="font-medium">{new Date(order.pickup_date).toLocaleDateString('de-DE')}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Status:</span>
+                <p className="font-medium">{order.status}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Cancelled By Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Storniert durch
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setCancelledBy('customer')}
+                className={`p-4 border-2 rounded-lg text-left transition-all ${
+                  cancelledBy === 'customer'
+                    ? 'border-primary-600 bg-primary-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <User className="h-5 w-5 mb-2 text-primary-600" />
+                <div className="font-semibold">Kunde</div>
+                <div className="text-xs text-gray-600">Gebühren nach AGB</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCancelledBy('contractor')}
+                className={`p-4 border-2 rounded-lg text-left transition-all ${
+                  cancelledBy === 'contractor'
+                    ? 'border-red-600 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <AlertTriangle className="h-5 w-5 mb-2 text-red-600" />
+                <div className="font-semibold">Auftragnehmer</div>
+                <div className="text-xs text-gray-600">Strafe + Kompensation</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Customer Cancellation */}
+          {cancelledBy === 'customer' && preview && (
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+              <h4 className="font-semibold text-blue-900 mb-3">Automatische Gebührenberechnung (AGB)</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-blue-800">Stunden bis Abholung:</span>
+                  <span className="font-semibold">{preview.hoursUntilPickup.toFixed(1)}h</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-blue-800">Fahrer-Status:</span>
+                  <span className="font-semibold">
+                    {preview.driverStatus === 'not_started' && 'Noch nicht gestartet'}
+                    {preview.driverStatus === 'en_route' && '🚗 Unterwegs'}
+                    {preview.driverStatus === 'past_pickup' && 'Nach Abholzeit'}
+                  </span>
+                </div>
+                <div className="flex justify-between text-lg font-bold border-t border-blue-200 pt-2 mt-2">
+                  <span className="text-blue-900">Stornogebühr ({preview.feePercentage}%):</span>
+                  <span className={preview.feePercentage === 0 ? 'text-green-600' : 'text-red-600'}>
+                    {formatPrice(preview.cancellationFee)}
+                  </span>
+                </div>
+                {preview.canCancelFree && (
+                  <p className="text-green-700 text-xs italic">✓ Kostenlose Stornierung möglich</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Contractor Cancellation */}
+          {cancelledBy === 'contractor' && (
+            <div className="space-y-4">
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                <h4 className="font-semibold text-red-900 mb-2">Auftragnehmer-Stornierung</h4>
+                <p className="text-sm text-red-800">
+                  Der Auftragnehmer erhält eine Strafe und der Kunde kann kompensiert werden.
+                  Die Mehrkosten trägt der Auftragnehmer.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Strafe für Auftragnehmer
+                  </label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={contractorPenalty}
+                      onChange={(e) => setContractorPenalty(e.target.value)}
+                      placeholder="0.00"
+                      className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Minusbetrag für Auftragnehmer</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kompensation für Kunde
+                  </label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={customerCompensation}
+                      onChange={(e) => setCustomerCompensation(e.target.value)}
+                      placeholder="0.00"
+                      className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Zusätzlicher Betrag für Kunde</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Admin-Notizen
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows="2"
+                  placeholder="Interne Notizen zur Stornierung..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Reason */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Grund für Stornierung *
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows="3"
+              placeholder="Bitte geben Sie den Grund für die Stornierung an..."
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              required
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Abbrechen
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium disabled:opacity-50 flex items-center"
+            >
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              {loading ? 'Wird storniert...' : 'Auftrag stornieren'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

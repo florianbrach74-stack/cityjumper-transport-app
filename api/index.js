@@ -27,6 +27,7 @@ app.use('/orders', require('../server/routes/orders'));
 app.use('/cmr', require('../server/routes/cmr'));
 app.use('/pricing', require('../server/routes/pricing'));
 app.use('/reports', require('../server/routes/reports'));
+app.use('/cancellation', require('../server/routes/cancellation'));
 app.use('/admin', require('../server/routes/admin'));
 app.use('/bids', require('../server/routes/bids'));
 app.use('/verification', require('../server/routes/verification'));
