@@ -5,17 +5,15 @@ import axios from 'axios';
 export default function CancellationModal({ order, onClose, onSuccess }) {
   const [cancelledBy, setCancelledBy] = useState('customer');
   const [reason, setReason] = useState('');
-  const [contractorPenalty, setContractorPenalty] = useState('');
-  const [customerCompensation, setCustomerCompensation] = useState('');
+  const [priceIncrease, setPriceIncrease] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(null);
+  const [contractorPreview, setContractorPreview] = useState(null);
 
   useEffect(() => {
-    if (cancelledBy === 'customer') {
-      fetchCancellationPreview();
-    }
-  }, []);
+    fetchCancellationPreview();
+  }, [cancelledBy]);
 
   const fetchCancellationPreview = async () => {
     try {
@@ -44,8 +42,7 @@ export default function CancellationModal({ order, onClose, onSuccess }) {
         ? { reason }
         : { 
             reason, 
-            contractorPenalty: parseFloat(contractorPenalty) || 0,
-            customerCompensation: parseFloat(customerCompensation) || 0,
+            priceIncrease: parseFloat(priceIncrease) || 0,
             notes 
           };
 
@@ -173,54 +170,61 @@ export default function CancellationModal({ order, onClose, onSuccess }) {
           )}
 
           {/* Contractor Cancellation */}
-          {cancelledBy === 'contractor' && (
+          {cancelledBy === 'contractor' && preview && (
             <div className="space-y-4">
               <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-                <h4 className="font-semibold text-red-900 mb-2">Auftragnehmer-Stornierung</h4>
-                <p className="text-sm text-red-800">
-                  Der Auftragnehmer erhält eine Strafe und der Kunde kann kompensiert werden.
-                  Die Mehrkosten trägt der Auftragnehmer.
+                <h4 className="font-semibold text-red-900 mb-3">Auftragnehmer-Stornierung (AGB)</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-red-800">Stunden bis Abholung:</span>
+                    <span className="font-semibold">{preview.hoursUntilPickup.toFixed(1)}h</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-red-800">Stornogebühr (AGB):</span>
+                    <span className="font-semibold">{preview.feePercentage}%</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold border-t border-red-200 pt-2 mt-2">
+                    <span className="text-red-900">Strafe Auftragnehmer:</span>
+                    <span className="text-red-600">{formatPrice(preview.cancellationFee)}</span>
+                  </div>
+                  <p className="text-red-700 text-xs italic mt-2">
+                    ⚠️ Auftragnehmer zahlt {preview.feePercentage}% Stornogebühr gemäß AGB
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Preiserhöhung für neuen Auftragnehmer
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={priceIncrease}
+                    onChange={(e) => setPriceIncrease(e.target.value)}
+                    placeholder="0.00"
+                    max={preview.cancellationFee}
+                    className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Max: {formatPrice(preview.cancellationFee)} (= Stornogebühr)
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  💡 Erhöhung = Anreiz für schnelle Neubesetzung
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Strafe für Auftragnehmer
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={contractorPenalty}
-                      onChange={(e) => setContractorPenalty(e.target.value)}
-                      placeholder="0.00"
-                      className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
-                      required
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Minusbetrag für Auftragnehmer</p>
+              {priceIncrease && parseFloat(priceIncrease) > 0 && (
+                <div className="bg-blue-50 p-3 rounded-lg text-sm">
+                  <p className="font-semibold text-blue-900">Neuer Auftragspreis:</p>
+                  <p className="text-blue-800">
+                    {formatPrice(order.price)} + {formatPrice(priceIncrease)} = {formatPrice(parseFloat(order.price) + parseFloat(priceIncrease))}
+                  </p>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Kompensation für Kunde
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={customerCompensation}
-                      onChange={(e) => setCustomerCompensation(e.target.value)}
-                      placeholder="0.00"
-                      className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Zusätzlicher Betrag für Kunde</p>
-                </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

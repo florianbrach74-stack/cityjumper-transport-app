@@ -81,6 +81,18 @@ router.post('/:orderId/cancel-by-customer', authenticateToken, async (req, res) 
     // Calculate cancellation fee
     const feeInfo = calculateCancellationFee(order, 'customer');
     
+    // If driver is en route (75% fee), reduce order price so contractor can complete it
+    let newStatus = 'cancelled';
+    let newPrice = parseFloat(order.price);
+    let newContractorPrice = parseFloat(order.contractor_price);
+    
+    if (feeInfo.driverStatus === 'en_route' && order.contractor_id) {
+      // Driver already started - allow completion with reduced price
+      newStatus = order.status; // Keep current status
+      newPrice = feeInfo.cancellationFee; // 75% of original
+      newContractorPrice = newPrice * 0.85; // Contractor gets 85% of reduced price
+    }
+    
     // Update order
     await client.query(
       `UPDATE transport_orders 
@@ -90,9 +102,11 @@ router.post('/:orderId/cancel-by-customer', authenticateToken, async (req, res) 
            cancellation_timestamp = NOW(),
            cancellation_fee = $2,
            cancellation_fee_percentage = $3,
-           status = 'cancelled'
-       WHERE id = $4`,
-      [reason, feeInfo.cancellationFee, feeInfo.feePercentage, orderId]
+           price = $4,
+           contractor_price = $5,
+           status = $6
+       WHERE id = $7`,
+      [reason, feeInfo.cancellationFee, feeInfo.feePercentage, newPrice, newContractorPrice, newStatus, orderId]
     );
     
     // Create history entry
@@ -126,13 +140,13 @@ router.post('/:orderId/cancel-by-customer', authenticateToken, async (req, res) 
   }
 });
 
-// Cancel order by contractor (Admin manages penalties)
+// Cancel order by contractor (Admin manages penalties and price increase)
 router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('admin'), async (req, res) => {
   const client = await pool.connect();
   
   try {
     const { orderId } = req.params;
-    const { reason, contractorPenalty, customerCompensation, notes } = req.body;
+    const { reason, priceIncrease, notes } = req.body;
     const userId = req.user.id;
     
     await client.query('BEGIN');
@@ -156,10 +170,19 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
       return res.status(400).json({ error: 'Auftrag bereits storniert' });
     }
     
-    const penalty = parseFloat(contractorPenalty) || 0;
-    const compensation = parseFloat(customerCompensation) || 0;
+    // Calculate contractor penalty based on AGB (same as customer cancellation)
+    const feeInfo = calculateCancellationFee(order, 'contractor');
+    const contractorPenalty = feeInfo.cancellationFee;
     
-    // Update order
+    // Price increase for new contractor (max = cancellation fee)
+    const increase = Math.min(
+      parseFloat(priceIncrease) || 0,
+      contractorPenalty
+    );
+    
+    const newPrice = parseFloat(order.price) + increase;
+    
+    // Update order - set to pending with increased price
     await client.query(
       `UPDATE transport_orders 
        SET cancellation_status = 'cancelled_by_contractor',
@@ -168,10 +191,13 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
            cancellation_timestamp = NOW(),
            contractor_penalty = $2,
            customer_compensation = $3,
-           cancellation_notes = $4,
-           status = 'cancelled'
-       WHERE id = $5`,
-      [reason, penalty, compensation, notes, orderId]
+           price = $4,
+           contractor_price = NULL,
+           contractor_id = NULL,
+           cancellation_notes = $5,
+           status = 'pending'
+       WHERE id = $6`,
+      [reason, contractorPenalty, increase, newPrice, notes, orderId]
     );
     
     // Create history entry
@@ -180,16 +206,18 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
        (order_id, cancelled_by, cancellation_reason, contractor_penalty, 
         customer_compensation, created_by)
        VALUES ($1, 'contractor', $2, $3, $4, $5)`,
-      [orderId, reason, penalty, compensation, userId]
+      [orderId, reason, contractorPenalty, increase, userId]
     );
     
     await client.query('COMMIT');
     
     res.json({
       success: true,
-      message: 'Auftrag als Auftragnehmer-Stornierung markiert',
-      contractorPenalty: penalty,
-      customerCompensation: compensation
+      message: 'Auftragnehmer-Stornierung verarbeitet. Auftrag wieder verfügbar mit erhöhtem Preis.',
+      contractorPenalty,
+      priceIncrease: increase,
+      newPrice,
+      originalPrice: parseFloat(order.price)
     });
     
   } catch (error) {
