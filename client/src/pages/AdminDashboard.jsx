@@ -8,6 +8,7 @@ import DetailedOrderView from '../components/DetailedOrderView';
 import InvoiceGenerator from '../components/InvoiceGenerator';
 import AdminOrderEditModal from '../components/AdminOrderEditModal';
 import PricingSettings from '../components/PricingSettings';
+import ReportsSummary from '../components/ReportsSummary';
 import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
@@ -397,6 +398,16 @@ export default function AdminDashboard() {
               💰 Preiskalkulation
             </button>
             <button
+              onClick={() => setActiveTab('reports')}
+              className={`${
+                activeTab === 'reports'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              📊 Abrechnungen
+            </button>
+            <button
               onClick={() => setActiveTab('verifications')}
               className={`${
                 activeTab === 'verifications'
@@ -639,6 +650,11 @@ export default function AdminDashboard() {
         {/* Pricing Settings Tab */}
         {activeTab === 'pricing' && (
           <PricingSettings />
+        )}
+
+        {/* Reports Tab */}
+        {activeTab === 'reports' && (
+          <ReportsSummary userRole="admin" />
         )}
 
         {/* All Contractors Tab */}

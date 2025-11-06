@@ -4,8 +4,9 @@ import Navbar from '../components/Navbar';
 import CreateOrderModal from '../components/CreateOrderModal';
 import UpdatePriceModal from '../components/UpdatePriceModal';
 import CMRViewer from '../components/CMRViewer';
+import ReportsSummary from '../components/ReportsSummary';
 import { formatPrice } from '../utils/formatPrice';
-import { Plus, Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText, TrendingUp } from 'lucide-react';
+import { Plus, Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText, TrendingUp, BarChart3 } from 'lucide-react';
 
 const CustomerDashboard = () => {
   const [orders, setOrders] = useState([]);
@@ -175,10 +176,27 @@ const CustomerDashboard = () => {
               <CheckCircle className="h-5 w-5" />
               <span>Abgeschlossene Aufträge ({orders.filter(o => o.status === 'completed' || o.status === 'pending_approval').length})</span>
             </button>
+            <button
+              onClick={() => setActiveTab('reports')}
+              className={`${
+                activeTab === 'reports'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
+            >
+              <BarChart3 className="h-5 w-5" />
+              <span>Abrechnungen</span>
+            </button>
           </nav>
         </div>
 
+        {/* Reports Tab */}
+        {activeTab === 'reports' && (
+          <ReportsSummary userRole="customer" />
+        )}
+
         {/* Orders List */}
+        {activeTab !== 'reports' && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval') : (o.status === 'completed' || o.status === 'pending_approval')).length === 0 ? (
             <div className="text-center py-12">
@@ -352,6 +370,7 @@ const CustomerDashboard = () => {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Create Order Modal */}

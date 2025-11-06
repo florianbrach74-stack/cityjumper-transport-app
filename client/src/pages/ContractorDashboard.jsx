@@ -7,8 +7,9 @@ import CMRSignature from '../components/CMRSignature';
 import BidModal from '../components/BidModal';
 import EmployeeManagement from '../components/EmployeeManagement';
 import NotificationSettings from '../components/NotificationSettings';
+import ReportsSummary from '../components/ReportsSummary';
 import { formatPrice } from '../utils/formatPrice';
-import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell } from 'lucide-react';
+import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell, BarChart3 } from 'lucide-react';
 
 // API helpers
 const ordersAPI = {
@@ -555,6 +556,17 @@ const ContractorDashboard = () => {
               <span>Abgeschlossene Aufträge ({myOrders.filter(o => o.status === 'delivered' || o.status === 'completed' || o.status === 'pending_approval').length})</span>
             </button>
             <button
+              onClick={() => setActiveTab('reports')}
+              className={`${
+                activeTab === 'reports'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
+            >
+              <BarChart3 className="h-5 w-5" />
+              <span>Abrechnungen</span>
+            </button>
+            <button
               onClick={() => setActiveTab('employees')}
               className={`${
                 activeTab === 'employees'
@@ -682,6 +694,8 @@ const ContractorDashboard = () => {
               </div>
             )}
           </div>
+        ) : activeTab === 'reports' ? (
+          <ReportsSummary userRole="contractor" />
         ) : activeTab === 'employees' ? (
           <EmployeeManagement />
         ) : (

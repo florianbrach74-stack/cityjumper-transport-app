@@ -30,6 +30,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/employees', require('./routes/employees'));
 app.use('/api/contractors', require('./routes/contractors'));
 app.use('/api/pricing', require('./routes/pricing'));
+app.use('/api/reports', require('./routes/reports'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
