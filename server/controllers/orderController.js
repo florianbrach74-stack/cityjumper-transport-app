@@ -42,6 +42,10 @@ const createOrder = async (req, res) => {
       // Beiladungs-Daten
       is_partial_load: req.body.is_partial_load || false,
       minimum_price_at_creation: req.body.minimum_price_at_creation || null,
+      // Widerrufsbelehrung-Zustimmung
+      withdrawal_consent_given: req.body.withdrawal_consent_given || false,
+      withdrawal_consent_timestamp: req.body.withdrawal_consent_given ? new Date() : null,
+      withdrawal_consent_ip: req.body.withdrawal_consent_given ? req.ip : null,
     };
     
     // Wenn Beiladung, setze Deadline auf 7 Tage

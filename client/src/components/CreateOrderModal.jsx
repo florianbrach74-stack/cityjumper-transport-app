@@ -59,6 +59,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const [extraStopsFee, setExtraStopsFee] = useState(0);
   const [showPartialLoadDialog, setShowPartialLoadDialog] = useState(false);
   const [isPartialLoad, setIsPartialLoad] = useState(false);
+  const [withdrawalConsent, setWithdrawalConsent] = useState(false);
 
   const vehicleTypes = [
     'Kleintransporter (bis 2 Paletten)',
@@ -194,6 +195,12 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     e.preventDefault();
     setError('');
     
+    // Check withdrawal consent for private customers (role: customer, not company)
+    if (user?.role === 'customer' && !user?.company_name && !withdrawalConsent) {
+      setError('Bitte bestätigen Sie die Widerrufsbelehrung, um fortzufahren.');
+      return;
+    }
+    
     // Prüfe Mindestlohn - zeige Beiladungs-Dialog wenn unterschritten
     if (priceWarning && !isPartialLoad) {
       setShowPartialLoadDialog(true);
@@ -222,6 +229,8 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         // Beiladungs-Daten
         is_partial_load: isPartialLoad,
         minimum_price_at_creation: minimumPrice,
+        // Widerrufsbelehrung-Zustimmung
+        withdrawal_consent_given: user?.role === 'customer' && !user?.company_name ? withdrawalConsent : null,
       };
 
       console.log('Sending order data:', orderData);
@@ -703,6 +712,36 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
           </div>
 
           {/* Actions */}
+          {/* Widerrufsbelehrung für Privatkunden */}
+          {user?.role === 'customer' && !user?.company_name && (
+            <div className="pt-4 border-t">
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                <div className="flex items-start">
+                  <input
+                    type="checkbox"
+                    id="withdrawalConsent"
+                    checked={withdrawalConsent}
+                    onChange={(e) => setWithdrawalConsent(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="withdrawalConsent" className="ml-3 text-sm text-gray-700">
+                    <span className="font-semibold">Ich stimme ausdrücklich zu,</span> dass FB Transporte vor Ablauf der Widerrufsfrist mit der Durchführung des Transports beginnt.
+                    Mir ist bekannt, dass ich mein Widerrufsrecht bei vollständiger Vertragserfüllung verliere.
+                    <br />
+                    <a 
+                      href="/widerruf" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary-600 hover:text-primary-700 underline font-medium mt-1 inline-block"
+                    >
+                      → Widerrufsbelehrung lesen
+                    </a>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end space-x-3 pt-4 border-t">
             <button
               type="button"
