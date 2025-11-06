@@ -408,7 +408,7 @@ const ContractorDashboard = () => {
             )}
 
             {/* CMR Button - visible after pickup */}
-            {(order.status === 'picked_up' || order.status === 'delivered') && (
+            {(order.status === 'picked_up' || order.status === 'delivered' || order.status === 'pending_approval' || order.status === 'completed') && (
               <button
                 onClick={() => setSelectedOrderForCMR(order.id)}
                 className="w-full flex justify-center items-center px-4 py-2 border border-primary-600 rounded-lg text-sm font-medium text-primary-600 hover:bg-primary-50"
