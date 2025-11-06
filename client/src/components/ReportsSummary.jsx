@@ -1,25 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Download, FileText, TrendingUp, Package, Clock, DollarSign, Filter } from 'lucide-react';
+import { Download, FileText, TrendingUp, Package, Clock, DollarSign, Filter, Send } from 'lucide-react';
 import axios from 'axios';
 
 export default function ReportsSummary({ userRole }) {
-  const [dateRange, setDateRange] = useState('7'); // 7, 14, 30, custom
+  const [dateRange, setDateRange] = useState('7');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState(null);
   const [orders, setOrders] = useState([]);
   const [selectedOrders, setSelectedOrders] = useState([]);
+  const [customerFilter, setCustomerFilter] = useState('all');
+  const [customers, setCustomers] = useState([]);
 
   const getDateRange = () => {
     const end = new Date();
     let start = new Date();
 
     if (dateRange === 'custom') {
-      return {
-        startDate: customStartDate,
-        endDate: customEndDate
-      };
+      return { startDate: customStartDate, endDate: customEndDate };
     }
 
     const days = parseInt(dateRange);
@@ -47,6 +46,19 @@ export default function ReportsSummary({ userRole }) {
 
       setSummary(response.data.summary);
       setOrders(response.data.orders);
+      
+      if (userRole === 'admin') {
+        const uniqueCustomers = [...new Map(
+          response.data.orders.map(o => [
+            o.customer_id,
+            {
+              id: o.customer_id,
+              name: o.customer_company || `${o.customer_first_name || ''} ${o.customer_last_name || ''}`.trim()
+            }
+          ])
+        ).values()];
+        setCustomers(uniqueCustomers);
+      }
     } catch (error) {
       console.error('Error fetching summary:', error);
       alert('Fehler beim Laden der Zusammenfassung');
@@ -70,21 +82,59 @@ export default function ReportsSummary({ userRole }) {
   };
 
   const handleSelectAll = () => {
-    if (selectedOrders.length === orders.length) {
+    const filteredOrders = getFilteredOrders();
+    if (selectedOrders.length === filteredOrders.length) {
       setSelectedOrders([]);
     } else {
-      setSelectedOrders(orders.map(o => o.id));
+      setSelectedOrders(filteredOrders.map(o => o.id));
+    }
+  };
+
+  const generateSingleInvoice = async (orderId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/reports/bulk-invoice`,
+        { orderIds: [orderId] },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert('Rechnung erstellt und an Kunde gesendet');
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      alert(error.response?.data?.error || 'Fehler beim Erstellen der Rechnung');
+    }
+  };
+
+  const generateBulkInvoice = async () => {
+    if (selectedOrders.length === 0) {
+      alert('Bitte wählen Sie mindestens einen Auftrag aus');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/reports/bulk-invoice`,
+        { orderIds: selectedOrders },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(`Sammelrechnung für ${selectedOrders.length} Aufträge erstellt und an Kunde gesendet`);
+      setSelectedOrders([]);
+    } catch (error) {
+      console.error('Error generating bulk invoice:', error);
+      alert(error.response?.data?.error || 'Fehler beim Erstellen der Sammelrechnung');
     }
   };
 
   const exportToCSV = () => {
+    const filteredOrders = getFilteredOrders();
     const csvContent = [
       ['Auftrags-Nr', 'Datum', 'Von', 'Nach', 'Status', 'Preis', 'Wartezeit', 'Gesamt'].join(';'),
-      ...orders.map(order => [
+      ...filteredOrders.map(order => [
         order.id,
         new Date(order.created_at).toLocaleDateString('de-DE'),
-        `${order.pickup_city}`,
-        `${order.delivery_city}`,
+        order.pickup_city,
+        order.delivery_city,
         order.status,
         `€${parseFloat(order.price || 0).toFixed(2)}`,
         order.waiting_time_approved ? `€${parseFloat(order.waiting_time_fee || 0).toFixed(2)}` : '€0.00',
@@ -99,32 +149,14 @@ export default function ReportsSummary({ userRole }) {
     link.click();
   };
 
-  const generateBulkInvoice = async () => {
-    if (selectedOrders.length === 0) {
-      alert('Bitte wählen Sie mindestens einen Auftrag aus');
-      return;
+  const getFilteredOrders = () => {
+    if (customerFilter === 'all' || userRole !== 'admin') {
+      return orders;
     }
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/reports/bulk-invoice`,
-        { orderIds: selectedOrders },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // Open invoice in new window or download
-      console.log('Bulk invoice generated:', response.data);
-      alert(`Sammelrechnung für ${selectedOrders.length} Aufträge erstellt`);
-    } catch (error) {
-      console.error('Error generating bulk invoice:', error);
-      alert(error.response?.data?.error || 'Fehler beim Erstellen der Sammelrechnung');
-    }
+    return orders.filter(o => o.customer_id === parseInt(customerFilter));
   };
 
-  const formatPrice = (price) => {
-    return `€${parseFloat(price || 0).toFixed(2)}`;
-  };
+  const formatPrice = (price) => `€${parseFloat(price || 0).toFixed(2)}`;
 
   if (loading && !summary) {
     return (
@@ -133,6 +165,8 @@ export default function ReportsSummary({ userRole }) {
       </div>
     );
   }
+
+  const filteredOrders = getFilteredOrders();
 
   return (
     <div className="space-y-6">
@@ -146,7 +180,7 @@ export default function ReportsSummary({ userRole }) {
           <div className="flex items-center space-x-2">
             <button
               onClick={exportToCSV}
-              disabled={orders.length === 0}
+              disabled={filteredOrders.length === 0}
               className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               <Download className="h-4 w-4 mr-2" />
@@ -165,7 +199,7 @@ export default function ReportsSummary({ userRole }) {
         </div>
 
         {/* Date Range Filter */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 mb-4">
           <div className="flex items-center space-x-2">
             <Filter className="h-5 w-5 text-gray-400" />
             <span className="text-sm font-medium text-gray-700">Zeitraum:</span>
@@ -199,7 +233,7 @@ export default function ReportsSummary({ userRole }) {
 
         {/* Custom Date Range */}
         {dateRange === 'custom' && (
-          <div className="mt-4 flex items-center space-x-4">
+          <div className="flex items-center space-x-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Von</label>
               <input
@@ -220,6 +254,25 @@ export default function ReportsSummary({ userRole }) {
             </div>
           </div>
         )}
+
+        {/* Customer Filter (Admin only) */}
+        {userRole === 'admin' && customers.length > 0 && (
+          <div className="flex items-center space-x-4">
+            <span className="text-sm font-medium text-gray-700">Kunde:</span>
+            <select
+              value={customerFilter}
+              onChange={(e) => setCustomerFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="all">Alle Kunden ({orders.length})</option>
+              {customers.map(customer => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.name} ({orders.filter(o => o.customer_id === customer.id).length})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -229,7 +282,7 @@ export default function ReportsSummary({ userRole }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Gesamt Aufträge</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{summary.totalOrders}</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{filteredOrders.length}</p>
               </div>
               <Package className="h-10 w-10 text-blue-500" />
             </div>
@@ -239,7 +292,9 @@ export default function ReportsSummary({ userRole }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Abgeschlossen</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">{summary.completedOrders}</p>
+                <p className="text-2xl font-bold text-green-600 mt-1">
+                  {filteredOrders.filter(o => o.status === 'completed').length}
+                </p>
               </div>
               <TrendingUp className="h-10 w-10 text-green-500" />
             </div>
@@ -252,7 +307,17 @@ export default function ReportsSummary({ userRole }) {
                   {userRole === 'admin' ? 'Gesamtumsatz' : userRole === 'contractor' ? 'Ihre Einnahmen' : 'Ihre Kosten'}
                 </p>
                 <p className="text-2xl font-bold text-primary-600 mt-1">
-                  {formatPrice(summary.totalRevenue)}
+                  {formatPrice(
+                    filteredOrders.reduce((sum, o) => {
+                      const price = parseFloat(o.price || 0);
+                      const contractorPrice = parseFloat(o.contractor_price || 0);
+                      const waitingFee = o.waiting_time_approved ? parseFloat(o.waiting_time_fee || 0) : 0;
+                      
+                      if (userRole === 'admin') return sum + price + waitingFee;
+                      if (userRole === 'contractor') return sum + contractorPrice + waitingFee;
+                      return sum + price + waitingFee;
+                    }, 0)
+                  )}
                 </p>
               </div>
               <DollarSign className="h-10 w-10 text-primary-500" />
@@ -265,24 +330,16 @@ export default function ReportsSummary({ userRole }) {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Plattform-Provision</p>
                   <p className="text-2xl font-bold text-green-600 mt-1">
-                    {formatPrice(summary.totalPlatformCommission)}
+                    {formatPrice(
+                      filteredOrders.reduce((sum, o) => {
+                        const price = parseFloat(o.price || 0);
+                        const contractorPrice = parseFloat(o.contractor_price || 0);
+                        return sum + (price - contractorPrice);
+                      }, 0)
+                    )}
                   </p>
                 </div>
                 <TrendingUp className="h-10 w-10 text-green-500" />
-              </div>
-            </div>
-          )}
-
-          {summary.totalWaitingTimeFees > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Wartezeit-Gebühren</p>
-                  <p className="text-2xl font-bold text-orange-600 mt-1">
-                    {formatPrice(summary.totalWaitingTimeFees)}
-                  </p>
-                </div>
-                <Clock className="h-10 w-10 text-orange-500" />
               </div>
             </div>
           )}
@@ -292,13 +349,13 @@ export default function ReportsSummary({ userRole }) {
       {/* Orders Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Aufträge ({orders.length})</h3>
-          {userRole === 'admin' && orders.length > 0 && (
+          <h3 className="text-lg font-semibold text-gray-900">Aufträge ({filteredOrders.length})</h3>
+          {userRole === 'admin' && filteredOrders.length > 0 && (
             <button
               onClick={handleSelectAll}
               className="text-sm text-primary-600 hover:text-primary-700 font-medium"
             >
-              {selectedOrders.length === orders.length ? 'Alle abwählen' : 'Alle auswählen'}
+              {selectedOrders.length === filteredOrders.length ? 'Alle abwählen' : 'Alle auswählen'}
             </button>
           )}
         </div>
@@ -310,7 +367,7 @@ export default function ReportsSummary({ userRole }) {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <input
                       type="checkbox"
-                      checked={selectedOrders.length === orders.length && orders.length > 0}
+                      checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
                       onChange={handleSelectAll}
                       className="rounded border-gray-300"
                     />
@@ -334,17 +391,20 @@ export default function ReportsSummary({ userRole }) {
                 {userRole === 'admin' && (
                   <>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Auftragnehmer
+                      Kunde
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Provision
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Rechnung
                     </th>
                   </>
                 )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {orders.map((order) => {
+              {filteredOrders.map((order) => {
                 const price = parseFloat(order.price || 0);
                 const contractorPrice = parseFloat(order.contractor_price || 0);
                 const commission = price - contractorPrice;
@@ -393,10 +453,19 @@ export default function ReportsSummary({ userRole }) {
                     {userRole === 'admin' && (
                       <>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {order.contractor_company || `${order.contractor_first_name || ''} ${order.contractor_last_name || ''}`.trim() || '-'}
+                          {order.customer_company || `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                           {formatPrice(commission)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <button
+                            onClick={() => generateSingleInvoice(order.id)}
+                            className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
+                          >
+                            <Send className="h-4 w-4 mr-1" />
+                            Senden
+                          </button>
                         </td>
                       </>
                     )}
