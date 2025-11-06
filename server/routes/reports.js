@@ -176,11 +176,15 @@ router.get('/by-customer', authenticateToken, authorizeRole('admin'), async (req
 // Generate bulk invoice for multiple orders (Admin only)
 router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
+    console.log('Bulk invoice request:', req.body);
     const { orderIds, customerId } = req.body;
 
     if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+      console.error('Invalid orderIds:', orderIds);
       return res.status(400).json({ error: 'Mindestens eine Auftrags-ID ist erforderlich' });
     }
+
+    console.log('Fetching orders:', orderIds);
 
     // Get orders
     const ordersResult = await pool.query(
@@ -188,16 +192,15 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
               c.email as customer_email,
               c.first_name as customer_first_name,
               c.last_name as customer_last_name,
-              c.company_name as customer_company,
-              c.address as customer_address,
-              c.postal_code as customer_postal_code,
-              c.city as customer_city
+              c.company_name as customer_company
        FROM transport_orders o
        LEFT JOIN users c ON o.customer_id = c.id
        WHERE o.id = ANY($1)
        ORDER BY o.created_at ASC`,
       [orderIds]
     );
+
+    console.log('Orders found:', ordersResult.rows.length);
 
     const orders = ordersResult.rows;
 
@@ -236,10 +239,7 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         customer: {
           id: orders[0].customer_id,
           email: orders[0].customer_email,
-          name: orders[0].customer_company || `${orders[0].customer_first_name} ${orders[0].customer_last_name}`,
-          address: orders[0].customer_address,
-          postalCode: orders[0].customer_postal_code,
-          city: orders[0].customer_city
+          name: orders[0].customer_company || `${orders[0].customer_first_name} ${orders[0].customer_last_name}`
         },
         totals,
         invoiceDate: new Date().toISOString(),
@@ -248,7 +248,11 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
     });
   } catch (error) {
     console.error('Generate bulk invoice error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
