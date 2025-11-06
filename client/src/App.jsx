@@ -14,6 +14,7 @@ import CMRSignature from './pages/CMRSignature';
 import VerificationPage from './pages/VerificationPage';
 import Settings from './pages/Settings';
 import AGB from './pages/AGB';
+import Widerruf from './pages/Widerruf';
 
 const DashboardRouter = () => {
   const { user } = useAuth();
@@ -42,6 +43,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/agb" element={<AGB />} />
+          <Route path="/widerruf" element={<Widerruf />} />
           <Route path="/cmr/:cmrNumber" element={<CMRSignature />} />
           <Route path="/cmr/:cmrNumber/sender" element={<CMRSignature />} />
           <Route path="/cmr/:cmrNumber/carrier" element={<CMRSignature />} />
