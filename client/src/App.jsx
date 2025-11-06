@@ -13,6 +13,7 @@ import ContractorOrdersView from './pages/ContractorOrdersView';
 import CMRSignature from './pages/CMRSignature';
 import VerificationPage from './pages/VerificationPage';
 import Settings from './pages/Settings';
+import AGB from './pages/AGB';
 
 const DashboardRouter = () => {
   const { user } = useAuth();
@@ -40,6 +41,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/agb" element={<AGB />} />
           <Route path="/cmr/:cmrNumber" element={<CMRSignature />} />
           <Route path="/cmr/:cmrNumber/sender" element={<CMRSignature />} />
           <Route path="/cmr/:cmrNumber/carrier" element={<CMRSignature />} />
