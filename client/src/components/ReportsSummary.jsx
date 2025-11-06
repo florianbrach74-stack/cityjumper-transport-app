@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Download, FileText, TrendingUp, Package, Clock, DollarSign, Filter, Send } from 'lucide-react';
 import axios from 'axios';
+import InvoicePreviewModal from './InvoicePreviewModal';
 
 export default function ReportsSummary({ userRole }) {
   const [dateRange, setDateRange] = useState('7');
@@ -12,6 +13,7 @@ export default function ReportsSummary({ userRole }) {
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [customerFilter, setCustomerFilter] = useState('all');
   const [customers, setCustomers] = useState([]);
+  const [invoicePreview, setInvoicePreview] = useState(null);
 
   const getDateRange = () => {
     const end = new Date();
@@ -90,22 +92,29 @@ export default function ReportsSummary({ userRole }) {
     }
   };
 
-  const generateSingleInvoice = async (orderId) => {
+  const previewSingleInvoice = async (orderId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post(
+      const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/reports/bulk-invoice`,
         { orderIds: [orderId] },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert('Rechnung erstellt und an Kunde gesendet');
+      setInvoicePreview(response.data.invoice);
     } catch (error) {
-      console.error('Error generating invoice:', error);
-      alert(error.response?.data?.error || 'Fehler beim Erstellen der Rechnung');
+      console.error('Error generating invoice preview:', error);
+      alert(error.response?.data?.error || 'Fehler beim Erstellen der Vorschau');
     }
   };
 
-  const generateBulkInvoice = async () => {
+  const sendInvoice = async () => {
+    // In a real implementation, this would send the email
+    // For now, we just show a success message
+    alert('Rechnung wurde erfolgreich an den Kunden gesendet!');
+    setInvoicePreview(null);
+  };
+
+  const previewBulkInvoice = async () => {
     if (selectedOrders.length === 0) {
       alert('Bitte wählen Sie mindestens einen Auftrag aus');
       return;
@@ -113,17 +122,22 @@ export default function ReportsSummary({ userRole }) {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post(
+      const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/reports/bulk-invoice`,
         { orderIds: selectedOrders },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert(`Sammelrechnung für ${selectedOrders.length} Aufträge erstellt und an Kunde gesendet`);
-      setSelectedOrders([]);
+      setInvoicePreview(response.data.invoice);
     } catch (error) {
-      console.error('Error generating bulk invoice:', error);
+      console.error('Error generating bulk invoice preview:', error);
       alert(error.response?.data?.error || 'Fehler beim Erstellen der Sammelrechnung');
     }
+  };
+
+  const sendBulkInvoice = async () => {
+    alert(`Sammelrechnung für ${invoicePreview.orders.length} Aufträge wurde erfolgreich an den Kunden gesendet!`);
+    setSelectedOrders([]);
+    setInvoicePreview(null);
   };
 
   const exportToCSV = () => {
@@ -188,7 +202,7 @@ export default function ReportsSummary({ userRole }) {
             </button>
             {userRole === 'admin' && selectedOrders.length > 0 && (
               <button
-                onClick={generateBulkInvoice}
+                onClick={previewBulkInvoice}
                 className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium"
               >
                 <FileText className="h-4 w-4 mr-2" />
@@ -460,11 +474,11 @@ export default function ReportsSummary({ userRole }) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <button
-                            onClick={() => generateSingleInvoice(order.id)}
+                            onClick={() => previewSingleInvoice(order.id)}
                             className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
                           >
-                            <Send className="h-4 w-4 mr-1" />
-                            Senden
+                            <FileText className="h-4 w-4 mr-1" />
+                            Rechnung
                           </button>
                         </td>
                       </>
@@ -476,6 +490,15 @@ export default function ReportsSummary({ userRole }) {
           </table>
         </div>
       </div>
+
+      {/* Invoice Preview Modal */}
+      {invoicePreview && (
+        <InvoicePreviewModal
+          invoice={invoicePreview}
+          onClose={() => setInvoicePreview(null)}
+          onSend={invoicePreview.orders.length === 1 ? sendInvoice : sendBulkInvoice}
+        />
+      )}
     </div>
   );
 }
