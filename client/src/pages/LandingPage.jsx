@@ -4,6 +4,7 @@ import { Truck, MapPin, Clock, Shield, Euro, ArrowRight, CheckCircle, LogIn, Log
 import AddressSearch from '../components/AddressSearch';
 import RouteMap from '../components/RouteMap';
 import Logo from '../components/Logo';
+import Footer from '../components/Footer';
 import { formatPrice } from '../utils/formatPrice';
 
 export default function LandingPage() {
@@ -616,6 +617,9 @@ export default function LandingPage() {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
