@@ -35,25 +35,134 @@ CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Au
 ### 🌟 Highlights
 
 - ⚡ **Echtzeit-Routing**: OSRM-Integration für präzise Routen & Fahrzeiten mit Verkehrsberücksichtigung
-- 💰 **Faire Preise**: Automatische Berechnung mit Mindestlohn-Garantie (18€/h + 0,50€/km)
+- 💰 **Dynamische Preiskalkulation**: Admin kann alle Parameter ohne Code-Änderungen anpassen
 - 🔒 **Mindestlohn-Validierung**: Echtzeit-Prüfung verhindert Unterschreitung des Mindestlohns
 - 🗺️ **Interaktive Karten**: Leaflet.js mit vollständiger Routenvisualisierung
-- 📦 **Smart Defaults**: Europalette-Maße (120×80×15cm, 100kg) vorausgefüllt
-- 🚚 **Direktfahrt-Standard**: Zustellung am gleichen Tag wie Abholung
+- 📊 **Reporting & Abrechnungen**: Zeitraum-Filter, CSV-Export, Sammelrechnungen
+- 📄 **Professionelle Rechnungen**: MwSt-Berechnung, editierbare Felder, PDF-Vorschau
+- 🔴 **Intelligentes Stornierungssystem**: AGB-konforme Gebühren, automatische Preisanpassungen
+- ⚖️ **Rechtliche Compliance**: AGB, Widerrufsbelehrung, Consent-Tracking
 - 📱 **Responsive Design**: Optimiert für Desktop, Tablet & Mobile
 - 🎨 **Modernes UI**: Komplettes CI/CD Design-System mit professionellem Logo
 - 🔐 **Sicheres Login**: JWT-basierte Authentifizierung mit 4 Rollen-Typen
 - 🔒 **Datenschutz**: Auftragnehmer sehen nur PLZ bis zur Auftragsannahme
 - 📄 **CMR-Frachtbriefe**: Automatische PDF-Generierung mit QR-Codes
-- ✍️ **Digitale Signaturen**: Touch-optimierte Unterschrifts-Erfassung mit Empfänger-Name
+- ✍️ **Digitale Signaturen**: Touch-optimierte Unterschrifts-Erfassung
 - 🏢 **Firmendaten-Verwaltung**: Vollständige Rechnungsinformationen für B2B & B2C
-- 💰 **MwSt.-Anzeige**: Alle Preise mit "zzgl. 19% MwSt." Hinweis
-- 🧾 **Rechnungs-Generator**: Professionelle PDF-Rechnungen mit Firmendaten
 - 👥 **Admin-Vollzugriff**: Komplette Kunden- & Auftragnehmer-Verwaltung
 
 ---
 
 ## 🚀 Features
+
+### 💰 Dynamische Preiskalkulation (Admin)
+- **Vollständig konfigurierbar ohne Code-Änderungen**
+  - Distanzpreise (unter/über 100km)
+  - Stundensatz (Mindestlohn)
+  - Startgebühr, Extra-Stop-Gebühr
+  - Plattform-Provision (Standard: 15%)
+  - Wartezeit-Parameter (Inklusivzeit, Preis pro 5 Min)
+  
+- **Live-Updates**
+  - Änderungen gelten sofort für neue Aufträge
+  - Bestehende Aufträge behalten alte Preise
+  - Minimum-Price-Tracking
+  
+- **Reset-Funktion**
+  - Zurück zu Standard-Werten
+  - Sicherheitsabfrage
+
+### 📊 Reporting & Abrechnungssystem
+- **Zeitraum-Filter**
+  - 7, 14, 30 Tage oder Custom
+  - Automatische Zusammenfassungen
+  
+- **Für alle Rollen**
+  - Kunden: Ihre Kosten
+  - Auftragnehmer: Ihre Einnahmen
+  - Admin: Gesamtumsatz + Provision
+  
+- **Sammelrechnungen (Admin)**
+  - Mehrere Aufträge eines Kunden kombinieren
+  - Kunden-Filter
+  - CSV-Export
+  
+- **Einzelrechnungen**
+  - Pro Auftrag
+  - Direkt an Kunde senden
+
+### 📄 Professionelle Rechnungen
+- **Vollständiger Rechnungskopf**
+  - Firmenadresse, USt-IdNr
+  - Geschäftsführer, Amtsgericht
+  
+- **Editierbare Felder**
+  - Rechnungsnummer (klickbar)
+  - Rechnungsdatum (klickbar)
+  
+- **MwSt-Berechnung**
+  - 19% MwSt (umschaltbar)
+  - Kleinunternehmer-Option (§19 UStG)
+  - Netto/Brutto-Ausweisung
+  
+- **Zahlungsinformationen**
+  - IBAN, BIC, Bank
+  - Zahlungsziel (14 Tage)
+  - Verwendungszweck
+  
+- **PDF-Vorschau**
+  - Vor Versand prüfen
+  - "Jetzt senden" oder "Abbrechen"
+
+### ⚖️ Rechtliche Compliance
+- **AGB-Seite** (`/agb`)
+  - Alle 12 Abschnitte
+  - Stornierungsregeln
+  - Haftung & Versicherung
+  - Gerichtsstand
+  
+- **Widerrufsbelehrung** (`/widerruf`)
+  - 14-Tage-Widerrufsrecht
+  - Muster-Widerrufsformular
+  - Verbraucherpflichten
+  - Erlöschen des Widerrufsrechts
+  
+- **Footer mit Links**
+  - AGB, Widerrufsbelehrung
+  - Datenschutz, Impressum
+  - Kontaktinformationen
+  
+- **Widerrufsrecht-Zustimmung**
+  - Checkbox bei Auftragserteilung (Privatkunden)
+  - Aktive Zustimmung erforderlich
+  - Consent-Tracking (IP, Timestamp)
+  - § 356 Abs. 4 BGB konform
+
+### 🔴 Intelligentes Stornierungssystem
+- **Kunden-Stornierung (Automatisch nach AGB)**
+  - >24h vor Abholung: 0% (Kostenlos)
+  - <24h vor Abholung: 50% Gebühr
+  - Fahrer unterwegs: 75% Gebühr
+  - Automatische Berechnung
+  - Vorschau vor Stornierung
+  
+- **Fahrer unterwegs?**
+  - Auftrag wird auf 75% reduziert
+  - Fahrer kann abschließen
+  - Bekommt 85% vom reduzierten Preis
+  
+- **Auftragnehmer-Stornierung (Admin-gesteuert)**
+  - AGB-Gebühren gelten (50% oder 75%)
+  - Auftragnehmer zahlt Strafe
+  - Admin kann Preis erhöhen (max. = Strafe)
+  - Auftrag wird auf 'pending' gesetzt
+  - Verfügbar für neue Auftragnehmer
+  
+- **Audit-Trail**
+  - Alle Stornierungen protokolliert
+  - Wer, wann, warum
+  - Finanzielle Beträge
+  - Admin-Notizen
 
 ### 🎨 Design & UX
 - **Komplettes CI/CD Design-System**
