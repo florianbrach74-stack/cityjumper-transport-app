@@ -3,9 +3,12 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
+// Use DATABASE_PUBLIC_URL for Railway external connections
+const connectionString = process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL;
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  connectionString: connectionString,
+  ssl: { rejectUnauthorized: false }
 });
 
 async function runMigration() {
