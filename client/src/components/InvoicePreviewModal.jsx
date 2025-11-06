@@ -1,8 +1,13 @@
 import { useState } from 'react';
-import { X, Send, Download, FileText } from 'lucide-react';
+import { X, Send, Download, FileText, Edit2 } from 'lucide-react';
 
 export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
   const [sending, setSending] = useState(false);
+  const [invoiceNumber, setInvoiceNumber] = useState(invoice.invoiceNumber);
+  const [invoiceDate, setInvoiceDate] = useState(new Date(invoice.invoiceDate).toISOString().split('T')[0]);
+  const [editingNumber, setEditingNumber] = useState(false);
+  const [editingDate, setEditingDate] = useState(false);
+  const [includeMwst, setIncludeMwst] = useState(true);
 
   const handleSend = async () => {
     setSending(true);
@@ -18,6 +23,12 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
 
   const formatPrice = (price) => `€${parseFloat(price || 0).toFixed(2)}`;
   const formatDate = (date) => new Date(date).toLocaleDateString('de-DE');
+
+  // Calculate totals with MwSt
+  const netTotal = invoice.totals.total;
+  const mwstRate = 0.19;
+  const mwstAmount = includeMwst ? netTotal * mwstRate : 0;
+  const grossTotal = netTotal + mwstAmount;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -39,18 +50,62 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
         {/* Invoice Preview */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="bg-white border border-gray-200 rounded-lg p-8 max-w-3xl mx-auto">
-            {/* Invoice Header */}
-            <div className="flex justify-between items-start mb-8">
+            {/* Company Header */}
+            <div className="flex justify-between items-start mb-8 pb-6 border-b-2 border-gray-300">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">RECHNUNG</h1>
-                <p className="text-gray-600">Nr: {invoice.invoiceNumber}</p>
-                <p className="text-gray-600">Datum: {formatDate(invoice.invoiceDate)}</p>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-primary-600 mb-2">
+                <div className="text-3xl font-bold text-primary-600 mb-3">
                   CityJumper
                 </div>
-                <p className="text-sm text-gray-600">Express Transport</p>
+                <p className="text-sm text-gray-700 font-medium">Express Transport GmbH</p>
+                <p className="text-sm text-gray-600">Musterstraße 123</p>
+                <p className="text-sm text-gray-600">10115 Berlin</p>
+                <p className="text-sm text-gray-600 mt-2">Tel: +49 30 12345678</p>
+                <p className="text-sm text-gray-600">Email: info@cityjumper.de</p>
+                <p className="text-sm text-gray-600 mt-2">USt-IdNr: DE123456789</p>
+                <p className="text-sm text-gray-600">Geschäftsführer: Max Mustermann</p>
+              </div>
+              <div className="text-right">
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">RECHNUNG</h1>
+                <div className="space-y-2">
+                  {editingNumber ? (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={invoiceNumber}
+                        onChange={(e) => setInvoiceNumber(e.target.value)}
+                        onBlur={() => setEditingNumber(false)}
+                        className="px-2 py-1 border border-primary-500 rounded text-sm w-40"
+                        autoFocus
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <p className="text-gray-700"><span className="font-semibold">Nr:</span> {invoiceNumber}</p>
+                      <button onClick={() => setEditingNumber(true)} className="text-primary-600 hover:text-primary-700">
+                        <Edit2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                  {editingDate ? (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="date"
+                        value={invoiceDate}
+                        onChange={(e) => setInvoiceDate(e.target.value)}
+                        onBlur={() => setEditingDate(false)}
+                        className="px-2 py-1 border border-primary-500 rounded text-sm"
+                        autoFocus
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <p className="text-gray-700"><span className="font-semibold">Datum:</span> {formatDate(invoiceDate)}</p>
+                      <button onClick={() => setEditingDate(true)} className="text-primary-600 hover:text-primary-700">
+                        <Edit2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -103,12 +158,29 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
               </table>
             </div>
 
+            {/* MwSt Toggle */}
+            <div className="mb-4 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+              <input
+                type="checkbox"
+                id="includeMwst"
+                checked={includeMwst}
+                onChange={(e) => setIncludeMwst(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <label htmlFor="includeMwst" className="text-sm text-gray-700 cursor-pointer">
+                MwSt. (19%) ausweisen
+              </label>
+              {!includeMwst && (
+                <span className="text-xs text-gray-500">(Kleinunternehmerregelung §19 UStG)</span>
+              )}
+            </div>
+
             {/* Totals */}
             <div className="border-t-2 border-gray-300 pt-4">
               <div className="flex justify-end space-y-2">
-                <div className="w-64">
+                <div className="w-80">
                   <div className="flex justify-between text-gray-700 mb-2">
-                    <span>Zwischensumme:</span>
+                    <span>Zwischensumme (Fahrten):</span>
                     <span className="font-medium">{formatPrice(invoice.totals.subtotal)}</span>
                   </div>
                   {invoice.totals.waitingTimeFees > 0 && (
@@ -117,19 +189,53 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
                       <span className="font-medium">{formatPrice(invoice.totals.waitingTimeFees)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-300">
-                    <span>Gesamtbetrag:</span>
-                    <span>{formatPrice(invoice.totals.total)}</span>
+                  <div className="flex justify-between text-gray-900 font-semibold mb-2 pt-2 border-t border-gray-200">
+                    <span>Nettobetrag:</span>
+                    <span>{formatPrice(netTotal)}</span>
                   </div>
+                  {includeMwst && (
+                    <div className="flex justify-between text-gray-700 mb-2">
+                      <span>zzgl. 19% MwSt.:</span>
+                      <span className="font-medium">{formatPrice(mwstAmount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xl font-bold text-gray-900 pt-3 border-t-2 border-gray-300">
+                    <span>Gesamtbetrag:</span>
+                    <span>{formatPrice(grossTotal)}</span>
+                  </div>
+                  {!includeMwst && (
+                    <p className="text-xs text-gray-500 mt-2 italic">
+                      Gemäß §19 UStG wird keine Umsatzsteuer berechnet.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Info */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <h3 className="font-semibold text-gray-900 mb-3">Zahlungsinformationen:</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-600"><span className="font-medium">Bank:</span> Deutsche Bank</p>
+                  <p className="text-gray-600"><span className="font-medium">IBAN:</span> DE89 3704 0044 0532 0130 00</p>
+                  <p className="text-gray-600"><span className="font-medium">BIC:</span> COBADEFFXXX</p>
+                </div>
+                <div>
+                  <p className="text-gray-600"><span className="font-medium">Zahlungsziel:</span> 14 Tage netto</p>
+                  <p className="text-gray-600"><span className="font-medium">Verwendungszweck:</span> {invoiceNumber}</p>
                 </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="mt-8 pt-6 border-t border-gray-200 text-xs text-gray-500 text-center">
-              <p>Vielen Dank für Ihr Vertrauen!</p>
-              <p className="mt-2">
-                Zahlbar innerhalb von 14 Tagen nach Rechnungsdatum.
+            <div className="mt-6 pt-6 border-t border-gray-200 text-xs text-gray-500 text-center">
+              <p className="font-medium text-gray-700 mb-2">Vielen Dank für Ihr Vertrauen!</p>
+              <p className="text-gray-500">
+                CityJumper Express Transport GmbH • Musterstraße 123 • 10115 Berlin
+              </p>
+              <p className="text-gray-500 mt-1">
+                Amtsgericht Berlin • HRB 12345 • Geschäftsführer: Max Mustermann
               </p>
             </div>
           </div>
