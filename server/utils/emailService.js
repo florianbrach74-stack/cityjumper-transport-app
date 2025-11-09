@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 const getEmailDisclaimer = () => `
   <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
     <p style="margin: 0; color: #92400e; font-size: 14px;">
-      <strong>⚠️ Wichtiger Hinweis:</strong> CityJumper ist eine Vermittlungsplattform. 
+      <strong>⚠️ Wichtiger Hinweis:</strong> Courierly ist eine Vermittlungsplattform. 
       Wir garantieren keine Auftragsübernahme. 
       <strong>Tipp:</strong> Höhere Preise erhöhen die Wahrscheinlichkeit einer schnellen Übernahme.
     </p>
