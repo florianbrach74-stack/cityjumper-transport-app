@@ -35,7 +35,7 @@ export default function Widerruf() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Mail className="h-5 w-5 text-primary-600" />
-                  <a href="mailto:info@florianbrach.com" className="hover:text-primary-600">info@florianbrach.com</a>
+                  <a href="mailto:info@courierly.de" className="hover:text-primary-600">info@courierly.de</a>
                 </div>
               </div>
             </div>
@@ -62,7 +62,7 @@ export default function Widerruf() {
                 <p>Adolf-Menzel-Straße 71</p>
                 <p>12621 Berlin</p>
                 <p className="mt-2">Telefon: 0172 421 6672</p>
-                <p>E-Mail: info@florianbrach.com</p>
+                <p>E-Mail: info@courierly.de</p>
               </div>
               <p>
                 mittels einer eindeutigen Erklärung (z. B. per Brief oder E-Mail) über Ihren Entschluss informieren, diesen Vertrag zu widerrufen.
@@ -127,7 +127,7 @@ export default function Widerruf() {
                 <p className="font-semibold">FB Transporte – Inhaber Florian Brach</p>
                 <p>Adolf-Menzel-Straße 71</p>
                 <p>12621 Berlin</p>
-                <p className="mt-2">E-Mail: info@florianbrach.com</p>
+                <p className="mt-2">E-Mail: info@courierly.de</p>
               </div>
 
               <div className="space-y-6">

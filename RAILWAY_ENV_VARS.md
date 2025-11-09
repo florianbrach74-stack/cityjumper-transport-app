@@ -5,16 +5,16 @@
 Gehen Sie zu Railway → Ihr Projekt → Variables und setzen Sie:
 
 ```
-EMAIL_HOST=mail.florianbrach.com
+EMAIL_HOST=send.one.com
 EMAIL_PORT=465
 EMAIL_SECURE=true
-EMAIL_USER=info@florianbrach.com
-EMAIL_PASS=[IHR_EMAIL_PASSWORT]
-EMAIL_FROM=info@florianbrach.com
+EMAIL_USER=info@courierly.de
+EMAIL_PASSWORD=your-email-password
+EMAIL_FROM=info@courierly.de
 ```
 
 ## Wichtig:
-- `EMAIL_PASS` muss das Passwort Ihres Email-Accounts sein
+- `EMAIL_PASSWORD` muss das Passwort Ihres Email-Accounts sein
 - `EMAIL_SECURE=true` für Port 465 (SSL)
 - Nach dem Setzen der Variables wird Railway automatisch neu deployen
 

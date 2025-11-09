@@ -35,7 +35,7 @@ export default function AGB() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Mail className="h-5 w-5 text-primary-600" />
-                  <a href="mailto:info@florianbrach.com" className="hover:text-primary-600">info@florianbrach.com</a>
+                  <a href="mailto:info@courierly.de" className="hover:text-primary-600">info@courierly.de</a>
                 </div>
               </div>
             </div>
@@ -44,8 +44,8 @@ export default function AGB() {
             </p>
             <p className="mt-2 text-sm font-medium text-gray-700">
               Preise gemäß der jeweils gültigen Preisliste auf{' '}
-              <a href="https://www.florianbrach.com" className="text-primary-600 hover:underline">
-                www.florianbrach.com
+              <a href="https://www.courierly.de" className="text-primary-600 hover:underline">
+                www.courierly.de
               </a>
             </p>
           </div>
@@ -119,8 +119,8 @@ export default function AGB() {
             <div className="space-y-3 text-gray-700">
               <p>
                 <span className="font-semibold">4.1</span> Es gelten die auf der Website{' '}
-                <a href="https://www.florianbrach.com" className="text-primary-600 hover:underline">
-                  www.florianbrach.com
+                <a href="https://www.courierly.de" className="text-primary-600 hover:underline">
+                  www.courierly.de
                 </a>{' '}
                 veröffentlichten Preise und Zuschläge.
               </p>
@@ -253,8 +253,8 @@ export default function AGB() {
             </h2>
             <p className="text-gray-700">
               FB Transporte verarbeitet personenbezogene Daten gemäß DSGVO und BDSG. Näheres siehe Datenschutzerklärung unter{' '}
-              <a href="https://www.florianbrach.com/datenschutz" className="text-primary-600 hover:underline font-semibold">
-                👉 www.florianbrach.com/datenschutz
+              <a href="https://www.courierly.de/datenschutz" className="text-primary-600 hover:underline font-semibold">
+                👉 www.courierly.de/datenschutz
               </a>.
               Zur Durchführung des Auftrags dürfen Daten an Unterauftragnehmer, Empfänger oder Behörden weitergegeben werden.
             </p>
@@ -280,7 +280,7 @@ export default function AGB() {
                     <p>Adolf-Menzel-Straße 71</p>
                     <p>12621 Berlin</p>
                     <p>Telefon 0172 421 6672</p>
-                    <p>E-Mail info@florianbrach.com</p>
+                    <p>E-Mail info@courierly.de</p>
                   </div>
                   <p>
                     mittels einer eindeutigen Erklärung (z. B. Brief, E-Mail) über Ihren Entschluss informieren, den Vertrag zu widerrufen.

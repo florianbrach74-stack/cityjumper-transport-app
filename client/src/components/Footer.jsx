@@ -25,7 +25,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-primary-500" />
-                <a href="mailto:info@florianbrach.com" className="hover:text-white">info@florianbrach.com</a>
+                <a href="mailto:info@courierly.de" className="hover:text-white">info@courierly.de</a>
               </div>
             </div>
           </div>

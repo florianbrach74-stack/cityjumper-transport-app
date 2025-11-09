@@ -266,11 +266,11 @@ cancellation_notes TEXT
 
 ## 📞 Support & Kontakt
 
-**FB Transporte – Inhaber Florian Brach**
+**Courierly – FB Transporte, Inhaber Florian Brach**
 - Adresse: Adolf-Menzel-Straße 71, 12621 Berlin
 - Telefon: 0172 421 6672
-- Email: info@florianbrach.com
-- Website: www.florianbrach.com
+- Email: info@courierly.de
+- Website: www.courierly.de
 
 ---
 
