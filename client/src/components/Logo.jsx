@@ -10,7 +10,7 @@ export default function Logo({ size = 'md', showText = true, className = '' }) {
 
   return (
     <div className={`flex items-center space-x-3 ${className}`}>
-      {/* CityJumper Logo - Modern Location Pin with Dynamic Arrow */}
+      {/* Courierly Logo - Package with Speed Arrow */}
       <div className="relative group">
         <svg 
           className={`${currentSize.icon} transition-all duration-300 group-hover:scale-110 drop-shadow-lg`}
@@ -19,21 +19,16 @@ export default function Logo({ size = 'md', showText = true, className = '' }) {
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            {/* Gradient for Pin */}
-            <linearGradient id="pinGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#38bdf8" />
-              <stop offset="100%" stopColor="#0ea5e9" />
-            </linearGradient>
-            
-            {/* Gradient for Arrow */}
-            <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#fb923c" />
-              <stop offset="100%" stopColor="#f59e0b" />
-            </linearGradient>
-            
-            {/* Glow effect */}
-            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            {/* Glow effects */}
+            <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <filter id="glow-orange" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
               <feMerge>
                 <feMergeNode in="coloredBlur"/>
                 <feMergeNode in="SourceGraphic"/>
@@ -41,50 +36,36 @@ export default function Logo({ size = 'md', showText = true, className = '' }) {
             </filter>
           </defs>
           
-          {/* Location Pin Shape */}
-          <g filter="url(#glow)">
-            {/* Pin Circle */}
-            <circle 
-              cx="50" 
-              cy="35" 
-              r="20" 
-              fill="url(#pinGradient)"
-              stroke="#0284c7"
-              strokeWidth="2"
-            />
+          {/* Package icon (cyan) */}
+          <g filter="url(#glow-cyan)">
+            {/* Top line */}
+            <rect x="40" y="20" width="20" height="3" rx="1.5" fill="#00d9ff"/>
             
-            {/* Pin Point */}
-            <path 
-              d="M 50 55 L 40 42 Q 50 38 60 42 Z" 
-              fill="url(#pinGradient)"
-              stroke="#0284c7"
-              strokeWidth="1.5"
-            />
+            {/* Package outline */}
+            <rect x="25" y="15" width="50" height="50" rx="8" 
+                  fill="none" stroke="#00d9ff" strokeWidth="4" strokeLinecap="round"/>
             
-            {/* Inner Circle (white) */}
-            <circle 
-              cx="50" 
-              cy="35" 
-              r="12" 
-              fill="white"
-              opacity="0.9"
-            />
-            
-            {/* Dynamic Arrow Inside Pin */}
-            <path 
-              d="M 45 38 L 50 28 L 55 38 M 50 28 L 50 42" 
-              stroke="url(#arrowGradient)"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            {/* Left lines */}
+            <rect x="30" y="35" width="15" height="3" rx="1.5" fill="#00d9ff"/>
+            <rect x="30" y="45" width="15" height="3" rx="1.5" fill="#00d9ff"/>
+            <rect x="30" y="55" width="15" height="3" rx="1.5" fill="#00d9ff"/>
           </g>
           
-          {/* Speed Lines */}
-          <g opacity="0.7">
-            <line x1="20" y1="60" x2="35" y2="60" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round"/>
-            <line x1="15" y1="68" x2="35" y2="68" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" opacity="0.7"/>
-            <line x1="10" y1="76" x2="30" y2="76" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" opacity="0.4"/>
+          {/* Arrow (orange) */}
+          <g filter="url(#glow-orange)">
+            {/* Arrow shaft lines */}
+            <rect x="45" y="35" width="25" height="3" rx="1.5" fill="#ffa500"/>
+            <rect x="45" y="43" width="25" height="3" rx="1.5" fill="#ffa500"/>
+            <rect x="45" y="51" width="25" height="3" rx="1.5" fill="#ffa500"/>
+            
+            {/* Arrow head */}
+            <path d="M 68 35 L 80 43 L 68 51 Z" fill="#ffa500"/>
+          </g>
+          
+          {/* Speed effect */}
+          <g opacity="0.6">
+            <line x1="15" y1="75" x2="30" y2="75" stroke="#00d9ff" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="10" y1="82" x2="28" y2="82" stroke="#00d9ff" strokeWidth="2" strokeLinecap="round" opacity="0.7"/>
           </g>
         </svg>
       </div>
@@ -92,16 +73,13 @@ export default function Logo({ size = 'md', showText = true, className = '' }) {
       {showText && (
         <div className="flex flex-col leading-tight">
           <span className={`${currentSize.text} font-display font-extrabold tracking-tight`}>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-sky-600">
-              City
-            </span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-600">
-              Jumper
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-cyan-600">
+              Courierly
             </span>
           </span>
           {size !== 'sm' && (
             <span className="text-xs text-gray-500 font-semibold tracking-wider uppercase mt-0.5">
-              Express Transport
+              Express Delivery
             </span>
           )}
         </div>

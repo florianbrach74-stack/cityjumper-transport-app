@@ -1,8 +1,8 @@
-# 🚚 CityJumper - Transport Management Platform
+# 📦 Courierly - Transport Management Platform
 
 <div align="center">
 
-![CityJumper Logo](https://img.shields.io/badge/CityJumper-Express%20Transport-0ea5e9?style=for-the-badge&logo=truck&logoColor=white)
+![Courierly Logo](https://img.shields.io/badge/Courierly-Express%20Delivery-00d9ff?style=for-the-badge&logo=truck&logoColor=white)
 
 **Moderne Transport- und Kurierdienst-Plattform mit Echtzeit-Routing & Mindestlohn-Garantie**
 
@@ -30,7 +30,7 @@
 
 ## 🎯 Überblick
 
-CityJumper ist eine vollständige Transport-Management-Plattform, die Kunden, Auftragnehmer und Mitarbeiter verbindet. Mit Echtzeit-Routing über OSRM, automatischer Preisberechnung mit Mindestlohn-Garantie und einem modernen CI/CD Design-System.
+Courierly ist eine vollständige Transport-Management-Plattform, die Kunden, Auftragnehmer und Mitarbeiter verbindet. Mit Echtzeit-Routing über OSRM, automatischer Preisberechnung mit Mindestlohn-Garantie und einem modernen Design-System.
 
 ### 🌟 Highlights
 
@@ -826,6 +826,6 @@ Entwickelt mit ❤️ für moderne Transport-Logistik
 
 <div align="center">
 
-**⚡ CityJumper - Express Transport leicht gemacht**
+**📦 Courierly - Express Delivery leicht gemacht**
 
 </div>

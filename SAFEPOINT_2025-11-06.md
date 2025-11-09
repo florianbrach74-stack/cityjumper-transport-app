@@ -1,6 +1,12 @@
-# 🎯 Safepoint - 06. November 2025
+# 🎯 Safepoint - 09. November 2025
 
-## Projekt-Status: Produktionsbereit ✅
+## Courierly - Projekt-Status: Produktionsbereit ✅
+
+### Rebranding zu Courierly ✨
+- Neues Logo: Package mit Speed-Arrow (Cyan + Orange)
+- Alle Texte von CityJumper → Courierly umbenannt
+- Neues Farbschema: Cyan (#00d9ff) + Orange (#ffa500)
+- "Express Delivery" statt "Express Transport"
 
 ### Letzte große Updates (Session vom 06.11.2025)
 

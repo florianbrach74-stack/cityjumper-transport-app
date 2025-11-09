@@ -341,7 +341,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-display font-bold text-gray-900 mb-4">
-              Warum <span className="text-primary-600">CityJumper</span>?
+              Warum <span className="text-primary-600">Courierly</span>?
             </h2>
             <p className="text-xl text-gray-600">Ihr zuverlässiger Partner für schnelle Transporte</p>
           </div>
@@ -520,7 +520,7 @@ export default function LandingPage() {
       {/* Footer */}
       <div className="bg-gray-900 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-gray-400">© 2025 CityJumper Transport. Alle Rechte vorbehalten.</p>
+          <p className="text-gray-400">© 2025 Courierly Express. Alle Rechte vorbehalten.</p>
         </div>
       </div>
 
