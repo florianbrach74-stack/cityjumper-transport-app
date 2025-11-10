@@ -1,35 +1,60 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let transporter = null;
 let emailEnabled = false;
 
-// Check if Resend is configured
-if (process.env.RESEND_API_KEY) {
-  emailEnabled = true;
-  console.log('✅ Resend email service configured');
+// Only create transporter if email config is complete
+const emailPassword = process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
+if (process.env.EMAIL_HOST && process.env.EMAIL_USER && emailPassword) {
+  try {
+    transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: parseInt(process.env.EMAIL_PORT) || 587,
+      secure: process.env.EMAIL_SECURE === 'true' || parseInt(process.env.EMAIL_PORT) === 465,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: emailPassword,
+      },
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+    });
+
+    // Verify transporter configuration (non-blocking)
+    transporter.verify((error, success) => {
+      if (error) {
+        console.log('⚠️  Email configuration error (emails disabled):', error.message);
+        emailEnabled = false;
+      } else {
+        console.log('✅ Email server is ready to send messages');
+        emailEnabled = true;
+      }
+    });
+  } catch (error) {
+    console.log('⚠️  Email setup failed (emails disabled):', error.message);
+  }
 } else {
-  console.log('⚠️  Resend API key not configured (emails disabled)');
+  console.log('⚠️  Email not configured (emails disabled)');
 }
 
 const sendEmail = async (to, subject, html) => {
-  if (!emailEnabled) {
+  if (!emailEnabled || !transporter) {
     console.log('⚠️  Email disabled, skipping:', subject);
     return { messageId: 'email-disabled' };
   }
   
   try {
-    const data = await resend.emails.send({
-      from: 'Courierly <noreply@courierly.de>',
-      to: Array.isArray(to) ? to : [to],
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM || '"CityJumper Transport" <noreply@cityjumper.com>',
+      to,
       subject,
       html,
     });
-    
-    console.log('📧 Email sent via Resend:', data.id);
-    return { messageId: data.id };
+    console.log('📧 Email sent:', info.messageId);
+    return info;
   } catch (error) {
-    console.error('❌ Error sending email via Resend:', error.message);
+    console.error('❌ Error sending email:', error.message);
+    // Don't throw - just log and continue
     return { messageId: 'email-failed', error: error.message };
   }
 };
@@ -56,7 +81,7 @@ const emailTemplates = {
         
         <p>Wir werden Sie benachrichtigen, sobald ein Auftragnehmer Ihren Auftrag annimmt.</p>
         
-        <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
+        <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr ZipMend Team</p>
       </div>
     `,
   }),
@@ -80,7 +105,7 @@ const emailTemplates = {
         
         <p>Der Auftragnehmer wird sich bei Bedarf mit Ihnen in Verbindung setzen.</p>
         
-        <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
+        <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr ZipMend Team</p>
       </div>
     `,
   }),
@@ -119,7 +144,7 @@ const emailTemplates = {
         
         <p>Bitte führen Sie den Transport gemäß den angegebenen Details durch.</p>
         
-        <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
+        <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr ZipMend Team</p>
       </div>
     `,
   }),
