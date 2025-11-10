@@ -14,7 +14,7 @@ router.get('/test-email', async (req, res) => {
 
     // Send test email
     const result = await sendEmail({
-      to: 'info@courierly.de', // Send to your email
+      to: 'info@florianbrach.com', // Send to your email
       subject: '✅ Courierly Railway Email Test - ' + new Date().toLocaleString('de-DE'),
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -54,7 +54,7 @@ router.get('/test-email', async (req, res) => {
         messageId: result.messageId,
         service: 'Resend',
         domain: 'courierly.de',
-        recipient: 'info@courierly.de'
+        recipient: 'info@florianbrach.com'
       });
     } else {
       throw new Error(result.error || 'Failed to send email');
