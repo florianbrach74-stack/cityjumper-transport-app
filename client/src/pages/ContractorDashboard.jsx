@@ -8,6 +8,7 @@ import BidModal from '../components/BidModal';
 import EmployeeManagement from '../components/EmployeeManagement';
 import NotificationSettings from '../components/NotificationSettings';
 import ReportsSummary from '../components/ReportsSummary';
+import AssignEmployeeDropdown from '../components/AssignEmployeeDropdown';
 import { formatPrice } from '../utils/formatPrice';
 import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell, BarChart3 } from 'lucide-react';
 
@@ -38,6 +39,7 @@ const ContractorDashboard = () => {
   const [selectedOrderForPickup, setSelectedOrderForPickup] = useState(null);
   const [selectedOrderForDelivery, setSelectedOrderForDelivery] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState(null);
+  const [assignmentMode, setAssignmentMode] = useState('all_access');
 
   const fetchOrders = async () => {
     try {
@@ -56,9 +58,19 @@ const ContractorDashboard = () => {
     }
   };
 
+  const fetchAssignmentMode = async () => {
+    try {
+      const response = await api.get('/employee-assignment/settings');
+      setAssignmentMode(response.data.assignmentMode || 'all_access');
+    } catch (error) {
+      console.error('Error fetching assignment mode:', error);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
     fetchVerificationStatus();
+    fetchAssignmentMode();
   }, []);
 
   const fetchVerificationStatus = async () => {
@@ -417,6 +429,30 @@ const ContractorDashboard = () => {
                 <FileText className="h-5 w-5 mr-2" />
                 CMR anzeigen
               </button>
+            )}
+
+            {/* Employee Assignment - visible when manual_assignment mode is active */}
+            {assignmentMode === 'manual_assignment' && (
+              <div className="pt-3 border-t">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Zugewiesen an:</span>
+                  <AssignEmployeeDropdown
+                    orderId={order.id}
+                    currentEmployeeId={order.assigned_employee_id}
+                    currentEmployeeName={
+                      order.employee_first_name
+                        ? `${order.employee_first_name} ${order.employee_last_name}`
+                        : null
+                    }
+                    onAssigned={(updatedOrder) => {
+                      // Update the order in the list
+                      setMyOrders(myOrders.map(o => 
+                        o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o
+                      ));
+                    }}
+                  />
+                </div>
+              </div>
             )}
           </div>
         )}
