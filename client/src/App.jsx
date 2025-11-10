@@ -15,6 +15,8 @@ import VerificationPage from './pages/VerificationPage';
 import Settings from './pages/Settings';
 import AGB from './pages/AGB';
 import Widerruf from './pages/Widerruf';
+import EmployeeSettings from './pages/EmployeeSettings';
+import ContractorOrdersWithAssignment from './pages/ContractorOrdersWithAssignment';
 
 const DashboardRouter = () => {
   const { user } = useAuth();
@@ -61,6 +63,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <VerificationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employee-settings"
+            element={
+              <ProtectedRoute>
+                <EmployeeSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/contractor/orders"
+            element={
+              <ProtectedRoute>
+                <ContractorOrdersWithAssignment />
               </ProtectedRoute>
             }
           />
