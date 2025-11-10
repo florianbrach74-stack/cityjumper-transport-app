@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
-const { pool } = require('../config/database');
+const pool = require('../config/database');
 
 // Get contractor's employee assignment settings
 router.get('/settings', authenticateToken, authorizeRole('contractor'), async (req, res) => {
