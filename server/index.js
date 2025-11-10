@@ -35,6 +35,7 @@ app.use('/api/cancellation', require('./routes/cancellation'));
 app.use('/api', require('./routes/test-email'));
 app.use('/api/employee-assignment', require('./routes/employee-assignment'));
 app.use('/api', require('./routes/debug-employees'));
+app.use('/api', require('./routes/run-migration'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
