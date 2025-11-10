@@ -47,13 +47,20 @@ router.put('/settings', authenticateToken, authorizeRole('contractor'), async (r
 // Get contractor's employees
 router.get('/employees', authenticateToken, authorizeRole('contractor'), async (req, res) => {
   try {
+    console.log('📋 Fetching employees for contractor:', req.user.id);
+    
     const result = await pool.query(
-      `SELECT id, first_name, last_name, email, phone 
+      `SELECT id, first_name, last_name, email, phone, contractor_id 
        FROM users 
        WHERE role = 'employee' AND contractor_id = $1
        ORDER BY first_name, last_name`,
       [req.user.id]
     );
+
+    console.log(`   Found ${result.rows.length} employees`);
+    if (result.rows.length > 0) {
+      console.log('   Employees:', result.rows.map(e => `${e.first_name} ${e.last_name} (contractor_id: ${e.contractor_id})`));
+    }
 
     res.json(result.rows);
   } catch (error) {
