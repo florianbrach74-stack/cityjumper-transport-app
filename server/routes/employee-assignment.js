@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const { pool } = require('../config/database');
 
 // Get contractor's employee assignment settings
-router.get('/settings', authenticateToken, requireRole('contractor'), async (req, res) => {
+router.get('/settings', authenticateToken, authorizeRole('contractor'), async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT employee_assignment_mode FROM users WHERE id = $1',
@@ -21,7 +21,7 @@ router.get('/settings', authenticateToken, requireRole('contractor'), async (req
 });
 
 // Update contractor's employee assignment settings
-router.put('/settings', authenticateToken, requireRole('contractor'), async (req, res) => {
+router.put('/settings', authenticateToken, authorizeRole('contractor'), async (req, res) => {
   try {
     const { assignmentMode } = req.body;
 
@@ -45,7 +45,7 @@ router.put('/settings', authenticateToken, requireRole('contractor'), async (req
 });
 
 // Get contractor's employees
-router.get('/employees', authenticateToken, requireRole('contractor'), async (req, res) => {
+router.get('/employees', authenticateToken, authorizeRole('contractor'), async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, first_name, last_name, email, phone 
@@ -63,7 +63,7 @@ router.get('/employees', authenticateToken, requireRole('contractor'), async (re
 });
 
 // Assign order to employee
-router.post('/orders/:orderId/assign', authenticateToken, requireRole('contractor'), async (req, res) => {
+router.post('/orders/:orderId/assign', authenticateToken, authorizeRole('contractor'), async (req, res) => {
   try {
     const { orderId } = req.params;
     const { employeeId } = req.body;
@@ -123,7 +123,7 @@ router.post('/orders/:orderId/assign', authenticateToken, requireRole('contracto
 });
 
 // Get orders with assignment info (for contractor)
-router.get('/orders', authenticateToken, requireRole('contractor'), async (req, res) => {
+router.get('/orders', authenticateToken, authorizeRole('contractor'), async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT o.*,
@@ -145,7 +145,7 @@ router.get('/orders', authenticateToken, requireRole('contractor'), async (req, 
 });
 
 // Get orders for employee (respects assignment mode)
-router.get('/employee/orders', authenticateToken, requireRole('employee'), async (req, res) => {
+router.get('/employee/orders', authenticateToken, authorizeRole('employee'), async (req, res) => {
   try {
     // Get contractor's assignment mode
     const contractorResult = await pool.query(
