@@ -1,4 +1,6 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Email disclaimer for all templates
 const getEmailDisclaimer = () => `
@@ -11,139 +13,158 @@ const getEmailDisclaimer = () => `
   </div>
 `;
 
-// Create transporter only if email credentials are provided
-let transporter = null;
-
-if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+// Helper function to send emails via Resend
+const sendEmail = async ({ to, subject, html }) => {
   try {
-    transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT || 587,
-      secure: process.env.EMAIL_PORT === '465',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('⚠️  Resend API key not configured - email will be logged only');
+      console.log(`📧 Would send email to: ${to}`);
+      console.log(`   Subject: ${subject}`);
+      return { success: false, message: 'Email service not configured' };
+    }
+
+    console.log(`📧 Sending email via Resend to: ${to}`);
+    console.log(`   Subject: ${subject}`);
+    
+    const data = await resend.emails.send({
+      from: 'Courierly <noreply@courierly.de>',
+      to: Array.isArray(to) ? to : [to],
+      subject: subject,
+      html: html,
     });
-    console.log('✅ Email service configured');
+
+    console.log('✅ Email sent successfully via Resend');
+    console.log(`   Message ID: ${data.id}`);
+    
+    return { success: true, messageId: data.id };
   } catch (error) {
-    console.warn('⚠️ Email service configuration failed:', error.message);
-  }
-} else {
-  console.warn('⚠️ Email service not configured - emails will be logged only');
-}
-
-const sendNewOrderNotification = async (contractorEmail, orderData) => {
-  const mailOptions = {
-    from: process.env.EMAIL_FROM,
-    to: contractorEmail,
-    subject: 'Neuer Transportauftrag verfügbar',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #2563eb;">Neuer Transportauftrag verfügbar</h2>
-        <p>Es gibt einen neuen Transportauftrag in Ihrem Gebiet:</p>
-        
-        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin-top: 0;">Auftragsdetails:</h3>
-          <p><strong>Abholung:</strong> PLZ ${orderData.pickup_postal_code}, ${orderData.pickup_city}</p>
-          <p><strong>Zustellung:</strong> PLZ ${orderData.delivery_postal_code}, ${orderData.delivery_city}</p>
-          <p><strong>Datum:</strong> ${new Date(orderData.pickup_date).toLocaleDateString('de-DE')}</p>
-          <p><strong>Fahrzeugtyp:</strong> ${orderData.vehicle_type}</p>
-          ${orderData.price ? `<p><strong>Geschätzter Preis:</strong> €${orderData.price}</p>` : ''}
-        </div>
-        
-        <p style="color: #6b7280; font-size: 14px;">
-          <strong>Hinweis:</strong> Die genauen Kundendaten (Name, vollständige Adresse) werden erst nach Zuweisung durch den Administrator sichtbar.
-        </p>
-        
-        ${getEmailDisclaimer()}
-        
-        <a href="${process.env.FRONTEND_URL || 'https://cityjumper-transport.vercel.app'}/dashboard" 
-           style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          Zum Dashboard
-        </a>
-        
-        <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
-          Sie erhalten diese E-Mail, weil Sie Benachrichtigungen für dieses PLZ-Gebiet aktiviert haben.
-        </p>
-      </div>
-    `,
-  };
-
-  if (!transporter) {
-    console.log(`📧 [EMAIL DISABLED] Would send notification to ${contractorEmail}`);
-    console.log('Order details:', { pickup: orderData.pickup_postal_code, delivery: orderData.delivery_postal_code });
-    return;
-  }
-
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ Notification email sent to ${contractorEmail}`);
-  } catch (error) {
-    console.error(`❌ Error sending email to ${contractorEmail}:`, error);
+    console.error('❌ Resend email error:', error);
+    return { success: false, error: error.message };
   }
 };
 
-const sendOrderAssignmentNotification = async (contractorEmail, orderData) => {
-  const mailOptions = {
-    from: process.env.EMAIL_FROM,
-    to: contractorEmail,
-    subject: 'Auftrag zugewiesen - Vollständige Details verfügbar',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #16a34a;">Auftrag wurde Ihnen zugewiesen!</h2>
-        <p>Sie haben einen neuen Auftrag erhalten. Hier sind die vollständigen Details:</p>
-        
-        <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #16a34a;">
-          <h3 style="margin-top: 0; color: #16a34a;">Abholung:</h3>
-          <p><strong>Adresse:</strong> ${orderData.pickup_address}</p>
-          <p><strong>PLZ/Stadt:</strong> ${orderData.pickup_postal_code} ${orderData.pickup_city}</p>
-          <p><strong>Datum:</strong> ${new Date(orderData.pickup_date).toLocaleDateString('de-DE')}</p>
-          ${orderData.pickup_time ? `<p><strong>Uhrzeit:</strong> ${orderData.pickup_time}</p>` : ''}
-          ${orderData.pickup_contact_name ? `<p><strong>Kontakt:</strong> ${orderData.pickup_contact_name}</p>` : ''}
-          ${orderData.pickup_contact_phone ? `<p><strong>Telefon:</strong> ${orderData.pickup_contact_phone}</p>` : ''}
-        </div>
-        
-        <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
-          <h3 style="margin-top: 0; color: #2563eb;">Zustellung:</h3>
-          <p><strong>Adresse:</strong> ${orderData.delivery_address}</p>
-          <p><strong>PLZ/Stadt:</strong> ${orderData.delivery_postal_code} ${orderData.delivery_city}</p>
-          ${orderData.delivery_contact_name ? `<p><strong>Kontakt:</strong> ${orderData.delivery_contact_name}</p>` : ''}
-          ${orderData.delivery_contact_phone ? `<p><strong>Telefon:</strong> ${orderData.delivery_contact_phone}</p>` : ''}
-        </div>
-        
-        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin-top: 0;">Weitere Details:</h3>
-          <p><strong>Fahrzeugtyp:</strong> ${orderData.vehicle_type}</p>
-          ${orderData.price ? `<p><strong>Preis:</strong> €${orderData.price}</p>` : ''}
-          ${orderData.description ? `<p><strong>Beschreibung:</strong> ${orderData.description}</p>` : ''}
-          ${orderData.special_requirements ? `<p><strong>Besondere Anforderungen:</strong> ${orderData.special_requirements}</p>` : ''}
-        </div>
-        
-        ${getEmailDisclaimer()}
-        
-        <a href="${process.env.FRONTEND_URL || 'https://cityjumper-transport.vercel.app'}/dashboard" 
-           style="display: inline-block; background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">
-          Auftrag ansehen
-        </a>
+const sendNewOrderNotification = async (contractorEmail, orderData) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #2563eb;">Neuer Transportauftrag verfügbar</h2>
+      <p>Es gibt einen neuen Transportauftrag in Ihrem Gebiet:</p>
+      
+      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Auftragsdetails:</h3>
+        <p><strong>Abholung:</strong> PLZ ${orderData.pickup_postal_code}, ${orderData.pickup_city}</p>
+        <p><strong>Zustellung:</strong> PLZ ${orderData.delivery_postal_code}, ${orderData.delivery_city}</p>
+        <p><strong>Datum:</strong> ${new Date(orderData.pickup_date).toLocaleDateString('de-DE')}</p>
+        <p><strong>Fahrzeugtyp:</strong> ${orderData.vehicle_type}</p>
+        <p><strong>Preis:</strong> ${orderData.price} €</p>
       </div>
-    `,
-  };
 
-  if (!transporter) {
-    console.log(`📧 [EMAIL DISABLED] Would send assignment notification to ${contractorEmail}`);
-    return;
-  }
+      ${getEmailDisclaimer()}
+      
+      <p>Melden Sie sich in Ihrem Dashboard an, um den Auftrag anzunehmen.</p>
+      
+      <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
+        Mit freundlichen Grüßen,<br>
+        Ihr Courierly Team
+      </p>
+    </div>
+  `;
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ Assignment email sent to ${contractorEmail}`);
-  } catch (error) {
-    console.error(`❌ Error sending assignment email to ${contractorEmail}:`, error);
-  }
+  return sendEmail({
+    to: contractorEmail,
+    subject: 'Neuer Transportauftrag verfügbar',
+    html
+  });
+};
+
+const sendOrderAssignmentNotification = async (customerEmail, contractorData, orderData) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #10b981;">Ihr Auftrag wurde angenommen!</h2>
+      <p>Gute Nachrichten! Ihr Transportauftrag wurde von einem Transportunternehmen angenommen.</p>
+      
+      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Transportunternehmen:</h3>
+        <p><strong>Firma:</strong> ${contractorData.company_name || `${contractorData.first_name} ${contractorData.last_name}`}</p>
+        <p><strong>Email:</strong> ${contractorData.email}</p>
+        <p><strong>Telefon:</strong> ${contractorData.phone || 'Nicht angegeben'}</p>
+      </div>
+
+      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Auftragsdetails:</h3>
+        <p><strong>Von:</strong> ${orderData.pickup_city}</p>
+        <p><strong>Nach:</strong> ${orderData.delivery_city}</p>
+        <p><strong>Datum:</strong> ${new Date(orderData.pickup_date).toLocaleDateString('de-DE')}</p>
+        <p><strong>Preis:</strong> ${orderData.price} €</p>
+      </div>
+      
+      <p>Das Transportunternehmen wird sich in Kürze mit Ihnen in Verbindung setzen.</p>
+      
+      <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
+        Mit freundlichen Grüßen,<br>
+        Ihr Courierly Team
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: customerEmail,
+    subject: 'Ihr Transportauftrag wurde angenommen - Courierly',
+    html
+  });
+};
+
+const sendBidNotification = async (customerEmail, contractorData, orderData, bidAmount) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #00d9ff;">Neues Angebot für Ihren Auftrag</h2>
+      <p>Guten Tag,</p>
+      <p><strong>${contractorData.company_name || `${contractorData.first_name} ${contractorData.last_name}`}</strong> hat ein Angebot für Ihren Transportauftrag abgegeben:</p>
+      
+      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Auftragsdetails:</h3>
+        <p><strong>Route:</strong> ${orderData.pickup_city} → ${orderData.delivery_city}</p>
+        <p><strong>Angebotspreis:</strong> ${bidAmount} €</p>
+      </div>
+      
+      <p>Sie können das Angebot in Ihrem Dashboard annehmen oder ablehnen.</p>
+      
+      <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
+        Mit freundlichen Grüßen,<br>
+        Ihr Courierly Team
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: customerEmail,
+    subject: `Neues Angebot von ${contractorData.company_name || contractorData.first_name} - Courierly`,
+    html
+  });
+};
+
+const sendAdminNotification = async (adminEmail, subject, message) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #dc2626;">Admin-Benachrichtigung</h2>
+      <p>${message}</p>
+      
+      <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
+        Courierly Admin System
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `[Admin] ${subject}`,
+    html
+  });
 };
 
 module.exports = {
+  sendEmail,
   sendNewOrderNotification,
   sendOrderAssignmentNotification,
+  sendBidNotification,
+  sendAdminNotification
 };
