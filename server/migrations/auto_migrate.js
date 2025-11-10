@@ -4,7 +4,7 @@ async function autoMigrate() {
   try {
     console.log('🔍 Checking if migration is needed...');
     
-    // Check if columns already exist
+    // Check if transport_orders columns already exist
     const checkQuery = `
       SELECT column_name 
       FROM information_schema.columns 
@@ -14,12 +14,25 @@ async function autoMigrate() {
     
     const result = await pool.query(checkQuery);
     
-    if (result.rows.length >= 4) {
-      console.log('✓ Migration already applied, skipping...');
+    const transportOrdersMigrated = result.rows.length >= 4;
+    
+    // Check if employee_assignment_mode column exists
+    const checkEmployeeAssignment = `
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' 
+      AND column_name = 'employee_assignment_mode';
+    `;
+    
+    const employeeResult = await pool.query(checkEmployeeAssignment);
+    const employeeAssignmentMigrated = employeeResult.rows.length > 0;
+    
+    if (transportOrdersMigrated && employeeAssignmentMigrated) {
+      console.log('✓ All migrations already applied, skipping...');
       return;
     }
     
-    console.log('🔧 Applying migration...');
+    console.log('🔧 Applying migrations...');
     
     // Add additional stops as JSONB array (for admin-added stops during execution)
     await pool.query(`
@@ -56,12 +69,23 @@ async function autoMigrate() {
       ADD COLUMN IF NOT EXISTS edit_history JSONB DEFAULT '[]'::jsonb;
     `);
     
+    // Add employee assignment mode to users table
+    if (!employeeAssignmentMigrated) {
+      console.log('🔧 Adding employee_assignment_mode column...');
+      await pool.query(`
+        ALTER TABLE users 
+        ADD COLUMN IF NOT EXISTS employee_assignment_mode VARCHAR(50) DEFAULT 'all_access';
+      `);
+      console.log('  ✓ Employee assignment mode added');
+    }
+    
     console.log('✅ Migration completed successfully!');
     console.log('📦 New features are now available:');
     console.log('  ✓ Multi-stop orders (multiple pickups/deliveries)');
     console.log('  ✓ Admin can edit completed orders');
     console.log('  ✓ Additional stops during execution');
     console.log('  ✓ Automatic pricing: +6€ per extra stop');
+    console.log('  ✓ Employee assignment mode (all_access / manual_assignment)');
     
   } catch (error) {
     console.error('⚠️  Migration error (may be safe to ignore if already applied):', error.message);
