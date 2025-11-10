@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { User, Mail, Lock, MapPin, Building, Phone, Save, Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, Mail, Lock, MapPin, Building, Phone, Save, Upload, FileText, CheckCircle, AlertCircle, Users } from 'lucide-react';
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -44,6 +44,10 @@ const Settings = () => {
 
   const [verificationStatus, setVerificationStatus] = useState(null);
 
+  // Employee assignment mode (for contractors)
+  const [assignmentMode, setAssignmentMode] = useState('all_access');
+  const [savingAssignment, setSavingAssignment] = useState(false);
+
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('user') || '{}');
     setUser(userData);
@@ -65,9 +69,10 @@ const Settings = () => {
       postal_code: userData.postal_code || '',
     });
 
-    // Load verification status for contractors
+    // Load verification status and assignment mode for contractors
     if (userData.role === 'contractor') {
       fetchVerificationStatus();
+      fetchAssignmentMode();
     }
   }, []);
 
@@ -83,6 +88,50 @@ const Settings = () => {
       setVerificationStatus(data.verification);
     } catch (error) {
       console.error('Error fetching verification status:', error);
+    }
+  };
+
+  const fetchAssignmentMode = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/employee-assignment/settings`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      setAssignmentMode(data.assignmentMode || 'all_access');
+    } catch (error) {
+      console.error('Error fetching assignment mode:', error);
+    }
+  };
+
+  const updateAssignmentMode = async (mode) => {
+    setSavingAssignment(true);
+    setMessage({ type: '', text: '' });
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/employee-assignment/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ assignmentMode: mode }),
+      });
+
+      if (response.ok) {
+        setAssignmentMode(mode);
+        setMessage({ type: 'success', text: 'Mitarbeiter-Einstellungen erfolgreich gespeichert' });
+      } else {
+        throw new Error('Update failed');
+      }
+    } catch (error) {
+      console.error('Error updating assignment mode:', error);
+      setMessage({ type: 'error', text: 'Fehler beim Speichern der Einstellungen' });
+    } finally {
+      setSavingAssignment(false);
     }
   };
 
@@ -633,6 +682,99 @@ const Settings = () => {
                   Verifizierung einreichen
                 </button>
               </form>
+            )}
+          </div>
+        )}
+
+        {/* Employee Assignment Settings (for contractors only) */}
+        {user?.role === 'contractor' && (
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <Users className="h-6 w-6 mr-2 text-primary-600" />
+              Mitarbeiter-Zugriff
+            </h2>
+            
+            <p className="text-gray-600 mb-6">
+              Legen Sie fest, wie Ihre Mitarbeiter Zugriff auf Aufträge erhalten
+            </p>
+
+            <div className="space-y-4">
+              {/* Option 1: All Access */}
+              <label className={`block p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                assignmentMode === 'all_access'
+                  ? 'border-primary-600 bg-primary-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}>
+                <div className="flex items-start">
+                  <input
+                    type="radio"
+                    name="assignmentMode"
+                    value="all_access"
+                    checked={assignmentMode === 'all_access'}
+                    onChange={(e) => updateAssignmentMode(e.target.value)}
+                    disabled={savingAssignment}
+                    className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500"
+                  />
+                  <div className="ml-3 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-medium text-gray-900">
+                        Alle Mitarbeiter sehen alle Aufträge
+                      </span>
+                      {assignmentMode === 'all_access' && (
+                        <span className="px-3 py-1 bg-primary-600 text-white text-sm rounded-full">
+                          Aktiv
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-gray-600 text-sm">
+                      Jeder Mitarbeiter hat Zugriff auf alle Aufträge, die Sie angenommen haben. 
+                      Ideal für kleine Teams oder wenn alle Fahrer flexibel einsetzbar sind.
+                    </p>
+                  </div>
+                </div>
+              </label>
+
+              {/* Option 2: Manual Assignment */}
+              <label className={`block p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                assignmentMode === 'manual_assignment'
+                  ? 'border-primary-600 bg-primary-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}>
+                <div className="flex items-start">
+                  <input
+                    type="radio"
+                    name="assignmentMode"
+                    value="manual_assignment"
+                    checked={assignmentMode === 'manual_assignment'}
+                    onChange={(e) => updateAssignmentMode(e.target.value)}
+                    disabled={savingAssignment}
+                    className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500"
+                  />
+                  <div className="ml-3 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-medium text-gray-900">
+                        Aufträge einzeln zuweisen
+                      </span>
+                      {assignmentMode === 'manual_assignment' && (
+                        <span className="px-3 py-1 bg-primary-600 text-white text-sm rounded-full">
+                          Aktiv
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-gray-600 text-sm">
+                      Sie weisen jeden Auftrag manuell einem bestimmten Mitarbeiter zu. 
+                      Mitarbeiter sehen nur ihre zugewiesenen Aufträge. Ideal für große Teams oder spezialisierte Fahrer.
+                    </p>
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            {savingAssignment && (
+              <div className="mt-4 flex items-center text-primary-600">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 mr-2"></div>
+                <span className="text-sm">Speichert...</span>
+              </div>
             )}
           </div>
         )}
