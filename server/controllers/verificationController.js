@@ -118,7 +118,7 @@ const approveContractor = async (req, res) => {
             
             <p>Vielen Dank für Ihre Geduld.</p>
             
-            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
           </div>
         `
       );
@@ -179,7 +179,7 @@ const rejectContractor = async (req, res) => {
             
             <p>Bitte laden Sie die korrekten Dokumente erneut hoch.</p>
             
-            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
           </div>
         `
       );

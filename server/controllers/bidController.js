@@ -161,7 +161,7 @@ const acceptBid = async (req, res) => {
             
             <p>Sie können den Auftrag jetzt in Ihrem Dashboard sehen.</p>
             
-            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
           </div>
         `
       );

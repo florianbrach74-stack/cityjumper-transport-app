@@ -216,7 +216,7 @@ const addSignature = async (req, res) => {
             <p>Das CMR-Dokument wurde vom Absender und Frachtführer unterschrieben.</p>
             <p>Sie werden benachrichtigt, sobald die Sendung zugestellt wurde.</p>
             
-            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
           </div>
         `
       );
@@ -369,7 +369,7 @@ const addPublicSignature = async (req, res) => {
           
           <p>Das unterschriebene CMR-Dokument steht in Ihrem Dashboard zum Download bereit.</p>
           
-          <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+          <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
         </div>
       `
     );
@@ -391,7 +391,7 @@ const addPublicSignature = async (req, res) => {
             <p><strong>Zugestellt am:</strong> ${new Date().toLocaleString('de-DE')}</p>
           </div>
           
-          <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+          <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
         </div>
       `
     );
@@ -602,7 +602,7 @@ const confirmPickup = async (req, res) => {
             
             <p>Sie werden benachrichtigt, sobald das Paket zugestellt wurde.</p>
             
-            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
           </div>
         `
       );
@@ -740,7 +740,7 @@ const confirmDelivery = async (req, res) => {
             
             <p>Das vollständige CMR-Dokument mit allen Unterschriften finden Sie im Anhang oder in Ihrem Dashboard.</p>
             
-            <p style="margin-top: 30px;">Vielen Dank für Ihr Vertrauen!<br>Ihr CityJumper Team</p>
+            <p style="margin-top: 30px;">Vielen Dank für Ihr Vertrauen!<br>Ihr Courierly Team</p>
           </div>
         `
       );

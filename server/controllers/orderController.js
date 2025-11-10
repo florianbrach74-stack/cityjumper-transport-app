@@ -364,7 +364,7 @@ const updateOrderStatus = async (req, res) => {
               
               <p>Sie werden benachrichtigt, sobald die Sendung zugestellt wurde.</p>
               
-              <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+              <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
             </div>
           `
         );
@@ -388,7 +388,7 @@ const updateOrderStatus = async (req, res) => {
               
               <p>Sie erhalten eine weitere Email sobald der Empfänger das CMR-Dokument unterschrieben hat.</p>
               
-              <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper Team</p>
+              <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
             </div>
           `
         );
