@@ -1,22 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { sendEmail } = require('../utils/emailService');
+require('dotenv').config();
 
 // Test email endpoint using Resend
 router.get('/test-email', async (req, res) => {
   try {
     console.log('📧 Testing Resend email configuration...');
+    console.log('   RESEND_API_KEY present:', !!process.env.RESEND_API_KEY);
     
-    // Check if Resend API key is set
-    if (!process.env.RESEND_API_KEY) {
-      return res.status(500).json({
-        success: false,
-        error: 'RESEND_API_KEY not configured',
-        message: 'Please set RESEND_API_KEY environment variable'
-      });
-    }
-
-    console.log('✅ Resend API key is configured');
+    // Just try to send - sendEmail will handle missing key gracefully
     console.log('📤 Sending test email...');
 
     // Send test email
