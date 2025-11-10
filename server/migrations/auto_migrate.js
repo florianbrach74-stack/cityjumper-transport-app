@@ -27,7 +27,18 @@ async function autoMigrate() {
     const employeeResult = await pool.query(checkEmployeeAssignment);
     const employeeAssignmentMigrated = employeeResult.rows.length > 0;
     
-    if (transportOrdersMigrated && employeeAssignmentMigrated) {
+    // Check if contractor_id column exists
+    const checkContractorId = `
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' 
+      AND column_name = 'contractor_id';
+    `;
+    
+    const contractorIdResult = await pool.query(checkContractorId);
+    const contractorIdMigrated = contractorIdResult.rows.length > 0;
+    
+    if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated) {
       console.log('✓ All migrations already applied, skipping...');
       return;
     }
@@ -69,6 +80,19 @@ async function autoMigrate() {
       ADD COLUMN IF NOT EXISTS edit_history JSONB DEFAULT '[]'::jsonb;
     `);
     
+    // Add contractor_id to users table
+    if (!contractorIdMigrated) {
+      console.log('🔧 Adding contractor_id column...');
+      await pool.query(`
+        ALTER TABLE users 
+        ADD COLUMN IF NOT EXISTS contractor_id INTEGER REFERENCES users(id);
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_users_contractor_id ON users(contractor_id);
+      `);
+      console.log('  ✓ contractor_id column added');
+    }
+    
     // Add employee assignment mode to users table
     if (!employeeAssignmentMigrated) {
       console.log('🔧 Adding employee_assignment_mode column...');
@@ -85,6 +109,7 @@ async function autoMigrate() {
     console.log('  ✓ Admin can edit completed orders');
     console.log('  ✓ Additional stops during execution');
     console.log('  ✓ Automatic pricing: +6€ per extra stop');
+    console.log('  ✓ Employee-Contractor relationship (contractor_id)');
     console.log('  ✓ Employee assignment mode (all_access / manual_assignment)');
     
   } catch (error) {
