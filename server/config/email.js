@@ -1,13 +1,18 @@
 const { Resend } = require('resend');
 require('dotenv').config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend = null;
 let emailEnabled = false;
 
-// Check if Resend is configured
+// Initialize Resend only if API key is available
 if (process.env.RESEND_API_KEY) {
-  emailEnabled = true;
-  console.log('✅ Resend email service configured');
+  try {
+    resend = new Resend(process.env.RESEND_API_KEY);
+    emailEnabled = true;
+    console.log('✅ Resend email service configured');
+  } catch (error) {
+    console.log('⚠️  Resend initialization failed:', error.message);
+  }
 } else {
   console.log('⚠️  Resend API key not configured (emails disabled)');
 }
