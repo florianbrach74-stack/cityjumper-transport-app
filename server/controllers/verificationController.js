@@ -36,7 +36,10 @@ const submitVerification = async (req, res) => {
 
     // Notify admins (optional - don't fail if email fails)
     try {
-      const admins = await User.findByRole('admin');
+      // Get all admin users from database directly
+      const { pool } = require('../config/database');
+      const adminResult = await pool.query("SELECT * FROM users WHERE role = 'admin'");
+      const admins = adminResult.rows;
       for (const admin of admins) {
         await sendEmail(
           admin.email,

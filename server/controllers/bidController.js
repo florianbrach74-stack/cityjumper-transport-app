@@ -45,7 +45,10 @@ const createBid = async (req, res) => {
 
     // Send notification to admin (optional)
     try {
-      const admins = await User.findByRole('admin');
+      // Get all admin users from database directly
+      const { pool } = require('../config/database');
+      const adminResult = await pool.query("SELECT * FROM users WHERE role = 'admin'");
+      const admins = adminResult.rows;
       const contractor = await User.findById(contractorId);
       
       for (const admin of admins) {
