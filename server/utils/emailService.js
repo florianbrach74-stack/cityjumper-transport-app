@@ -19,7 +19,14 @@ const getEmailDisclaimer = () => `
 // Helper function to send emails via Resend
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    if (!process.env.RESEND_API_KEY) {
+    // Initialize Resend if not already done
+    if (!resend && process.env.RESEND_API_KEY) {
+      const { Resend } = require('resend');
+      resend = new Resend(process.env.RESEND_API_KEY);
+      console.log('✅ Resend initialized on-demand');
+    }
+
+    if (!resend || !process.env.RESEND_API_KEY) {
       console.warn('⚠️  Resend API key not configured - email will be logged only');
       console.log(`📧 Would send email to: ${to}`);
       console.log(`   Subject: ${subject}`);
@@ -28,6 +35,7 @@ const sendEmail = async ({ to, subject, html }) => {
 
     console.log(`📧 Sending email via Resend to: ${to}`);
     console.log(`   Subject: ${subject}`);
+    console.log(`   API Key present: ${!!process.env.RESEND_API_KEY}`);
     
     const data = await resend.emails.send({
       from: 'Courierly <noreply@courierly.de>',
@@ -42,6 +50,8 @@ const sendEmail = async ({ to, subject, html }) => {
     return { success: true, messageId: data.id };
   } catch (error) {
     console.error('❌ Resend email error:', error);
+    console.error('   Error details:', error.message);
+    console.error('   Error stack:', error.stack);
     return { success: false, error: error.message };
   }
 };
