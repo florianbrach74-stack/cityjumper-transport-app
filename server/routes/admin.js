@@ -15,10 +15,15 @@ router.get('/orders', adminAuth, async (req, res) => {
         c.last_name as customer_last_name,
         ct.email as contractor_email,
         ct.first_name as contractor_first_name,
-        ct.last_name as contractor_last_name
+        ct.last_name as contractor_last_name,
+        ct.company_name as contractor_company_name,
+        e.first_name as assigned_employee_first_name,
+        e.last_name as assigned_employee_last_name,
+        e.email as assigned_employee_email
       FROM transport_orders o
       LEFT JOIN users c ON o.customer_id = c.id
       LEFT JOIN users ct ON o.contractor_id = ct.id
+      LEFT JOIN users e ON o.assigned_employee_id = e.id
       ORDER BY o.created_at DESC
     `);
     

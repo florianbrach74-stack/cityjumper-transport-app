@@ -33,6 +33,7 @@ app.use('/api/pricing', require('./routes/pricing'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/cancellation', require('./routes/cancellation'));
 app.use('/api', require('./routes/test-email'));
+app.use('/api/employee-assignment', require('./routes/employee-assignment'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
