@@ -155,6 +155,67 @@ router.post('/run-migration/reset-employee-password', async (req, res) => {
 });
 
 // Check order assignment
+// Fix employee contractor_id
+router.post('/fix-employee-contractor-id', async (req, res) => {
+  try {
+    console.log('🔧 Fixing employee contractor_id fields...');
+    
+    // Get all employees
+    const employees = await pool.query(
+      `SELECT id, email, first_name, last_name, contractor_id 
+       FROM users 
+       WHERE role = 'employee'`
+    );
+    
+    const results = [];
+    
+    for (const employee of employees.rows) {
+      const result = {
+        id: employee.id,
+        name: `${employee.first_name} ${employee.last_name}`,
+        oldContractorId: employee.contractor_id
+      };
+      
+      if (!employee.contractor_id) {
+        // Find orders assigned to this employee
+        const orders = await pool.query(
+          `SELECT DISTINCT contractor_id 
+           FROM transport_orders 
+           WHERE assigned_employee_id = $1 
+           LIMIT 1`,
+          [employee.id]
+        );
+        
+        if (orders.rows.length > 0) {
+          const contractorId = orders.rows[0].contractor_id;
+          
+          // Update employee with contractor_id
+          await pool.query(
+            `UPDATE users 
+             SET contractor_id = $1 
+             WHERE id = $2`,
+            [contractorId, employee.id]
+          );
+          
+          result.newContractorId = contractorId;
+          result.status = 'fixed';
+        } else {
+          result.status = 'no_orders';
+        }
+      } else {
+        result.status = 'already_set';
+      }
+      
+      results.push(result);
+    }
+    
+    res.json({ success: true, results });
+  } catch (error) {
+    console.error('❌ Fix error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/debug/check-assignment/:orderId', async (req, res) => {
   try {
     const orderId = req.params.orderId;
