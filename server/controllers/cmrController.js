@@ -552,6 +552,11 @@ const confirmPickup = async (req, res) => {
     const contractorId = userRole === 'employee' ? user.contractor_id : userId;
     const contractor = await User.findById(contractorId);
     
+    if (!contractor) {
+      console.error('❌ Contractor not found:', contractorId);
+      return res.status(404).json({ error: 'Contractor not found' });
+    }
+    
     // Carrier name: Always the company/contractor name
     const carrierName = contractor.company_name || `${contractor.first_name} ${contractor.last_name}`;
     
