@@ -91,7 +91,7 @@ const EmployeeDashboardNew = () => {
         
       case 'accepted':
         // Orders assigned to me (manual) OR all orders if all_access
-        if (assignmentMode === 'manual') {
+        if (assignmentMode === 'manual' || assignmentMode === 'manual_assignment') {
           return allOrders.filter(o => o.assigned_employee_id === myId && !o.pickup_confirmed);
         } else {
           // all_access: show unassigned orders with "Übernehmen" button
@@ -117,7 +117,7 @@ const EmployeeDashboardNew = () => {
   // Calculate stats
   const stats = {
     all: allOrders.length,
-    accepted: assignmentMode === 'manual' 
+    accepted: (assignmentMode === 'manual' || assignmentMode === 'manual_assignment')
       ? allOrders.filter(o => o.assigned_employee_id === myId && !o.pickup_confirmed).length
       : allOrders.filter(o => !o.pickup_confirmed).length,
     in_transit: allOrders.filter(o => o.assigned_employee_id === myId && o.pickup_confirmed && !o.delivery_confirmed).length,
