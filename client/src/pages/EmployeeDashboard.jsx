@@ -146,7 +146,11 @@ const EmployeeDashboardNew = () => {
         
       case 'in_transit':
         // Orders I'm working on (picked up but not delivered)
-        return allOrders.filter(o => o.assigned_employee_id === myId && o.pickup_confirmed && !o.delivery_confirmed);
+        return allOrders.filter(o => 
+          o.assigned_employee_id === myId && 
+          (o.status === 'picked_up' || o.status === 'in_transit') &&
+          !o.delivery_confirmed
+        );
         
       case 'completed':
         // Orders I completed
@@ -164,9 +168,12 @@ const EmployeeDashboardNew = () => {
   const stats = {
     all: allOrders.length,
     accepted: (assignmentMode === 'manual' || assignmentMode === 'manual_assignment')
-      ? allOrders.filter(o => o.assigned_employee_id === myId && !o.pickup_confirmed).length
-      : allOrders.filter(o => !o.pickup_confirmed).length,
-    in_transit: allOrders.filter(o => o.assigned_employee_id === myId && o.pickup_confirmed && !o.delivery_confirmed).length,
+      ? allOrders.filter(o => o.assigned_employee_id === myId && o.status === 'accepted').length
+      : allOrders.filter(o => o.status === 'accepted').length,
+    in_transit: allOrders.filter(o => 
+      o.assigned_employee_id === myId && 
+      (o.status === 'picked_up' || o.status === 'in_transit')
+    ).length,
     completed: allOrders.filter(o => o.assigned_employee_id === myId && o.delivery_confirmed).length
   };
 

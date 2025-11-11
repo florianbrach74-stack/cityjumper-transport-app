@@ -207,14 +207,15 @@ router.get('/employee/orders', authenticateToken, authorizeRole('employee'), asy
     const assignmentMode = contractorResult.rows[0]?.employee_assignment_mode || 'all_access';
     console.log('   Assignment mode:', assignmentMode);
 
-    // Get ALL accepted orders of the contractor (NEW LOGIC)
+    // Get ALL active orders of the contractor (accepted, picked_up, in_transit)
     const query = `
       SELECT o.*,
              e.first_name as employee_first_name,
              e.last_name as employee_last_name
       FROM transport_orders o
       LEFT JOIN users e ON o.assigned_employee_id = e.id
-      WHERE o.contractor_id = $1 AND o.status = 'accepted'
+      WHERE o.contractor_id = $1 
+        AND o.status IN ('accepted', 'picked_up', 'in_transit')
       ORDER BY o.created_at DESC
     `;
     const params = [contractorId];
