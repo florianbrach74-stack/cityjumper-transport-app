@@ -1,14 +1,25 @@
-# 🔴 WICHTIG: Aufgaben für MORGEN (11. November 2025)
+# ✅ ERLEDIGT: Cloudflare Nameserver eingetragen!
 
-## 1. Cloudflare Nameserver bei IONOS eintragen
+# 🔴 NEUE AUFGABEN (11. November 2025, 12:53 Uhr)
 
-**Status:** ⏳ Warten auf DNS-Propagation (IONOS verarbeitet letzte Änderung)
+## 1. CMR-Anhang in Email hinzufügen
 
-**Cloudflare Nameserver:**
-```
-chris.ns.cloudflare.com
-millie.ns.cloudflare.com
-```
+**Problem:** Email sagt "CMR im Anhang", aber Anhang fehlt
+
+**Lösung:**
+- Resend unterstützt Attachments
+- CMR-PDF als Base64 anhängen
+- File: `server/controllers/cmrController.js` (Zeile 724)
+
+## 2. Benachrichtigung an alle Auftragnehmer bei neuem Auftrag
+
+**Problem:** Nur Kunde bekommt Email, Auftragnehmer nicht
+
+**Lösung:**
+- Bei Auftragserstellung: Email an alle verifizierten Contractors
+- Subject: "🚚 Neuer Transportauftrag verfügbar"
+- Mit Auftragsdetails und Link zum Dashboard
+- File: `server/controllers/orderController.js`
 
 ### Schritt-für-Schritt:
 

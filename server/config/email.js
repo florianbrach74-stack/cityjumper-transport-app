@@ -17,21 +17,31 @@ if (process.env.RESEND_API_KEY) {
   console.log('⚠️  Resend API key not configured (emails disabled)');
 }
 
-const sendEmail = async (to, subject, html) => {
+const sendEmail = async (to, subject, html, attachments = []) => {
   if (!emailEnabled) {
     console.log('⚠️  Email disabled, skipping:', subject);
     return { messageId: 'email-disabled' };
   }
   
   try {
-    const data = await resend.emails.send({
+    const emailData = {
       from: 'Courierly <noreply@courierly.de>',
       to: Array.isArray(to) ? to : [to],
       subject,
       html,
-    });
+    };
+    
+    // Add attachments if provided
+    if (attachments && attachments.length > 0) {
+      emailData.attachments = attachments;
+    }
+    
+    const data = await resend.emails.send(emailData);
     
     console.log('📧 Email sent via Resend:', data.id);
+    if (attachments.length > 0) {
+      console.log(`   With ${attachments.length} attachment(s)`);
+    }
     return { messageId: data.id };
   } catch (error) {
     console.error('❌ Error sending email via Resend:', error.message);

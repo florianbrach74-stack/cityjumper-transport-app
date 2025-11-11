@@ -721,6 +721,25 @@ const confirmDelivery = async (req, res) => {
       const customer = await User.findById(order.customer_id);
       const contractor = await User.findById(contractorId);
       
+      // Read CMR PDF file
+      const fs = require('fs');
+      const path = require('path');
+      const cmrPath = path.join(__dirname, '../../uploads/cmr', `cmr_${orderId}.pdf`);
+      
+      let attachments = [];
+      if (fs.existsSync(cmrPath)) {
+        const pdfBuffer = fs.readFileSync(cmrPath);
+        const pdfBase64 = pdfBuffer.toString('base64');
+        
+        attachments = [{
+          filename: `CMR_Auftrag_${orderId}.pdf`,
+          content: pdfBase64,
+        }];
+        console.log('📎 CMR PDF attached to email');
+      } else {
+        console.log('⚠️  CMR PDF not found, sending email without attachment');
+      }
+      
       await sendEmail(
         customer.email,
         '✅ Paket zugestellt - Auftrag abgeschlossen',
@@ -742,7 +761,8 @@ const confirmDelivery = async (req, res) => {
             
             <p style="margin-top: 30px;">Vielen Dank für Ihr Vertrauen!<br>Ihr Courierly Team</p>
           </div>
-        `
+        `,
+        attachments
       );
     } catch (emailError) {
       console.error('⚠️ Email notification failed (non-critical):', emailError.message);

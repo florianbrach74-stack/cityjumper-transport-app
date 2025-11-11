@@ -146,20 +146,27 @@ const createOrder = async (req, res) => {
       // Don't fail the request if email fails
     }
 
-    // Notify contractors in the postal code area
+    // Notify ALL verified contractors about new order
     try {
       const contractors = await pool.query(
         `SELECT email, first_name, last_name FROM users 
          WHERE role = 'contractor' 
-         AND notification_postal_codes IS NOT NULL 
-         AND ($1 = ANY(notification_postal_codes) OR $2 = ANY(notification_postal_codes))`,
-        [orderData.pickup_postal_code, orderData.delivery_postal_code]
+         AND account_status = 'verified'
+         AND email IS NOT NULL`
       );
 
+      console.log(`📧 Sending new order notifications to ${contractors.rows.length} contractors...`);
+      
       for (const contractor of contractors.rows) {
-        await sendNewOrderNotification(contractor.email, order);
+        try {
+          await sendNewOrderNotification(contractor.email, order);
+          console.log(`  ✅ Notified ${contractor.first_name} ${contractor.last_name}`);
+        } catch (emailError) {
+          console.error(`  ❌ Failed to notify ${contractor.email}:`, emailError.message);
+        }
       }
-      console.log(`✅ Notified ${contractors.rows.length} contractors about new order`);
+      
+      console.log(`✅ Notified ${contractors.rows.length} contractors about new order #${order.id}`);
     } catch (notifyError) {
       console.error('Error notifying contractors:', notifyError);
       // Don't fail the request if notification fails
