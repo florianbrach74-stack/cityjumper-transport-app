@@ -13,8 +13,10 @@ class CMRPdfGenerator {
           fs.mkdirSync(uploadsDir, { recursive: true });
         }
 
-        const filename = `CMR_${cmrData.cmr_number}.pdf`;
+        // Use order ID for filename (not CMR number) for consistency
+        const filename = `cmr_${order.id}.pdf`;
         const filepath = path.join(uploadsDir, filename);
+        console.log('   Saving PDF to:', filepath);
 
         // Create PDF document
         const doc = new PDFDocument({ size: 'A4', margin: 30 });
