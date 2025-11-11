@@ -110,4 +110,48 @@ router.post('/run-migration/fix-employee-role', async (req, res) => {
   }
 });
 
+// Reset employee password
+router.post('/run-migration/reset-employee-password', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const email = 'luci.flader@gmx.de';
+    const newPassword = 'Test123!';
+    
+    console.log('🔐 Resetting password for:', email);
+    
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Update password
+    const result = await pool.query(
+      `UPDATE users 
+       SET password = $1 
+       WHERE email = $2
+       RETURNING id, first_name, last_name, email, role`,
+      [hashedPassword, email]
+    );
+    
+    if (result.rows.length === 0) {
+      res.json({ success: false, error: 'User not found' });
+    } else {
+      console.log('✅ Password reset successfully!');
+      res.json({
+        success: true,
+        message: 'Password reset successfully',
+        user: result.rows[0],
+        email: email,
+        newPassword: newPassword,
+        warning: 'Please change this password after first login!'
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Reset password error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
