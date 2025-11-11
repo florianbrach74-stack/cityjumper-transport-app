@@ -313,15 +313,24 @@ router.post('/orders/:id/assign', adminAuth, async (req, res) => {
     
     const order = result.rows[0];
     
-    // Get contractor email
+    // Get contractor and customer details
     const contractor = await pool.query(
-      'SELECT email FROM users WHERE id = $1',
+      'SELECT email, company_name, first_name, last_name, phone FROM users WHERE id = $1',
       [contractor_id]
     );
     
-    if (contractor.rows.length > 0) {
+    const customer = await pool.query(
+      'SELECT email FROM users WHERE id = $1',
+      [order.customer_id]
+    );
+    
+    if (contractor.rows.length > 0 && customer.rows.length > 0) {
       // Send notification with full details
-      await sendOrderAssignmentNotification(contractor.rows[0].email, order);
+      await sendOrderAssignmentNotification(
+        customer.rows[0].email,
+        contractor.rows[0],
+        order
+      );
     }
     
     res.json({ 
