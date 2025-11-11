@@ -778,12 +778,16 @@ const confirmDelivery = async (req, res) => {
     // Regenerate CMR PDF with all signatures
     console.log('📄 Regenerating CMR PDF...');
     const updatedCmr = await CMR.findByOrderId(orderId);
+    console.log('   CMR data:', { id: updatedCmr.id, orderId: updatedCmr.order_id });
     
+    let pdfGenerated = false;
     try {
       await CMRPdfGenerator.generateCMR(updatedCmr, order);
       console.log('✅ CMR PDF generated');
+      pdfGenerated = true;
     } catch (pdfError) {
-      console.error('⚠️ CMR PDF generation failed (non-critical):', pdfError.message);
+      console.error('⚠️ CMR PDF generation failed:', pdfError);
+      console.error('   Error stack:', pdfError.stack);
     }
 
     // Send email to customer with CMR
@@ -798,6 +802,7 @@ const confirmDelivery = async (req, res) => {
       const fs = require('fs');
       const path = require('path');
       const cmrPath = path.join(__dirname, '../../uploads/cmr', `cmr_${orderId}.pdf`);
+      console.log('   Looking for PDF at:', cmrPath);
       
       let attachments = [];
       if (fs.existsSync(cmrPath)) {
@@ -808,9 +813,19 @@ const confirmDelivery = async (req, res) => {
           filename: `CMR_Auftrag_${orderId}.pdf`,
           content: pdfBase64,
         }];
-        console.log('📎 CMR PDF attached to email');
+        console.log('📎 CMR PDF attached to email (size:', pdfBuffer.length, 'bytes)');
       } else {
-        console.log('⚠️  CMR PDF not found, sending email without attachment');
+        console.log('⚠️ CMR PDF not found at:', cmrPath);
+        console.log('   PDF was generated:', pdfGenerated);
+        
+        // List files in uploads/cmr directory
+        const cmrDir = path.join(__dirname, '../../uploads/cmr');
+        if (fs.existsSync(cmrDir)) {
+          const files = fs.readdirSync(cmrDir);
+          console.log('   Files in CMR directory:', files);
+        } else {
+          console.log('   CMR directory does not exist!');
+        }
       }
       
       await sendEmail(
