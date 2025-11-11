@@ -34,7 +34,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
         LEFT JOIN users c ON o.customer_id = c.id
         LEFT JOIN users ct ON o.contractor_id = ct.id
         WHERE o.status = 'completed' 
-          AND o.updated_at >= $1 AND o.updated_at <= $2
+          AND o.updated_at >= $1 AND o.updated_at < ($2::date + interval '1 day')
         ORDER BY o.updated_at DESC
       `;
       params = [startDate, endDate];
@@ -51,7 +51,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
         LEFT JOIN users ct ON o.contractor_id = ct.id
         WHERE o.customer_id = $1 
           AND o.status = 'completed'
-          AND o.updated_at >= $2 AND o.updated_at <= $3
+          AND o.updated_at >= $2 AND o.updated_at < ($3::date + interval '1 day')
         ORDER BY o.updated_at DESC
       `;
       params = [userId, startDate, endDate];
@@ -68,7 +68,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
         LEFT JOIN users c ON o.customer_id = c.id
         WHERE o.contractor_id = $1 
           AND o.status = 'completed'
-          AND o.updated_at >= $2 AND o.updated_at <= $3
+          AND o.updated_at >= $2 AND o.updated_at < ($3::date + interval '1 day')
         ORDER BY o.updated_at DESC
       `;
       params = [userId, startDate, endDate];
