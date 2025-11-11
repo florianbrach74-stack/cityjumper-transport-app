@@ -90,19 +90,23 @@ router.get('/summary', authenticateToken, async (req, res) => {
     };
 
     orders.forEach(order => {
-      const price = parseFloat(order.price) || 0;
-      const contractorPrice = parseFloat(order.contractor_price) || (price * 0.85);
+      // Use customer_price if available, otherwise fall back to price
+      const customerPrice = parseFloat(order.customer_price || order.price) || 0;
+      const contractorPrice = parseFloat(order.contractor_price) || parseFloat(order.price) || 0;
       const waitingTimeFee = parseFloat(order.waiting_time_fee) || 0;
+      
+      // Calculate commission: 15% of customer price
+      const commission = customerPrice * 0.15;
 
       if (userRole === 'admin') {
-        summary.totalRevenue += price + (order.waiting_time_approved ? waitingTimeFee : 0);
+        summary.totalRevenue += customerPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
         summary.totalContractorPayout += contractorPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
-        summary.totalPlatformCommission += (price - contractorPrice);
+        summary.totalPlatformCommission += commission;
         if (order.waiting_time_approved) {
           summary.totalWaitingTimeFees += waitingTimeFee;
         }
       } else if (userRole === 'customer') {
-        summary.totalRevenue += price + (order.waiting_time_approved ? waitingTimeFee : 0);
+        summary.totalRevenue += customerPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
       } else if (userRole === 'contractor') {
         summary.totalRevenue += contractorPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
         if (order.waiting_time_approved) {
