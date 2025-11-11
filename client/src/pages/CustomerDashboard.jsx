@@ -283,7 +283,8 @@ const CustomerDashboard = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <div className="flex flex-col space-y-1">
-                          <span className="font-semibold">{order.price ? formatPrice(parseFloat(order.price)) : '-'}</span>
+                          {/* Zeige IMMER customer_price (was Kunde zahlt), NIEMALS price (was Contractor bekommt) */}
+                          <span className="font-semibold">{order.customer_price ? formatPrice(parseFloat(order.customer_price)) : '-'}</span>
                           
                           {/* Wartezeit-Gebühr für abgeschlossene Aufträge */}
                           {(order.status === 'completed' || order.status === 'pending_approval') && order.waiting_time_fee && parseFloat(order.waiting_time_fee) > 0 && (
@@ -327,10 +328,16 @@ const CustomerDashboard = () => {
                                 </div>
                               )}
                               
-                              <div className="bg-green-50 border border-green-200 p-2 rounded">
+                              <div className="bg-green-50 border border-green-200 p-2 rounded space-y-1">
                                 <div className="flex justify-between items-center">
                                   <span className="text-xs text-gray-600">Zusätzliche Kosten:</span>
                                   <span className="font-bold text-green-700">+€{parseFloat(order.waiting_time_fee || 0).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-1 border-t border-green-300">
+                                  <span className="text-xs font-semibold text-gray-700">Gesamtpreis:</span>
+                                  <span className="font-bold text-gray-900">
+                                    {formatPrice(parseFloat(order.customer_price || 0) + parseFloat(order.waiting_time_fee || 0))}
+                                  </span>
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
                                   (Erste 30 Min. kostenlos, danach €3 pro 5 Min.)
