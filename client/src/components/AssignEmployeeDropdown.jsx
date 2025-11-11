@@ -13,34 +13,27 @@ const AssignEmployeeDropdown = ({ orderId, currentEmployeeId, currentEmployeeNam
 
   const loadEmployees = async () => {
     try {
-      console.log('🔍 Loading employees...');
-      const response = await fetch('/api/employee-assignment/employees', {
+      // Use full API URL to avoid routing issues
+      const apiUrl = 'https://cityjumper-api-production-01e4.up.railway.app/api/employee-assignment/employees';
+      console.log('🔍 Loading employees from:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       
       console.log('📡 Response status:', response.status);
-      console.log('📡 Response OK:', response.ok);
-      console.log('📡 Content-Type:', response.headers.get('content-type'));
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Response not OK:', response.status, errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        throw new Error(`HTTP ${response.status}`);
       }
       
-      // Read response as text first to debug
-      const responseText = await response.text();
-      console.log('📡 Response text:', responseText);
-      
-      // Parse JSON manually
-      const data = JSON.parse(responseText);
-      console.log('✅ Employees loaded:', data);
+      const data = await response.json();
+      console.log('✅ Employees loaded:', data.length, 'employees');
       setEmployees(data);
     } catch (error) {
       console.error('❌ Error loading employees:', error);
-      console.error('Error details:', error.message, error.stack);
       setEmployees([]);
     } finally {
       setLoading(false);
