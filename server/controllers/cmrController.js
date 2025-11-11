@@ -689,7 +689,6 @@ const confirmDelivery = async (req, res) => {
     }
 
     // Update CMR with receiver signature and optional photo
-    const pool = require('../config/database');
     await pool.query(
       `UPDATE cmr_documents 
        SET consignee_signed_name = $1,
