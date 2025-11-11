@@ -770,6 +770,9 @@ const confirmDelivery = async (req, res) => {
     // Send email to customer with CMR
     try {
       const customer = await User.findById(order.customer_id);
+      
+      // Get contractor ID (from order or from employee's contractor)
+      const contractorId = order.contractor_id;
       const contractor = await User.findById(contractorId);
       
       // Read CMR PDF file
