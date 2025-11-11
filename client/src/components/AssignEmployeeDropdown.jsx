@@ -13,15 +13,29 @@ const AssignEmployeeDropdown = ({ orderId, currentEmployeeId, currentEmployeeNam
 
   const loadEmployees = async () => {
     try {
+      console.log('🔍 Loading employees...');
       const response = await fetch('/api/employee-assignment/employees', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', response.headers);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Response not OK:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
       const data = await response.json();
+      console.log('✅ Employees loaded:', data);
       setEmployees(data);
     } catch (error) {
-      console.error('Error loading employees:', error);
+      console.error('❌ Error loading employees:', error);
+      console.error('Error details:', error.message, error.stack);
+      setEmployees([]);
     } finally {
       setLoading(false);
     }
