@@ -33,8 +33,9 @@ router.get('/summary', authenticateToken, async (req, res) => {
         FROM transport_orders o
         LEFT JOIN users c ON o.customer_id = c.id
         LEFT JOIN users ct ON o.contractor_id = ct.id
-        WHERE o.created_at >= $1 AND o.created_at <= $2
-        ORDER BY o.created_at DESC
+        WHERE o.status = 'completed' 
+          AND o.updated_at >= $1 AND o.updated_at <= $2
+        ORDER BY o.updated_at DESC
       `;
       params = [startDate, endDate];
     } else if (userRole === 'customer') {
@@ -48,8 +49,10 @@ router.get('/summary', authenticateToken, async (req, res) => {
           ct.company_name as contractor_company
         FROM transport_orders o
         LEFT JOIN users ct ON o.contractor_id = ct.id
-        WHERE o.customer_id = $1 AND o.created_at >= $2 AND o.created_at <= $3
-        ORDER BY o.created_at DESC
+        WHERE o.customer_id = $1 
+          AND o.status = 'completed'
+          AND o.updated_at >= $2 AND o.updated_at <= $3
+        ORDER BY o.updated_at DESC
       `;
       params = [userId, startDate, endDate];
     } else if (userRole === 'contractor') {
@@ -63,8 +66,10 @@ router.get('/summary', authenticateToken, async (req, res) => {
           c.company_name as customer_company
         FROM transport_orders o
         LEFT JOIN users c ON o.customer_id = c.id
-        WHERE o.contractor_id = $1 AND o.created_at >= $2 AND o.created_at <= $3
-        ORDER BY o.created_at DESC
+        WHERE o.contractor_id = $1 
+          AND o.status = 'completed'
+          AND o.updated_at >= $2 AND o.updated_at <= $3
+        ORDER BY o.updated_at DESC
       `;
       params = [userId, startDate, endDate];
     }
