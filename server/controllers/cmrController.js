@@ -541,28 +541,21 @@ const confirmPickup = async (req, res) => {
     }
     console.log('✅ CMR ready, ID:', cmr.id);
 
-    // Get user details (contractor or employee)
+    // Get contractor ID from order (always reliable)
+    const contractorId = order.contractor_id;
+    console.log('   Contractor ID from order:', contractorId);
+    
+    const contractor = await User.findById(contractorId);
+    if (!contractor) {
+      console.error('❌ Contractor not found:', contractorId);
+      return res.status(404).json({ error: 'Contractor not found' });
+    }
+    
+    // Get user details for employee name
     const user = await User.findById(userId);
     if (!user) {
       console.error('❌ User not found:', userId);
       return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Get contractor details for company name
-    const contractorId = userRole === 'employee' ? user.contractor_id : userId;
-    console.log('   User contractor_id:', user.contractor_id);
-    console.log('   Resolved contractorId:', contractorId);
-    
-    if (!contractorId) {
-      console.error('❌ Employee has no contractor_id:', userId);
-      return res.status(400).json({ error: 'Employee not assigned to contractor' });
-    }
-    
-    const contractor = await User.findById(contractorId);
-    
-    if (!contractor) {
-      console.error('❌ Contractor not found:', contractorId);
-      return res.status(404).json({ error: 'Contractor not found' });
     }
     
     // Carrier name: Always the company/contractor name
