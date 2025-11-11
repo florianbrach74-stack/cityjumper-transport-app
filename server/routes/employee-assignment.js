@@ -180,47 +180,47 @@ router.get('/orders', authenticateToken, authorizeRole('contractor'), async (req
   }
 });
 
-// Get orders for employee (respects assignment mode)
+// Get orders for employee (NEW LOGIC: all contractor orders + assignment info)
 router.get('/employee/orders', authenticateToken, authorizeRole('employee'), async (req, res) => {
   try {
+    console.log('📦 Fetching orders for employee:', req.user.id);
+    
+    // Get employee's contractor
+    const employeeResult = await pool.query(
+      'SELECT contractor_id FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    
+    if (employeeResult.rows.length === 0 || !employeeResult.rows[0].contractor_id) {
+      return res.json({ orders: [], assignmentMode: 'none', error: 'No contractor assigned' });
+    }
+    
+    const contractorId = employeeResult.rows[0].contractor_id;
+    console.log('   Contractor ID:', contractorId);
+    
     // Get contractor's assignment mode
     const contractorResult = await pool.query(
       'SELECT employee_assignment_mode FROM users WHERE id = $1',
-      [req.user.contractor_id]
+      [contractorId]
     );
 
     const assignmentMode = contractorResult.rows[0]?.employee_assignment_mode || 'all_access';
+    console.log('   Assignment mode:', assignmentMode);
 
-    let query;
-    let params;
-
-    if (assignmentMode === 'all_access') {
-      // Employee sees all orders of their contractor
-      query = `
-        SELECT o.*,
-               e.first_name as employee_first_name,
-               e.last_name as employee_last_name
-        FROM transport_orders o
-        LEFT JOIN users e ON o.assigned_employee_id = e.id
-        WHERE o.contractor_id = $1
-        ORDER BY o.created_at DESC
-      `;
-      params = [req.user.contractor_id];
-    } else {
-      // Employee only sees orders assigned to them
-      query = `
-        SELECT o.*,
-               e.first_name as employee_first_name,
-               e.last_name as employee_last_name
-        FROM transport_orders o
-        LEFT JOIN users e ON o.assigned_employee_id = e.id
-        WHERE o.contractor_id = $1 AND o.assigned_employee_id = $2
-        ORDER BY o.created_at DESC
-      `;
-      params = [req.user.contractor_id, req.user.id];
-    }
+    // Get ALL accepted orders of the contractor (NEW LOGIC)
+    const query = `
+      SELECT o.*,
+             e.first_name as employee_first_name,
+             e.last_name as employee_last_name
+      FROM transport_orders o
+      LEFT JOIN users e ON o.assigned_employee_id = e.id
+      WHERE o.contractor_id = $1 AND o.status = 'accepted'
+      ORDER BY o.created_at DESC
+    `;
+    const params = [contractorId];
 
     const result = await pool.query(query, params);
+    console.log('   Found orders:', result.rows.length);
 
     res.json({
       orders: result.rows,
@@ -229,6 +229,52 @@ router.get('/employee/orders', authenticateToken, authorizeRole('employee'), asy
   } catch (error) {
     console.error('Get employee orders error:', error);
     res.status(500).json({ error: 'Fehler beim Abrufen der Aufträge' });
+  }
+});
+
+// Employee takes/accepts an order
+router.post('/employee/take-order/:orderId', authenticateToken, authorizeRole('employee'), async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+    console.log('📦 Employee', req.user.id, 'taking order', orderId);
+    
+    // Verify order belongs to employee's contractor
+    const orderCheck = await pool.query(
+      `SELECT o.id, o.contractor_id, u.contractor_id as employee_contractor_id
+       FROM transport_orders o
+       CROSS JOIN users u
+       WHERE o.id = $1 AND u.id = $2`,
+      [orderId, req.user.id]
+    );
+    
+    if (orderCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Auftrag nicht gefunden' });
+    }
+    
+    if (orderCheck.rows[0].contractor_id !== orderCheck.rows[0].employee_contractor_id) {
+      return res.status(403).json({ error: 'Nicht autorisiert' });
+    }
+    
+    // Assign order to employee
+    const result = await pool.query(
+      `UPDATE transport_orders 
+       SET assigned_employee_id = $1
+       WHERE id = $2
+       RETURNING *`,
+      [req.user.id, orderId]
+    );
+    
+    console.log('✅ Order assigned to employee');
+    
+    res.json({
+      success: true,
+      message: 'Auftrag übernommen',
+      order: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Take order error:', error);
+    res.status(500).json({ error: 'Fehler beim Übernehmen des Auftrags' });
   }
 });
 

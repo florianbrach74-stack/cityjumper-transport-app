@@ -1,20 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { ordersAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import CMRViewer from '../components/CMRViewer';
 import CMRSignature from '../components/CMRSignature';
-import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText, UserCheck } from 'lucide-react';
+import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText } from 'lucide-react';
 
-const EmployeeDashboardNew = () => {
-  const [allOrders, setAllOrders] = useState([]);
+const EmployeeDashboard = () => {
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [assignmentMode, setAssignmentMode] = useState('all_access');
   const [selectedOrderForCMR, setSelectedOrderForCMR] = useState(null);
   const [selectedOrderForPickup, setSelectedOrderForPickup] = useState(null);
   const [selectedOrderForDelivery, setSelectedOrderForDelivery] = useState(null);
-  const [activeTab, setActiveTab] = useState('all'); // all, accepted, in_transit, completed
+  const [stats, setStats] = useState({
+    total: 0,
+    accepted: 0,
+    in_transit: 0,
+    completed: 0,
+  });
 
   const fetchOrders = async () => {
     try {
+      // Use employee-specific endpoint
       const response = await fetch('https://cityjumper-api-production-01e4.up.railway.app/api/employee-assignment/employee/orders', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -24,10 +30,19 @@ const EmployeeDashboardNew = () => {
       const data = await response.json();
       console.log('📦 Employee orders response:', data);
       
-      const orders = data.orders || [];
-      setAllOrders(orders);
-      setAssignmentMode(data.assignmentMode || 'all_access');
-      
+      // Extract orders array from response
+      const orders = Array.isArray(data) ? data : (data.orders || []);
+      console.log('📦 Orders count:', orders.length);
+      console.log('📦 Assignment mode:', data.assignmentMode);
+      setOrders(orders);
+
+      // Calculate stats
+      setStats({
+        total: orders.length,
+        accepted: orders.filter((o) => o.status === 'accepted').length,
+        in_transit: orders.filter((o) => o.status === 'in_transit').length,
+        completed: orders.filter((o) => o.status === 'completed').length,
+      });
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
@@ -38,29 +53,6 @@ const EmployeeDashboardNew = () => {
   useEffect(() => {
     fetchOrders();
   }, []);
-
-  const handleTakeOrder = async (orderId) => {
-    if (!confirm('Möchten Sie diesen Auftrag übernehmen?')) return;
-    
-    try {
-      const response = await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/employee-assignment/employee/take-order/${orderId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        alert('Auftrag erfolgreich übernommen!');
-        fetchOrders();
-      } else {
-        alert('Fehler beim Übernehmen des Auftrags');
-      }
-    } catch (error) {
-      console.error('Error taking order:', error);
-      alert('Fehler beim Übernehmen des Auftrags');
-    }
-  };
 
   const handlePickup = (order) => {
     setSelectedOrderForPickup(order);
@@ -80,48 +72,15 @@ const EmployeeDashboardNew = () => {
     fetchOrders();
   };
 
-  // Filter orders based on status
-  const getFilteredOrders = () => {
-    const myId = parseInt(localStorage.getItem('userId') || '0');
-    
-    switch (activeTab) {
-      case 'all':
-        // All accepted orders of contractor
-        return allOrders;
-        
-      case 'accepted':
-        // Orders assigned to me (manual) OR all orders if all_access
-        if (assignmentMode === 'manual') {
-          return allOrders.filter(o => o.assigned_employee_id === myId && !o.pickup_confirmed);
-        } else {
-          // all_access: show unassigned orders with "Übernehmen" button
-          return allOrders.filter(o => !o.pickup_confirmed);
-        }
-        
-      case 'in_transit':
-        // Orders I'm working on (picked up but not delivered)
-        return allOrders.filter(o => o.assigned_employee_id === myId && o.pickup_confirmed && !o.delivery_confirmed);
-        
-      case 'completed':
-        // Orders I completed
-        return allOrders.filter(o => o.assigned_employee_id === myId && o.delivery_confirmed);
-        
-      default:
-        return allOrders;
-    }
-  };
-
-  const filteredOrders = getFilteredOrders();
-  const myId = parseInt(localStorage.getItem('userId') || '0');
-
-  // Calculate stats
-  const stats = {
-    all: allOrders.length,
-    accepted: assignmentMode === 'manual' 
-      ? allOrders.filter(o => o.assigned_employee_id === myId && !o.pickup_confirmed).length
-      : allOrders.filter(o => !o.pickup_confirmed).length,
-    in_transit: allOrders.filter(o => o.assigned_employee_id === myId && o.pickup_confirmed && !o.delivery_confirmed).length,
-    completed: allOrders.filter(o => o.assigned_employee_id === myId && o.delivery_confirmed).length
+  const getStatusBadge = (status) => {
+    const badges = {
+      pending: { color: 'bg-yellow-100 text-yellow-800', text: 'Ausstehend', icon: Clock },
+      accepted: { color: 'bg-blue-100 text-blue-800', text: 'Akzeptiert', icon: CheckCircle },
+      in_transit: { color: 'bg-purple-100 text-purple-800', text: 'Unterwegs', icon: Truck },
+      completed: { color: 'bg-green-100 text-green-800', text: 'Abgeschlossen', icon: CheckCircle },
+      cancelled: { color: 'bg-red-100 text-red-800', text: 'Storniert', icon: Clock },
+    };
+    return badges[status] || badges.pending;
   };
 
   if (loading) {
@@ -145,39 +104,24 @@ const EmployeeDashboardNew = () => {
           <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">
             Mitarbeiter Dashboard
           </h1>
-          <p className="text-gray-600">Übersicht Ihrer Aufträge</p>
-          {assignmentMode === 'all_access' && (
-            <p className="text-sm text-blue-600 mt-1">
-              ℹ️ Sie können alle Aufträge übernehmen
-            </p>
-          )}
+          <p className="text-gray-600">Übersicht Ihrer zugewiesenen Aufträge</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`bg-white rounded-xl shadow-soft p-6 text-left transition-all ${
-              activeTab === 'all' ? 'ring-2 ring-primary-500' : ''
-            }`}
-          >
+          <div className="bg-white rounded-xl shadow-soft p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Gesamt Aufträge</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.all}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
               </div>
               <div className="bg-primary-100 p-3 rounded-lg">
                 <Package className="h-6 w-6 text-primary-600" />
               </div>
             </div>
-          </button>
+          </div>
 
-          <button
-            onClick={() => setActiveTab('accepted')}
-            className={`bg-white rounded-xl shadow-soft p-6 text-left transition-all ${
-              activeTab === 'accepted' ? 'ring-2 ring-blue-500' : ''
-            }`}
-          >
+          <div className="bg-white rounded-xl shadow-soft p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Akzeptiert</p>
@@ -187,14 +131,9 @@ const EmployeeDashboardNew = () => {
                 <CheckCircle className="h-6 w-6 text-blue-600" />
               </div>
             </div>
-          </button>
+          </div>
 
-          <button
-            onClick={() => setActiveTab('in_transit')}
-            className={`bg-white rounded-xl shadow-soft p-6 text-left transition-all ${
-              activeTab === 'in_transit' ? 'ring-2 ring-purple-500' : ''
-            }`}
-          >
+          <div className="bg-white rounded-xl shadow-soft p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Unterwegs</p>
@@ -204,14 +143,9 @@ const EmployeeDashboardNew = () => {
                 <Truck className="h-6 w-6 text-purple-600" />
               </div>
             </div>
-          </button>
+          </div>
 
-          <button
-            onClick={() => setActiveTab('completed')}
-            className={`bg-white rounded-xl shadow-soft p-6 text-left transition-all ${
-              activeTab === 'completed' ? 'ring-2 ring-green-500' : ''
-            }`}
-          >
+          <div className="bg-white rounded-xl shadow-soft p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Abgeschlossen</p>
@@ -221,29 +155,24 @@ const EmployeeDashboardNew = () => {
                 <CheckCircle className="h-6 w-6 text-success-600" />
               </div>
             </div>
-          </button>
+          </div>
         </div>
 
         {/* Orders List */}
         <div className="bg-white rounded-xl shadow-soft">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {activeTab === 'all' && 'Alle Aufträge'}
-              {activeTab === 'accepted' && 'Akzeptierte Aufträge'}
-              {activeTab === 'in_transit' && 'Unterwegs'}
-              {activeTab === 'completed' && 'Abgeschlossen'}
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-900">Meine Aufträge</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              ⚠️ Hinweis: Preise sind für Mitarbeiter nicht sichtbar
+            </p>
           </div>
 
-          {filteredOrders.length === 0 ? (
+          {orders.length === 0 ? (
             <div className="p-12 text-center">
               <Package className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">Keine Aufträge</h3>
               <p className="mt-1 text-sm text-gray-500">
-                {activeTab === 'all' && 'Keine Aufträge verfügbar'}
-                {activeTab === 'accepted' && 'Keine akzeptierten Aufträge'}
-                {activeTab === 'in_transit' && 'Keine Aufträge unterwegs'}
-                {activeTab === 'completed' && 'Keine abgeschlossenen Aufträge'}
+                Ihnen wurden noch keine Aufträge zugewiesen.
               </p>
             </div>
           ) : (
@@ -260,10 +189,8 @@ const EmployeeDashboardNew = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredOrders.map((order) => {
-                    const isAssignedToMe = order.assigned_employee_id === myId;
-                    const canTakeOrder = assignmentMode === 'all_access' && !order.assigned_employee_id && activeTab === 'accepted';
-                    
+                  {orders.map((order) => {
+                    const StatusIcon = getStatusBadge(order.status).icon;
                     return (
                       <tr key={order.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -288,42 +215,29 @@ const EmployeeDashboardNew = () => {
                           {order.vehicle_type}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {isAssignedToMe && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              <UserCheck className="h-3 w-3 mr-1" />
-                              Mir zugewiesen
-                            </span>
-                          )}
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(order.status).color}`}>
+                            <StatusIcon className="h-3 w-3 mr-1" />
+                            {getStatusBadge(order.status).text}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex items-center space-x-2">
-                            {/* Übernehmen Button (all_access mode) */}
-                            {canTakeOrder && (
-                              <button
-                                onClick={() => handleTakeOrder(order.id)}
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                              >
-                                <UserCheck className="h-4 w-4 mr-1" />
-                                Übernehmen
-                              </button>
-                            )}
-                            
-                            {/* Paket abholen (assigned to me, not picked up yet) */}
-                            {isAssignedToMe && !order.pickup_confirmed && activeTab === 'in_transit' && (
+                            {/* Paket abholen Button */}
+                            {order.status === 'accepted' && !order.pickup_confirmed && (
                               <button
                                 onClick={() => handlePickup(order)}
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                               >
                                 <Package className="h-4 w-4 mr-1" />
                                 Paket abholen
                               </button>
                             )}
                             
-                            {/* Zustellung (picked up, not delivered) */}
-                            {isAssignedToMe && order.pickup_confirmed && !order.delivery_confirmed && activeTab === 'in_transit' && (
+                            {/* Zustellung Button */}
+                            {order.status === 'accepted' && order.pickup_confirmed && !order.delivery_confirmed && (
                               <button
                                 onClick={() => handleDelivery(order)}
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                               >
                                 <Truck className="h-4 w-4 mr-1" />
                                 Zustellung
@@ -352,7 +266,7 @@ const EmployeeDashboardNew = () => {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* CMR Viewer Modal */}
       {selectedOrderForCMR && (
         <CMRViewer
           orderId={selectedOrderForCMR}
@@ -360,6 +274,7 @@ const EmployeeDashboardNew = () => {
         />
       )}
 
+      {/* Pickup Signature Modal */}
       {selectedOrderForPickup && (
         <CMRSignature
           order={selectedOrderForPickup}
@@ -369,6 +284,7 @@ const EmployeeDashboardNew = () => {
         />
       )}
 
+      {/* Delivery Signature Modal */}
       {selectedOrderForDelivery && (
         <CMRSignature
           order={selectedOrderForDelivery}
@@ -381,4 +297,4 @@ const EmployeeDashboardNew = () => {
   );
 };
 
-export default EmployeeDashboardNew;
+export default EmployeeDashboard;
