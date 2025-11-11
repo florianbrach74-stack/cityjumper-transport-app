@@ -283,8 +283,14 @@ const CustomerDashboard = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <div className="flex flex-col space-y-1">
-                          {/* Zeige IMMER customer_price (was Kunde zahlt), NIEMALS price (was Contractor bekommt) */}
-                          <span className="font-semibold">{order.customer_price ? formatPrice(parseFloat(order.customer_price)) : '-'}</span>
+                          {/* Zeige customer_price (was Kunde zahlt), oder price als Fallback für alte Orders */}
+                          <span className="font-semibold">
+                            {order.customer_price 
+                              ? formatPrice(parseFloat(order.customer_price)) 
+                              : order.price 
+                                ? formatPrice(parseFloat(order.price))
+                                : '-'}
+                          </span>
                           
                           {/* Wartezeit-Gebühr für abgeschlossene Aufträge */}
                           {(order.status === 'completed' || order.status === 'pending_approval') && order.waiting_time_fee && parseFloat(order.waiting_time_fee) > 0 && (
