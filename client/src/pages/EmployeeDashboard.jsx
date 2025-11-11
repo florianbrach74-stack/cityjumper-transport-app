@@ -70,14 +70,60 @@ const EmployeeDashboardNew = () => {
     setSelectedOrderForDelivery(order);
   };
 
-  const handlePickupComplete = () => {
-    setSelectedOrderForPickup(null);
-    fetchOrders();
+  const handlePickupComplete = async (data) => {
+    try {
+      console.log('📦 Submitting pickup confirmation...', data);
+      
+      const response = await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/order/${selectedOrderForPickup.id}/pickup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Fehler beim Bestätigen der Abholung');
+      }
+
+      console.log('✅ Pickup confirmed successfully');
+      alert('Paket erfolgreich abgeholt!');
+      setSelectedOrderForPickup(null);
+      fetchOrders();
+    } catch (error) {
+      console.error('❌ Pickup confirmation error:', error);
+      throw error; // Re-throw so CMRSignature can show error
+    }
   };
 
-  const handleDeliveryComplete = () => {
-    setSelectedOrderForDelivery(null);
-    fetchOrders();
+  const handleDeliveryComplete = async (data) => {
+    try {
+      console.log('📦 Submitting delivery confirmation...', data);
+      
+      const response = await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/order/${selectedOrderForDelivery.id}/delivery`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Fehler beim Bestätigen der Zustellung');
+      }
+
+      console.log('✅ Delivery confirmed successfully');
+      alert('Zustellung erfolgreich bestätigt! CMR wurde an den Kunden gesendet.');
+      setSelectedOrderForDelivery(null);
+      fetchOrders();
+    } catch (error) {
+      console.error('❌ Delivery confirmation error:', error);
+      throw error; // Re-throw so CMRSignature can show error
+    }
   };
 
   // Filter orders based on status
