@@ -17,6 +17,8 @@ import AGB from './pages/AGB';
 import Widerruf from './pages/Widerruf';
 import EmployeeSettings from './pages/EmployeeSettings';
 import ContractorOrdersWithAssignment from './pages/ContractorOrdersWithAssignment';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 const DashboardRouter = () => {
   const { user } = useAuth();
@@ -44,6 +46,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/agb" element={<AGB />} />
           <Route path="/widerruf" element={<Widerruf />} />
           <Route path="/cmr/:cmrNumber" element={<CMRSignature />} />

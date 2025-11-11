@@ -19,6 +19,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/password-reset', require('./routes/password-reset'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/cmr', require('./routes/cmr'));
 app.use('/api/bids', require('./routes/bids'));
