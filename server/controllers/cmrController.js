@@ -576,16 +576,14 @@ const confirmPickup = async (req, res) => {
            sender_signed_at = CURRENT_TIMESTAMP,
            carrier_name = $3,
            carrier_signature = $4,
-           carrier_signed_at = CURRENT_TIMESTAMP,
-           carrier_signed_by = $6
+           carrier_signed_at = CURRENT_TIMESTAMP
        WHERE id = $5`,
       [
         senderName,
         senderSignature,
         carrierName,
         carrierSignature,
-        cmr.id,
-        carrierSignedBy
+        cmr.id
       ]
     );
     console.log('✅ CMR signatures saved');
