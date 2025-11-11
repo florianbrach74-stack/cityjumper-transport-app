@@ -492,8 +492,10 @@ const confirmPickup = async (req, res) => {
     const userRole = req.user.role;
 
     console.log('📦 Pickup confirmation started for order:', orderId);
-    console.log('User ID:', userId, 'Role:', userRole);
-    console.log('Pickup waiting time:', pickupWaitingMinutes, 'minutes');
+    console.log('   User ID:', userId, 'Role:', userRole);
+    console.log('   Pickup waiting time:', pickupWaitingMinutes, 'minutes');
+    console.log('   Sender name:', senderName);
+    console.log('   Has signatures:', !!senderSignature, !!carrierSignature);
 
     // Validate input
     if (!senderName || !senderSignature || !carrierSignature) {
