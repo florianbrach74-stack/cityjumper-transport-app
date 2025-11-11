@@ -92,11 +92,11 @@ router.get('/summary', authenticateToken, async (req, res) => {
     orders.forEach(order => {
       // Use customer_price if available, otherwise fall back to price
       const customerPrice = parseFloat(order.customer_price || order.price) || 0;
-      const contractorPrice = parseFloat(order.contractor_price) || parseFloat(order.price) || 0;
+      const contractorPrice = parseFloat(order.contractor_price || order.price) || 0;
       const waitingTimeFee = parseFloat(order.waiting_time_fee) || 0;
       
-      // Calculate commission: 15% of customer price
-      const commission = customerPrice * 0.15;
+      // Calculate commission: difference between customer price and contractor price
+      const commission = customerPrice - contractorPrice;
 
       if (userRole === 'admin') {
         summary.totalRevenue += customerPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
