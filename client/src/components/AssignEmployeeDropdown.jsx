@@ -44,7 +44,10 @@ const AssignEmployeeDropdown = ({ orderId, currentEmployeeId, currentEmployeeNam
     setAssigning(true);
     
     try {
-      const response = await fetch(`/api/employee-assignment/orders/${orderId}/assign`, {
+      const apiUrl = `https://cityjumper-api-production-01e4.up.railway.app/api/employee-assignment/orders/${orderId}/assign`;
+      console.log('🔄 Assigning employee:', employeeId, 'to order:', orderId);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -55,13 +58,17 @@ const AssignEmployeeDropdown = ({ orderId, currentEmployeeId, currentEmployeeNam
 
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Employee assigned successfully');
         if (onAssigned) {
           onAssigned(data.order);
         }
         setIsOpen(false);
+      } else {
+        throw new Error(`HTTP ${response.status}`);
       }
     } catch (error) {
-      console.error('Error assigning employee:', error);
+      console.error('❌ Error assigning employee:', error);
+      alert('Fehler beim Zuweisen des Mitarbeiters');
     } finally {
       setAssigning(false);
     }
