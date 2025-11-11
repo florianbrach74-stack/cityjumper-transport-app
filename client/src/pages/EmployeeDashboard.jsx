@@ -46,6 +46,54 @@ const EmployeeDashboard = () => {
     fetchOrders();
   }, []);
 
+  const handlePickup = async (orderId) => {
+    if (!confirm('Paket wirklich als abgeholt markieren?')) return;
+    
+    try {
+      const response = await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/${orderId}/pickup`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        alert('Paket erfolgreich abgeholt!');
+        fetchOrders(); // Reload orders
+      } else {
+        alert('Fehler beim Abholen des Pakets');
+      }
+    } catch (error) {
+      console.error('Error picking up package:', error);
+      alert('Fehler beim Abholen des Pakets');
+    }
+  };
+
+  const handleDelivery = async (orderId) => {
+    if (!confirm('Zustellung wirklich bestätigen? Dies löst den CMR-Versand aus.')) return;
+    
+    try {
+      const response = await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/${orderId}/delivery`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        alert('Zustellung erfolgreich bestätigt! CMR wurde an den Kunden gesendet.');
+        fetchOrders(); // Reload orders
+      } else {
+        alert('Fehler bei der Zustellung');
+      }
+    } catch (error) {
+      console.error('Error confirming delivery:', error);
+      alert('Fehler bei der Zustellung');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
       pending: { color: 'bg-yellow-100 text-yellow-800', text: 'Ausstehend', icon: Clock },
@@ -195,15 +243,40 @@ const EmployeeDashboard = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {order.cmr_number && (
-                            <button
-                              onClick={() => setSelectedOrderForCMR(order.id)}
-                              className="text-primary-600 hover:text-primary-900 flex items-center space-x-1"
-                            >
-                              <FileText className="h-4 w-4" />
-                              <span>CMR</span>
-                            </button>
-                          )}
+                          <div className="flex items-center space-x-2">
+                            {/* Paket abholen Button */}
+                            {order.status === 'accepted' && !order.pickup_confirmed && (
+                              <button
+                                onClick={() => handlePickup(order.id)}
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                              >
+                                <Package className="h-4 w-4 mr-1" />
+                                Paket abholen
+                              </button>
+                            )}
+                            
+                            {/* Zustellung Button */}
+                            {order.status === 'accepted' && order.pickup_confirmed && !order.delivery_confirmed && (
+                              <button
+                                onClick={() => handleDelivery(order.id)}
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                              >
+                                <Truck className="h-4 w-4 mr-1" />
+                                Zustellung
+                              </button>
+                            )}
+                            
+                            {/* CMR anzeigen */}
+                            {order.cmr_number && (
+                              <button
+                                onClick={() => setSelectedOrderForCMR(order.id)}
+                                className="text-primary-600 hover:text-primary-900 flex items-center space-x-1"
+                              >
+                                <FileText className="h-4 w-4" />
+                                <span>CMR</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
