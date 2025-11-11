@@ -154,4 +154,49 @@ router.post('/run-migration/reset-employee-password', async (req, res) => {
   }
 });
 
+// Check order assignment
+router.get('/debug/check-assignment/:orderId', async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+    
+    // Check order
+    const order = await pool.query(
+      `SELECT id, status, contractor_id, assigned_employee_id, pickup_confirmed, delivery_confirmed
+       FROM transport_orders 
+       WHERE id = $1`,
+      [orderId]
+    );
+    
+    if (order.rows.length === 0) {
+      return res.json({ error: 'Order not found' });
+    }
+    
+    // Check employee
+    const employee = await pool.query(
+      `SELECT id, first_name, last_name, email, role, contractor_id
+       FROM users 
+       WHERE id = $1`,
+      [order.rows[0].assigned_employee_id]
+    );
+    
+    // Check contractor
+    const contractor = await pool.query(
+      `SELECT id, first_name, last_name, email, employee_assignment_mode
+       FROM users 
+       WHERE id = $1`,
+      [order.rows[0].contractor_id]
+    );
+    
+    res.json({
+      order: order.rows[0],
+      employee: employee.rows[0] || null,
+      contractor: contractor.rows[0] || null
+    });
+    
+  } catch (error) {
+    console.error('❌ Check assignment error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

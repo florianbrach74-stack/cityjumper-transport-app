@@ -27,12 +27,13 @@ const EmployeeDashboard = () => {
         }
       });
       
-      const ordersData = await response.json();
-      console.log('📦 Employee orders loaded:', ordersData);
+      const data = await response.json();
+      console.log('📦 Employee orders response:', data);
       
-      // Ensure ordersData is an array
-      const orders = Array.isArray(ordersData) ? ordersData : [];
+      // Extract orders array from response
+      const orders = Array.isArray(data) ? data : (data.orders || []);
       console.log('📦 Orders count:', orders.length);
+      console.log('📦 Assignment mode:', data.assignmentMode);
       setOrders(orders);
 
       // Calculate stats
