@@ -16,7 +16,7 @@ const ContractorOrdersWithAssignment = () => {
 
   const loadOrders = async () => {
     try {
-      const response = await fetch('/api/employee-assignment/orders', {
+      const response = await fetch('https://cityjumper-api-production-01e4.up.railway.app/api/employee-assignment/orders', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

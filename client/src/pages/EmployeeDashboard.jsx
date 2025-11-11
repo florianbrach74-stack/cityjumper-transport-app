@@ -17,8 +17,15 @@ const EmployeeDashboard = () => {
 
   const fetchOrders = async () => {
     try {
-      const response = await ordersAPI.getOrders();
-      const ordersData = response.data.orders;
+      // Use employee-specific endpoint
+      const response = await fetch('https://cityjumper-api-production-01e4.up.railway.app/api/employee-assignment/employee/orders', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      const ordersData = await response.json();
+      console.log('📦 Employee orders loaded:', ordersData.length);
       setOrders(ordersData);
 
       // Calculate stats
