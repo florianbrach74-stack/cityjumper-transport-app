@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { ordersAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import CMRViewer from '../components/CMRViewer';
+import CMRSignature from '../components/CMRSignature';
 import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText } from 'lucide-react';
 
 const EmployeeDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrderForCMR, setSelectedOrderForCMR] = useState(null);
+  const [selectedOrderForPickup, setSelectedOrderForPickup] = useState(null);
+  const [selectedOrderForDelivery, setSelectedOrderForDelivery] = useState(null);
   const [stats, setStats] = useState({
     total: 0,
     accepted: 0,
@@ -46,52 +49,22 @@ const EmployeeDashboard = () => {
     fetchOrders();
   }, []);
 
-  const handlePickup = async (orderId) => {
-    if (!confirm('Paket wirklich als abgeholt markieren?')) return;
-    
-    try {
-      const response = await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/${orderId}/pickup`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        alert('Paket erfolgreich abgeholt!');
-        fetchOrders(); // Reload orders
-      } else {
-        alert('Fehler beim Abholen des Pakets');
-      }
-    } catch (error) {
-      console.error('Error picking up package:', error);
-      alert('Fehler beim Abholen des Pakets');
-    }
+  const handlePickup = (order) => {
+    setSelectedOrderForPickup(order);
   };
 
-  const handleDelivery = async (orderId) => {
-    if (!confirm('Zustellung wirklich bestätigen? Dies löst den CMR-Versand aus.')) return;
-    
-    try {
-      const response = await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/${orderId}/delivery`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+  const handleDelivery = (order) => {
+    setSelectedOrderForDelivery(order);
+  };
 
-      if (response.ok) {
-        alert('Zustellung erfolgreich bestätigt! CMR wurde an den Kunden gesendet.');
-        fetchOrders(); // Reload orders
-      } else {
-        alert('Fehler bei der Zustellung');
-      }
-    } catch (error) {
-      console.error('Error confirming delivery:', error);
-      alert('Fehler bei der Zustellung');
-    }
+  const handlePickupComplete = () => {
+    setSelectedOrderForPickup(null);
+    fetchOrders();
+  };
+
+  const handleDeliveryComplete = () => {
+    setSelectedOrderForDelivery(null);
+    fetchOrders();
   };
 
   const getStatusBadge = (status) => {
@@ -247,7 +220,7 @@ const EmployeeDashboard = () => {
                             {/* Paket abholen Button */}
                             {order.status === 'accepted' && !order.pickup_confirmed && (
                               <button
-                                onClick={() => handlePickup(order.id)}
+                                onClick={() => handlePickup(order)}
                                 className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                               >
                                 <Package className="h-4 w-4 mr-1" />
@@ -258,7 +231,7 @@ const EmployeeDashboard = () => {
                             {/* Zustellung Button */}
                             {order.status === 'accepted' && order.pickup_confirmed && !order.delivery_confirmed && (
                               <button
-                                onClick={() => handleDelivery(order.id)}
+                                onClick={() => handleDelivery(order)}
                                 className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                               >
                                 <Truck className="h-4 w-4 mr-1" />
@@ -293,6 +266,26 @@ const EmployeeDashboard = () => {
         <CMRViewer
           orderId={selectedOrderForCMR}
           onClose={() => setSelectedOrderForCMR(null)}
+        />
+      )}
+
+      {/* Pickup Signature Modal */}
+      {selectedOrderForPickup && (
+        <CMRSignature
+          order={selectedOrderForPickup}
+          mode="pickup"
+          onClose={() => setSelectedOrderForPickup(null)}
+          onComplete={handlePickupComplete}
+        />
+      )}
+
+      {/* Delivery Signature Modal */}
+      {selectedOrderForDelivery && (
+        <CMRSignature
+          order={selectedOrderForDelivery}
+          mode="delivery"
+          onClose={() => setSelectedOrderForDelivery(null)}
+          onComplete={handleDeliveryComplete}
         />
       )}
     </div>
