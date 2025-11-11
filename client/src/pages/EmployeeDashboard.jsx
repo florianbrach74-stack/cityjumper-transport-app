@@ -154,7 +154,7 @@ const EmployeeDashboardNew = () => {
         
       case 'completed':
         // Orders I completed
-        return allOrders.filter(o => o.assigned_employee_id === myId && o.delivery_confirmed);
+        return allOrders.filter(o => o.assigned_employee_id === myId && o.status === 'completed');
         
       default:
         return allOrders;
@@ -174,7 +174,7 @@ const EmployeeDashboardNew = () => {
       o.assigned_employee_id === myId && 
       (o.status === 'picked_up' || o.status === 'in_transit')
     ).length,
-    completed: allOrders.filter(o => o.assigned_employee_id === myId && o.delivery_confirmed).length
+    completed: allOrders.filter(o => o.assigned_employee_id === myId && o.status === 'completed').length
   };
 
   if (loading) {
