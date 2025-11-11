@@ -488,10 +488,11 @@ const confirmPickup = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { senderName, senderSignature, carrierSignature, pickupWaitingMinutes, waitingNotes } = req.body;
-    const contractorId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
 
     console.log('📦 Pickup confirmation started for order:', orderId);
-    console.log('Contractor ID:', contractorId);
+    console.log('User ID:', userId, 'Role:', userRole);
     console.log('Pickup waiting time:', pickupWaitingMinutes, 'minutes');
 
     // Validate input
@@ -499,14 +500,32 @@ const confirmPickup = async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Verify order belongs to this contractor
+    // Verify order belongs to this contractor OR employee
     const order = await Order.findById(orderId);
     if (!order) {
       console.error('❌ Order not found:', orderId);
       return res.status(404).json({ error: 'Order not found' });
     }
-    if (order.contractor_id !== contractorId) {
-      console.error('❌ Unauthorized access. Order contractor:', order.contractor_id, 'User:', contractorId);
+    
+    // Check authorization: contractor owns order OR employee is assigned to order
+    const pool = require('../config/database');
+    if (userRole === 'employee') {
+      // For employees, check if they belong to the contractor AND are assigned
+      const employeeCheck = await pool.query(
+        `SELECT u.contractor_id, o.assigned_employee_id 
+         FROM users u, transport_orders o 
+         WHERE u.id = $1 AND o.id = $2`,
+        [userId, orderId]
+      );
+      
+      if (employeeCheck.rows.length === 0 || 
+          employeeCheck.rows[0].contractor_id !== order.contractor_id) {
+        console.error('❌ Employee not authorized for this order');
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      console.log('✅ Employee authorized');
+    } else if (order.contractor_id !== userId) {
+      console.error('❌ Unauthorized access. Order contractor:', order.contractor_id, 'User:', userId);
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
@@ -520,16 +539,21 @@ const confirmPickup = async (req, res) => {
     }
     console.log('✅ CMR ready, ID:', cmr.id);
 
-    // Get contractor details
-    const contractor = await User.findById(contractorId);
-    if (!contractor) {
-      console.error('❌ Contractor not found:', contractorId);
-      return res.status(404).json({ error: 'Contractor not found' });
+    // Get user details (contractor or employee)
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error('❌ User not found:', userId);
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    // Update CMR with signatures
-    const pool = require('../config/database');
-    const carrierName = contractor.company_name || `${contractor.first_name} ${contractor.last_name}`;
+    // Get contractor details for company name
+    const contractorId = userRole === 'employee' ? user.contractor_id : userId;
+    const contractor = await User.findById(contractorId);
+    
+    // Carrier name: Employee name if employee, otherwise contractor name
+    const carrierName = userRole === 'employee' 
+      ? `${user.first_name} ${user.last_name}`
+      : (contractor.company_name || `${contractor.first_name} ${contractor.last_name}`);
     
     console.log('💾 Updating CMR with signatures...');
     await pool.query(
@@ -626,14 +650,35 @@ const confirmDelivery = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { receiverName, receiverSignature, deliveryPhoto, deliveryWaitingMinutes, waitingNotes } = req.body;
-    const contractorId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
 
     console.log('📦 Delivery confirmation started for order:', orderId);
+    console.log('User ID:', userId, 'Role:', userRole);
     console.log('Delivery waiting time:', deliveryWaitingMinutes, 'minutes');
 
-    // Verify order belongs to this contractor
+    // Verify order belongs to this contractor OR employee
     const order = await Order.findById(orderId);
-    if (!order || order.contractor_id !== contractorId) {
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    // Check authorization
+    const pool = require('../config/database');
+    if (userRole === 'employee') {
+      const employeeCheck = await pool.query(
+        `SELECT u.contractor_id 
+         FROM users u 
+         WHERE u.id = $1`,
+        [userId]
+      );
+      
+      if (employeeCheck.rows.length === 0 || 
+          employeeCheck.rows[0].contractor_id !== order.contractor_id) {
+        console.error('❌ Employee not authorized for this order');
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+    } else if (order.contractor_id !== userId) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
