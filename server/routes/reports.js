@@ -97,6 +97,17 @@ router.get('/summary', authenticateToken, async (req, res) => {
       
       // Calculate commission: difference between customer price and contractor price
       const commission = customerPrice - contractorPrice;
+      
+      // Debug logging for first order
+      if (order.id === orders[0].id) {
+        console.log('📊 Commission calculation for order', order.id);
+        console.log('   customer_price:', order.customer_price);
+        console.log('   contractor_price:', order.contractor_price);
+        console.log('   price:', order.price);
+        console.log('   Calculated customerPrice:', customerPrice);
+        console.log('   Calculated contractorPrice:', contractorPrice);
+        console.log('   Commission:', commission);
+      }
 
       if (userRole === 'admin') {
         summary.totalRevenue += customerPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
