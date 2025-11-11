@@ -132,8 +132,8 @@ const EmployeeDashboardNew = () => {
     
     switch (activeTab) {
       case 'all':
-        // All accepted orders of contractor
-        return allOrders;
+        // All active orders of contractor (not completed)
+        return allOrders.filter(o => o.status !== 'completed');
         
       case 'accepted':
         // Orders assigned to me (manual) OR all orders if all_access
@@ -166,7 +166,7 @@ const EmployeeDashboardNew = () => {
 
   // Calculate stats
   const stats = {
-    all: allOrders.length,
+    all: allOrders.filter(o => o.status !== 'completed').length,
     accepted: (assignmentMode === 'manual' || assignmentMode === 'manual_assignment')
       ? allOrders.filter(o => o.assigned_employee_id === myId && o.status === 'accepted').length
       : allOrders.filter(o => o.status === 'accepted').length,
