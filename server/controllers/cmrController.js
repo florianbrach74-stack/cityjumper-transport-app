@@ -569,6 +569,17 @@ const confirmPickup = async (req, res) => {
     console.log('💾 Updating CMR with signatures...');
     console.log('   Carrier company:', carrierName);
     console.log('   Signed by:', carrierSignedBy);
+    
+    // First, ensure the carrier_signed_by column exists
+    try {
+      await pool.query(`
+        ALTER TABLE cmr_documents 
+        ADD COLUMN IF NOT EXISTS carrier_signed_by VARCHAR(255)
+      `);
+    } catch (alterError) {
+      console.log('⚠️ Column might already exist:', alterError.message);
+    }
+    
     await pool.query(
       `UPDATE cmr_documents 
        SET sender_signed_name = $1,
@@ -576,14 +587,16 @@ const confirmPickup = async (req, res) => {
            sender_signed_at = CURRENT_TIMESTAMP,
            carrier_name = $3,
            carrier_signature = $4,
-           carrier_signed_at = CURRENT_TIMESTAMP
+           carrier_signed_at = CURRENT_TIMESTAMP,
+           carrier_signed_by = $6
        WHERE id = $5`,
       [
         senderName,
         senderSignature,
         carrierName,
         carrierSignature,
-        cmr.id
+        cmr.id,
+        carrierSignedBy
       ]
     );
     console.log('✅ CMR signatures saved');

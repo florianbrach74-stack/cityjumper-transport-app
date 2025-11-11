@@ -183,8 +183,11 @@ class CMRPdfGenerator {
             console.error('Error adding carrier signature image:', err);
             doc.fontSize(7).text('✓ Unterschrieben', 215, signatureY + 60);
           }
-          // Add carrier name (company name is shown in field 16)
-          if (cmrData.carrier_name) {
+          // Add carrier signed by name (person who signed, not company)
+          if (cmrData.carrier_signed_by) {
+            doc.fontSize(7).font('Helvetica').text(cmrData.carrier_signed_by, 215, signatureY + 78);
+          } else if (cmrData.carrier_name) {
+            // Fallback to carrier_name if carrier_signed_by not set
             doc.fontSize(7).font('Helvetica').text(cmrData.carrier_name, 215, signatureY + 78);
           }
           doc.fontSize(6).text(new Date(cmrData.carrier_signed_at).toLocaleString('de-DE'), 215, signatureY + 88);
