@@ -21,7 +21,8 @@ const AssignEmployeeDropdown = ({ orderId, currentEmployeeId, currentEmployeeNam
       });
       
       console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', response.headers);
+      console.log('📡 Response OK:', response.ok);
+      console.log('📡 Content-Type:', response.headers.get('content-type'));
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -29,7 +30,12 @@ const AssignEmployeeDropdown = ({ orderId, currentEmployeeId, currentEmployeeNam
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
       
-      const data = await response.json();
+      // Read response as text first to debug
+      const responseText = await response.text();
+      console.log('📡 Response text:', responseText);
+      
+      // Parse JSON manually
+      const data = JSON.parse(responseText);
       console.log('✅ Employees loaded:', data);
       setEmployees(data);
     } catch (error) {
