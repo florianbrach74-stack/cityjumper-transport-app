@@ -550,6 +550,14 @@ const confirmPickup = async (req, res) => {
 
     // Get contractor details for company name
     const contractorId = userRole === 'employee' ? user.contractor_id : userId;
+    console.log('   User contractor_id:', user.contractor_id);
+    console.log('   Resolved contractorId:', contractorId);
+    
+    if (!contractorId) {
+      console.error('❌ Employee has no contractor_id:', userId);
+      return res.status(400).json({ error: 'Employee not assigned to contractor' });
+    }
+    
     const contractor = await User.findById(contractorId);
     
     if (!contractor) {
