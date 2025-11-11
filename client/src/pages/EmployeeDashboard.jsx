@@ -309,7 +309,7 @@ const EmployeeDashboardNew = () => {
                             )}
                             
                             {/* Paket abholen (assigned to me, not picked up yet) */}
-                            {isAssignedToMe && !order.pickup_confirmed && activeTab === 'in_transit' && (
+                            {isAssignedToMe && !order.pickup_confirmed && (
                               <button
                                 onClick={() => handlePickup(order)}
                                 className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
@@ -320,7 +320,7 @@ const EmployeeDashboardNew = () => {
                             )}
                             
                             {/* Zustellung (picked up, not delivered) */}
-                            {isAssignedToMe && order.pickup_confirmed && !order.delivery_confirmed && activeTab === 'in_transit' && (
+                            {isAssignedToMe && order.pickup_confirmed && !order.delivery_confirmed && (
                               <button
                                 onClick={() => handleDelivery(order)}
                                 className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
