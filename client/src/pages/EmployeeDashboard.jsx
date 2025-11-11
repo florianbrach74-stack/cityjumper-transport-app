@@ -28,15 +28,19 @@ const EmployeeDashboard = () => {
       });
       
       const ordersData = await response.json();
-      console.log('📦 Employee orders loaded:', ordersData.length);
-      setOrders(ordersData);
+      console.log('📦 Employee orders loaded:', ordersData);
+      
+      // Ensure ordersData is an array
+      const orders = Array.isArray(ordersData) ? ordersData : [];
+      console.log('📦 Orders count:', orders.length);
+      setOrders(orders);
 
       // Calculate stats
       setStats({
-        total: ordersData.length,
-        accepted: ordersData.filter((o) => o.status === 'accepted').length,
-        in_transit: ordersData.filter((o) => o.status === 'in_transit').length,
-        completed: ordersData.filter((o) => o.status === 'completed').length,
+        total: orders.length,
+        accepted: orders.filter((o) => o.status === 'accepted').length,
+        in_transit: orders.filter((o) => o.status === 'in_transit').length,
+        completed: orders.filter((o) => o.status === 'completed').length,
       });
     } catch (error) {
       console.error('Error fetching orders:', error);
