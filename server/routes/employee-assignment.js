@@ -44,6 +44,26 @@ router.put('/settings', authenticateToken, authorizeRole('contractor'), async (r
   }
 });
 
+// Test endpoint without auth
+router.get('/employees-test', async (req, res) => {
+  try {
+    console.log('📋 TEST: Fetching all employees (no auth)');
+    
+    const result = await pool.query(
+      `SELECT id, first_name, last_name, email, contractor_id, role 
+       FROM users 
+       WHERE role = 'employee'
+       ORDER BY first_name, last_name`
+    );
+
+    console.log(`   Found ${result.rows.length} employees`);
+    res.json({ success: true, employees: result.rows });
+  } catch (error) {
+    console.error('Test employees error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get contractor's employees
 router.get('/employees', authenticateToken, authorizeRole('contractor'), async (req, res) => {
   try {
