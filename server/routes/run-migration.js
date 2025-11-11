@@ -61,4 +61,53 @@ router.post('/run-migration/contractor-id', async (req, res) => {
   }
 });
 
+// Fix employee role
+router.post('/run-migration/fix-employee-role', async (req, res) => {
+  try {
+    console.log('🔧 Fixing employee role...');
+    
+    // Check current role
+    const before = await pool.query(`
+      SELECT id, first_name, last_name, email, role, contractor_id 
+      FROM users 
+      WHERE email = 'luci.flader@gmx.de'
+    `);
+    
+    console.log('Before:', before.rows[0]);
+    
+    // Update role to employee
+    const result = await pool.query(`
+      UPDATE users 
+      SET role = 'employee'
+      WHERE email = 'luci.flader@gmx.de' AND role != 'employee'
+      RETURNING id, first_name, last_name, email, role, contractor_id
+    `);
+    
+    // Check after
+    const after = await pool.query(`
+      SELECT id, first_name, last_name, email, role, contractor_id 
+      FROM users 
+      WHERE email = 'luci.flader@gmx.de'
+    `);
+    
+    console.log('After:', after.rows[0]);
+    console.log('✅ Role fixed!');
+    
+    res.json({
+      success: true,
+      message: 'Employee role fixed',
+      before: before.rows[0],
+      after: after.rows[0],
+      updated: result.rowCount > 0
+    });
+    
+  } catch (error) {
+    console.error('❌ Fix employee role error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
