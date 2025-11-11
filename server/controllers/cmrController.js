@@ -550,12 +550,17 @@ const confirmPickup = async (req, res) => {
     const contractorId = userRole === 'employee' ? user.contractor_id : userId;
     const contractor = await User.findById(contractorId);
     
-    // Carrier name: Employee name if employee, otherwise contractor name
-    const carrierName = userRole === 'employee' 
+    // Carrier name: Always the company/contractor name
+    const carrierName = contractor.company_name || `${contractor.first_name} ${contractor.last_name}`;
+    
+    // Carrier signed by: Employee name if employee, otherwise contractor name
+    const carrierSignedBy = userRole === 'employee' 
       ? `${user.first_name} ${user.last_name}`
-      : (contractor.company_name || `${contractor.first_name} ${contractor.last_name}`);
+      : carrierName;
     
     console.log('💾 Updating CMR with signatures...');
+    console.log('   Carrier company:', carrierName);
+    console.log('   Signed by:', carrierSignedBy);
     await pool.query(
       `UPDATE cmr_documents 
        SET sender_signed_name = $1,
@@ -563,14 +568,16 @@ const confirmPickup = async (req, res) => {
            sender_signed_at = CURRENT_TIMESTAMP,
            carrier_name = $3,
            carrier_signature = $4,
-           carrier_signed_at = CURRENT_TIMESTAMP
+           carrier_signed_at = CURRENT_TIMESTAMP,
+           carrier_signed_by = $6
        WHERE id = $5`,
       [
         senderName,
         senderSignature,
         carrierName,
         carrierSignature,
-        cmr.id
+        cmr.id,
+        carrierSignedBy
       ]
     );
     console.log('✅ CMR signatures saved');
