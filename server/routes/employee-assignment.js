@@ -48,9 +48,10 @@ router.put('/settings', authenticateToken, authorizeRole('contractor'), async (r
 router.get('/employees', authenticateToken, authorizeRole('contractor'), async (req, res) => {
   try {
     console.log('📋 Fetching employees for contractor:', req.user.id);
+    console.log('   User details:', { id: req.user.id, email: req.user.email, role: req.user.role });
     
     const result = await pool.query(
-      `SELECT id, first_name, last_name, email, phone, contractor_id 
+      `SELECT id, first_name, last_name, email, phone, contractor_id, role 
        FROM users 
        WHERE role = 'employee' AND contractor_id = $1
        ORDER BY first_name, last_name`,
@@ -59,7 +60,15 @@ router.get('/employees', authenticateToken, authorizeRole('contractor'), async (
 
     console.log(`   Found ${result.rows.length} employees`);
     if (result.rows.length > 0) {
-      console.log('   Employees:', result.rows.map(e => `${e.first_name} ${e.last_name} (contractor_id: ${e.contractor_id})`));
+      console.log('   Employees:', result.rows.map(e => `${e.first_name} ${e.last_name} (ID: ${e.id}, contractor_id: ${e.contractor_id}, role: ${e.role})`));
+    } else {
+      console.log('   ⚠️  No employees found! Checking all employees in database...');
+      const allEmployees = await pool.query(
+        `SELECT id, first_name, last_name, email, contractor_id, role 
+         FROM users 
+         WHERE role = 'employee'`
+      );
+      console.log('   All employees in DB:', allEmployees.rows);
     }
 
     res.json(result.rows);
