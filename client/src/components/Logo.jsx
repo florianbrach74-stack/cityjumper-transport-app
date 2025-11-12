@@ -36,46 +36,44 @@ export default function Logo({ size = 'md', showText = true, className = '' }) {
             </filter>
           </defs>
           
-          {/* Package icon (cyan) */}
-          <g filter="url(#glow-cyan)">
+          {/* Package icon (black) */}
+          <g>
             {/* Top line */}
-            <rect x="40" y="20" width="20" height="3" rx="1.5" fill="#00d9ff"/>
+            <rect x="40" y="20" width="20" height="3" rx="1.5" fill="#000000"/>
             
             {/* Package outline */}
             <rect x="25" y="15" width="50" height="50" rx="8" 
-                  fill="none" stroke="#00d9ff" strokeWidth="4" strokeLinecap="round"/>
+                  fill="none" stroke="#000000" strokeWidth="4" strokeLinecap="round"/>
             
-            {/* Left lines */}
-            <rect x="30" y="35" width="15" height="3" rx="1.5" fill="#00d9ff"/>
-            <rect x="30" y="45" width="15" height="3" rx="1.5" fill="#00d9ff"/>
-            <rect x="30" y="55" width="15" height="3" rx="1.5" fill="#00d9ff"/>
+            {/* Left lines (black) */}
+            <rect x="30" y="35" width="15" height="3" rx="1.5" fill="#000000"/>
+            <rect x="30" y="45" width="15" height="3" rx="1.5" fill="#000000"/>
+            <rect x="30" y="55" width="15" height="3" rx="1.5" fill="#000000"/>
           </g>
           
           {/* Arrow (orange) */}
           <g filter="url(#glow-orange)">
-            {/* Arrow shaft lines */}
-            <rect x="45" y="35" width="25" height="3" rx="1.5" fill="#ffa500"/>
-            <rect x="45" y="43" width="25" height="3" rx="1.5" fill="#ffa500"/>
-            <rect x="45" y="51" width="25" height="3" rx="1.5" fill="#ffa500"/>
+            {/* Arrow shaft lines (orange) */}
+            <rect x="45" y="35" width="25" height="3" rx="1.5" fill="#FF9500"/>
+            <rect x="45" y="43" width="25" height="3" rx="1.5" fill="#FF9500"/>
+            <rect x="45" y="51" width="25" height="3" rx="1.5" fill="#FF9500"/>
             
             {/* Arrow head */}
-            <path d="M 68 35 L 80 43 L 68 51 Z" fill="#ffa500"/>
+            <path d="M 68 35 L 80 43 L 68 51 Z" fill="#FF9500"/>
           </g>
           
-          {/* Speed effect */}
+          {/* Speed effect (black) */}
           <g opacity="0.6">
-            <line x1="15" y1="75" x2="30" y2="75" stroke="#00d9ff" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="10" y1="82" x2="28" y2="82" stroke="#00d9ff" strokeWidth="2" strokeLinecap="round" opacity="0.7"/>
+            <line x1="15" y1="75" x2="30" y2="75" stroke="#000000" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="10" y1="82" x2="28" y2="82" stroke="#000000" strokeWidth="2" strokeLinecap="round" opacity="0.7"/>
           </g>
         </svg>
       </div>
       
       {showText && (
         <div className="flex flex-col leading-tight">
-          <span className={`${currentSize.text} font-display font-extrabold tracking-tight`}>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-cyan-600">
-              Courierly
-            </span>
+          <span className={`${currentSize.text} font-display font-extrabold tracking-tight text-gray-900`}>
+            Courierly
           </span>
           {size !== 'sm' && (
             <span className="text-xs text-gray-500 font-semibold tracking-wider uppercase mt-0.5">

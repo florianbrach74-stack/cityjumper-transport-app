@@ -1,0 +1,21 @@
+<svg width="600" height="800" viewBox="0 0 600 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Package Icon -->
+  <rect x="193" y="318" width="214" height="240" rx="30" stroke="black" stroke-width="20" fill="none"/>
+  <line x1="303" y1="338" x2="343" y2="338" stroke="black" stroke-width="15" stroke-linecap="round"/>
+  
+  <!-- Speed Lines (Black) -->
+  <line x1="193" y1="413" x2="283" y2="413" stroke="black" stroke-width="15" stroke-linecap="round"/>
+  <line x1="215" y1="448" x2="283" y2="448" stroke="black" stroke-width="15" stroke-linecap="round"/>
+  <line x1="177" y1="478" x2="258" y2="478" stroke="black" stroke-width="15" stroke-linecap="round"/>
+  
+  <!-- Speed Lines (Orange) -->
+  <line x1="298" y1="413" x2="453" y2="413" stroke="#FF9500" stroke-width="15" stroke-linecap="round"/>
+  <line x1="323" y1="448" x2="453" y2="448" stroke="#FF9500" stroke-width="15" stroke-linecap="round"/>
+  <line x1="291" y1="478" x2="453" y2="478" stroke="#FF9500" stroke-width="15" stroke-linecap="round"/>
+  
+  <!-- Arrow -->
+  <path d="M 443 378 L 543 438 L 443 498 L 463 438 Z" fill="#FF9500"/>
+  
+  <!-- Text: Courierly -->
+  <text x="300" y="680" font-family="Arial, sans-serif" font-size="120" font-weight="bold" text-anchor="middle" fill="black">Courierly</text>
+</svg>
