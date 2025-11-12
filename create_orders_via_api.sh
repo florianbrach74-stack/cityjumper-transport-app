@@ -3,7 +3,7 @@
 # CityJumper Test Orders Creator
 # This script creates 3 test orders via the API
 
-API_URL="https://cityjumper-api-production-01e4.up.railway.app"
+API_URL="https://courierly-api-production-01e4.up.railway.app"
 
 echo "🔐 Please provide your login credentials:"
 read -p "Email: " EMAIL
@@ -124,4 +124,4 @@ echo "✅ Order 3 created"
 
 echo ""
 echo "🎉 All 3 orders created successfully!"
-echo "📱 Check your dashboard: https://cityjumper-transport.vercel.app"
+echo "📱 Check your dashboard: https://courierly-transport.vercel.app"

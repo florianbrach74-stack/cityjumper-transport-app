@@ -6,8 +6,8 @@
 
 **Moderne Transport- und Kurierdienst-Plattform mit Echtzeit-Routing & Mindestlohn-Garantie**
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-success?style=flat-square)](https://cityjumper-transport.vercel.app)
-[![Backend](https://img.shields.io/badge/API-Railway-blueviolet?style=flat-square)](https://cityjumper-api-production-01e4.up.railway.app)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-success?style=flat-square)](https://courierly-transport.vercel.app)
+[![Backend](https://img.shields.io/badge/API-Railway-blueviolet?style=flat-square)](https://courierly-api-production-01e4.up.railway.app)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
 </div>
@@ -412,8 +412,8 @@ Courierly ist eine vollständige Transport-Management-Plattform, die Kunden, Auf
 
 ### 1️⃣ Repository klonen
 ```bash
-git clone https://github.com/florianbrach74-stack/cityjumper-transport-app.git
-cd cityjumper-transport-app
+git clone https://github.com/florianbrach74-stack/courierly-transport-app.git
+cd courierly-transport-app
 ```
 
 ### 2️⃣ Abhängigkeiten installieren
@@ -429,10 +429,10 @@ cd client && npm install
 ### 3️⃣ Datenbank einrichten
 ```bash
 # PostgreSQL Datenbank erstellen
-createdb cityjumper_db
+createdb courierly_db
 
 # Schema initialisieren
-psql cityjumper_db < setup_database.sql
+psql courierly_db < setup_database.sql
 ```
 
 ### 4️⃣ Umgebungsvariablen konfigurieren
@@ -441,7 +441,7 @@ Erstellen Sie eine `.env` Datei im Root-Verzeichnis:
 
 ```env
 # Datenbank
-DATABASE_URL=postgresql://user:password@localhost:5432/cityjumper_db
+DATABASE_URL=postgresql://user:password@localhost:5432/courierly_db
 
 # JWT Secret
 JWT_SECRET=your-super-secret-jwt-key-change-this
@@ -451,7 +451,7 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASSWORD=your-app-password
-EMAIL_FROM=noreply@cityjumper.com
+EMAIL_FROM=noreply@courierly.com
 
 # Frontend URL
 FRONTEND_URL=http://localhost:5173
@@ -476,7 +476,7 @@ npm run client  # Frontend auf :5173
 
 **Admin:**
 ```
-Email: admin@cityjumper.com
+Email: admin@courierly.com
 Passwort: admin123
 ```
 
@@ -498,14 +498,14 @@ Passwort: contractor123
 ## 📁 Projekt-Struktur
 
 ```
-cityjumper-transport-app/
+courierly-transport-app/
 ├── client/                          # React Frontend
 │   ├── public/                      # Statische Dateien
 │   ├── src/
 │   │   ├── components/              # Wiederverwendbare Komponenten
 │   │   │   ├── AddressSearch.jsx   # Adress-Autocomplete
 │   │   │   ├── RouteMap.jsx        # Karten-Komponente
-│   │   │   ├── Logo.jsx            # CityJumper Logo
+│   │   │   ├── Logo.jsx            # Courierly Logo
 │   │   │   ├── Navbar.jsx          # Navigation
 │   │   │   ├── CreateOrderModal.jsx
 │   │   │   └── ...
@@ -783,10 +783,10 @@ npm run install-all  # Install all dependencies
 ### Datenbank Migrations
 ```bash
 # Schema neu laden
-psql cityjumper_db < setup_database.sql
+psql courierly_db < setup_database.sql
 
 # Backup erstellen
-pg_dump cityjumper_db > backup.sql
+pg_dump courierly_db > backup.sql
 ```
 
 ---
@@ -820,7 +820,7 @@ MIT License - siehe [LICENSE](LICENSE) Datei
 
 Entwickelt mit ❤️ für moderne Transport-Logistik
 
-**Live Demo:** [cityjumper-transport.vercel.app](https://cityjumper-transport.vercel.app)
+**Live Demo:** [courierly-transport.vercel.app](https://courierly-transport.vercel.app)
 
 ---
 

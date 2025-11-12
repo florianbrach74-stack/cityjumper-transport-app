@@ -4,7 +4,7 @@
 
 ### Rebranding zu Courierly ✨
 - Neues Logo: Package mit Speed-Arrow (Cyan + Orange)
-- Alle Texte von CityJumper → Courierly umbenannt
+- Alle Texte von Courierly → Courierly umbenannt
 - Neues Farbschema: Cyan (#00d9ff) + Orange (#ffa500)
 - "Express Delivery" statt "Express Transport"
 

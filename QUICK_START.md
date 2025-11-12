@@ -1,11 +1,11 @@
-# 🚀 CityJumper Transport App - Quick Start Guide
+# 🚀 Courierly Transport App - Quick Start Guide
 
 ## 🚀 Schnellstart (5 Minuten)
 
 ### 1. Repository klonen
 ```bash
-git clone https://github.com/florianbrach74-stack/cityjumper-transport-app.git
-cd cityjumper-transport-app
+git clone https://github.com/florianbrach74-stack/courierly-transport-app.git
+cd courierly-transport-app
 ```
 
 ### 2. Backend starten

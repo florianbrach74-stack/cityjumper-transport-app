@@ -121,7 +121,7 @@ millie.ns.cloudflare.com
 1. **Cloudflare Nameserver bei IONOS eintragen** (siehe oben) 🔴
 2. **Email-Test durchführen:**
    ```bash
-   curl -X GET "https://cityjumper-api-production-01e4.up.railway.app/api/test-email"
+   curl -X GET "https://courierly-api-production-01e4.up.railway.app/api/test-email"
    ```
 3. **Test-Email an info@courierly.de senden** (sollte dann funktionieren)
 4. **Admin-Dashboard-Fehler beheben** (Logs prüfen)

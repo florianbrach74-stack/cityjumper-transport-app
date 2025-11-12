@@ -1,4 +1,4 @@
-# ✅ CityJumper - Bereit zur Veröffentlichung!
+# ✅ Courierly - Bereit zur Veröffentlichung!
 
 ## 🎉 Ihr Projekt ist bereit für GitHub und Vercel!
 
@@ -38,13 +38,13 @@ git commit -m "Initial commit: ZipMend Transport Platform mit CMR-System"
 
 Dann auf GitHub:
 1. https://github.com/new
-2. Repository Name: `cityjumper-transport-app`
+2. Repository Name: `courierly-transport-app`
 3. Private oder Public wählen
 4. "Create repository"
 
 ```bash
 # Remote hinzufügen (USERNAME ersetzen!)
-git remote add origin https://github.com/USERNAME/cityjumper-transport-app.git
+git remote add origin https://github.com/USERNAME/courierly-transport-app.git
 
 # Pushen
 git branch -M main
@@ -54,7 +54,7 @@ git push -u origin main
 ### 2. Datenbank einrichten (Supabase)
 
 1. https://supabase.com → "Start your project"
-2. Projekt erstellen: `cityjumper-db`
+2. Projekt erstellen: `courierly-db`
 3. SQL Editor öffnen
 4. `server/database/schema.sql` ausführen
 5. `server/database/cmr_schema.sql` ausführen
@@ -87,7 +87,7 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=ihre-email@gmail.com
 EMAIL_PASSWORD=gmail-app-passwort
-EMAIL_FROM=noreply@cityjumper.com
+EMAIL_FROM=noreply@courierly.com
 
 NODE_ENV=production
 PORT=5000

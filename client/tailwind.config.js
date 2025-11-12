@@ -7,9 +7,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        // CityJumper Brand Colors - Dynamic & Energetic
+        // Courierly Brand Colors - Dynamic & Energetic
         primary: {
-          50: '#f0f9ff',
+          50: '#f0f9ff',   // Courierly Light Blue
           100: '#e0f2fe',
           200: '#bae6fd',
           300: '#7dd3fc',

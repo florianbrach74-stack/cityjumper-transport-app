@@ -43,7 +43,7 @@
 
 5. **Testen:**
    ```bash
-   curl -X GET "https://cityjumper-api-production-01e4.up.railway.app/api/test-email"
+   curl -X GET "https://courierly-api-production-01e4.up.railway.app/api/test-email"
    ```
    - Email sollte an info@courierly.de versendet werden
    - Prüfen Sie Resend Dashboard: https://resend.com/emails
@@ -56,8 +56,8 @@
 Nach Nameserver-Update:
 
 1. **Test-Email senden:**
-   - Öffnen: https://cityjumper-api-production-01e4.up.railway.app/api/test-email
-   - Oder via Terminal: `curl -X GET "https://cityjumper-api-production-01e4.up.railway.app/api/test-email"`
+   - Öffnen: https://courierly-api-production-01e4.up.railway.app/api/test-email
+   - Oder via Terminal: `curl -X GET "https://courierly-api-production-01e4.up.railway.app/api/test-email"`
 
 2. **Resend Dashboard prüfen:**
    - https://resend.com/emails

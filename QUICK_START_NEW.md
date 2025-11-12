@@ -1,11 +1,11 @@
-# 🚀 CityJumper - Quick Start Guide
+# 🚀 Courierly - Quick Start Guide
 
 ## Schnellstart (5 Minuten)
 
 ### 1. Repository klonen
 ```bash
-git clone https://github.com/florianbrach74-stack/cityjumper-transport-app.git
-cd cityjumper-transport-app
+git clone https://github.com/florianbrach74-stack/courierly-transport-app.git
+cd courierly-transport-app
 ```
 
 ### 2. Backend starten
@@ -82,8 +82,8 @@ Frontend läuft auf: http://localhost:5173
 
 ## 🌐 Live-URLs
 
-- **Frontend:** https://cityjumper-transport-app.vercel.app
-- **Backend:** https://cityjumper-api-production-01e4.up.railway.app
+- **Frontend:** https://courierly-transport-app.vercel.app
+- **Backend:** https://courierly-api-production-01e4.up.railway.app
 - **Database:** Railway PostgreSQL
 
 ---

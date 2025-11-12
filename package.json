@@ -1,7 +1,7 @@
 {
-  "name": "cityjumper-transport-app",
+  "name": "courierly-transport-app",
   "version": "1.0.0",
-  "description": "CityJumper - Transport management platform for customers and contractors",
+  "description": "Courierly Transport Management System for customers and contractors",
   "main": "server/index.js",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",

@@ -221,7 +221,7 @@ Zusätzliche Kosten: +€9.00
 
 **In ALLEN Emails:**
 ```
-⚠️ Wichtiger Hinweis: CityJumper ist eine Vermittlungsplattform.
+⚠️ Wichtiger Hinweis: Courierly ist eine Vermittlungsplattform.
 Wir garantieren keine Auftragsübernahme.
 Tipp: Höhere Preise erhöhen die Wahrscheinlichkeit einer schnellen Übernahme.
 ```
@@ -433,12 +433,12 @@ Vollständige Preiskalkulation mit:
 
 ### Frontend (Vercel):
 - Automatisches Deployment bei Git Push
-- URL: `https://cityjumper-transport-app.vercel.app`
+- URL: `https://courierly-transport-app.vercel.app`
 - Build-Zeit: 1-2 Minuten
 
 ### Backend (Railway):
 - Automatisches Deployment bei Git Push
-- URL: `https://cityjumper-api-production-01e4.up.railway.app`
+- URL: `https://courierly-api-production-01e4.up.railway.app`
 - Build-Zeit: 2-3 Minuten (optimiert)
 - NIXPACKS Builder
 
@@ -458,7 +458,7 @@ Vollständige Preiskalkulation mit:
 ## 📞 Support & Kontakt
 
 Bei Fragen oder Problemen:
-- GitHub Issues: `https://github.com/florianbrach74-stack/cityjumper-transport-app`
+- GitHub Issues: `https://github.com/florianbrach74-stack/courierly-transport-app`
 - Dokumentation: Siehe `PRICING_DOCUMENTATION.md`
 
 ---

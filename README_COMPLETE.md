@@ -1,4 +1,4 @@
-# CityJumper Transport App - Vollständige Dokumentation
+# Courierly Transport App - Vollständige Dokumentation
 
 ## 📋 Inhaltsverzeichnis
 1. [Überblick](#überblick)
@@ -15,7 +15,7 @@
 
 ## 🎯 Überblick
 
-CityJumper ist eine vollständige Transport-Management-Plattform mit:
+Courierly ist eine vollständige Transport-Management-Plattform mit:
 - **Bewerbungssystem** für Auftragnehmer
 - **CMR-Frachtbrief** mit digitalen Unterschriften
 - **Verifizierungs-System** für Auftragnehmer
@@ -82,8 +82,8 @@ CityJumper ist eine vollständige Transport-Management-Plattform mit:
 - **react-signature-canvas** für Unterschriften
 
 ### Deployment
-- **Backend:** Railway (https://cityjumper-api-production-01e4.up.railway.app)
-- **Frontend:** Vercel (https://cityjumper-transport-app.vercel.app)
+- **Backend:** Railway (https://courierly-api-production-01e4.up.railway.app)
+- **Frontend:** Vercel (https://courierly-transport-app.vercel.app)
 - **Database:** Railway PostgreSQL
 
 ---
@@ -150,7 +150,7 @@ npm run dev
    - Build Command: `npm run build`
    - Output Directory: `dist`
 3. Environment Variables:
-   - `VITE_API_URL=https://cityjumper-api-production-01e4.up.railway.app`
+   - `VITE_API_URL=https://courierly-api-production-01e4.up.railway.app`
 4. Deploy → Automatisch bei Git Push
 
 ---
@@ -380,11 +380,11 @@ npm run build
 ## 📞 Support
 
 Bei Fragen oder Problemen:
-- Email: support@cityjumper.de
+- Email: support@courierly.de
 - GitHub Issues: [Link]
 
 ---
 
 **Version:** 1.0.0  
 **Letztes Update:** Oktober 2025  
-**Entwickelt mit ❤️ für CityJumper**
+**Entwickelt mit ❤️ für Courierly**

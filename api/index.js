@@ -39,7 +39,7 @@ app.use('/employees', require('../server/routes/employees'));
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    message: 'CityJumper API is running',
+    message: 'Courierly API is running',
     env: {
       hasDB: !!process.env.DB_HOST,
       hasJWT: !!process.env.JWT_SECRET,
@@ -50,7 +50,7 @@ app.get('/health', (req, res) => {
 
 // Root route
 app.get('/', (req, res) => {
-  res.json({ message: 'CityJumper API', version: '1.0.0' });
+  res.json({ message: 'Courierly API', version: '1.0.0' });
 });
 
 // 404 handler

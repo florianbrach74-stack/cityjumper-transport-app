@@ -232,7 +232,7 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
             <div className="mt-6 pt-6 border-t border-gray-200 text-xs text-gray-500 text-center">
               <p className="font-medium text-gray-700 mb-2">Vielen Dank für Ihr Vertrauen!</p>
               <p className="text-gray-500">
-                CityJumper Express Transport GmbH • Musterstraße 123 • 10115 Berlin
+                Courierly Express Delivery GmbH • Musterstraße 123 • 10115 Berlin
               </p>
               <p className="text-gray-500 mt-1">
                 Amtsgericht Berlin • HRB 12345 • Geschäftsführer: Max Mustermann

@@ -113,7 +113,7 @@ WHERE tablename = 'transport_orders' AND indexname = 'idx_orders_assigned_employ
 
 **Vercel deployt automatisch bei jedem Push zu main.**
 
-Prüfen Sie: https://cityjumper-transport.vercel.app
+Prüfen Sie: https://courierly-transport.vercel.app
 
 **Neue Seiten:**
 - `/employee-settings`
@@ -261,7 +261,7 @@ Alle Bugs wurden behoben:
 3. **API testen:**
    ```bash
    curl -H "Authorization: Bearer <token>" \
-     https://cityjumper-api-production-01e4.up.railway.app/api/employee-assignment/settings
+     https://courierly-api-production-01e4.up.railway.app/api/employee-assignment/settings
    ```
 
 ---

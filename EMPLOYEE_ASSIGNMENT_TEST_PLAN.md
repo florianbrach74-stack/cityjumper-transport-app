@@ -227,7 +227,7 @@
 
 ```bash
 curl -H "Authorization: Bearer <token>" \
-  https://cityjumper-api-production-01e4.up.railway.app/api/employee-assignment/settings
+  https://courierly-api-production-01e4.up.railway.app/api/employee-assignment/settings
 ```
 
 **Erwartete Response:**
@@ -246,7 +246,7 @@ curl -X PUT \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{"assignmentMode": "manual_assignment"}' \
-  https://cityjumper-api-production-01e4.up.railway.app/api/employee-assignment/settings
+  https://courierly-api-production-01e4.up.railway.app/api/employee-assignment/settings
 ```
 
 **Erwartete Response:**
@@ -263,7 +263,7 @@ curl -X PUT \
 
 ```bash
 curl -H "Authorization: Bearer <token>" \
-  https://cityjumper-api-production-01e4.up.railway.app/api/employee-assignment/employees
+  https://courierly-api-production-01e4.up.railway.app/api/employee-assignment/employees
 ```
 
 **Erwartete Response:**
@@ -288,7 +288,7 @@ curl -X POST \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{"employeeId": 123}' \
-  https://cityjumper-api-production-01e4.up.railway.app/api/employee-assignment/orders/456/assign
+  https://courierly-api-production-01e4.up.railway.app/api/employee-assignment/orders/456/assign
 ```
 
 **Erwartete Response:**

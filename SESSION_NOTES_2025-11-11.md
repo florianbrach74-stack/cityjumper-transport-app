@@ -190,10 +190,10 @@ const commission = customerPrice - contractorPrice;
 
 ## 🔗 Wichtige Links
 
-- **GitHub Repo:** https://github.com/florianbrach74-stack/cityjumper-transport-app
+- **GitHub Repo:** https://github.com/florianbrach74-stack/courierly-transport-app
 - **Railway Dashboard:** https://railway.app
 - **Vercel Dashboard:** https://vercel.com
-- **Live App:** https://cityjumper-transport-app.vercel.app
+- **Live App:** https://courierly-transport-app.vercel.app
 
 ---
 

@@ -16,7 +16,7 @@ async function geocodeAddress(address, postalCode, city, country = 'Deutschland'
         countrycodes: 'de'
       },
       headers: {
-        'User-Agent': 'CityJumper-Transport-App'
+        'User-Agent': 'Courierly-Transport-App'
       }
     });
 
