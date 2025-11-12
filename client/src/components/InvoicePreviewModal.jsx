@@ -53,16 +53,18 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
             {/* Company Header */}
             <div className="flex justify-between items-start mb-8 pb-6 border-b-2 border-gray-300">
               <div>
-                <div className="text-3xl font-bold text-primary-600 mb-3">
+                <div className="text-3xl font-bold text-primary-600 mb-2">
                   Courierly
                 </div>
-                <p className="text-sm text-gray-700 font-medium">Express Delivery GmbH</p>
-                <p className="text-sm text-gray-600">Musterstraße 123</p>
-                <p className="text-sm text-gray-600">10115 Berlin</p>
-                <p className="text-sm text-gray-600 mt-2">Tel: +49 30 12345678</p>
+                <p className="text-xs text-gray-500 italic mb-3">eine Marke der FB Transporte</p>
+                <p className="text-sm text-gray-700 font-medium">Inhaber: Florian Brach</p>
+                <p className="text-sm text-gray-600">Adolf-Menzel-Straße 71</p>
+                <p className="text-sm text-gray-600">12621 Berlin</p>
+                <p className="text-sm text-gray-600 mt-2">Tel: +49 (0)172 421 66 72</p>
                 <p className="text-sm text-gray-600">Email: info@courierly.de</p>
-                <p className="text-sm text-gray-600 mt-2">USt-IdNr: DE123456789</p>
-                <p className="text-sm text-gray-600">Geschäftsführer: Max Mustermann</p>
+                <p className="text-sm text-gray-600">Web: www.courierly.de</p>
+                <p className="text-sm text-gray-600 mt-2">USt-IdNr: DE299198928</p>
+                <p className="text-sm text-gray-600">St.-Nr.: 33/237/00521</p>
               </div>
               <div className="text-right">
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">RECHNUNG</h1>
@@ -232,10 +234,10 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
             <div className="mt-6 pt-6 border-t border-gray-200 text-xs text-gray-500 text-center">
               <p className="font-medium text-gray-700 mb-2">Vielen Dank für Ihr Vertrauen!</p>
               <p className="text-gray-500">
-                Courierly Express Delivery GmbH • Musterstraße 123 • 10115 Berlin
+                Courierly – eine Marke der FB Transporte • Inhaber: Florian Brach • Adolf-Menzel-Straße 71 • 12621 Berlin
               </p>
               <p className="text-gray-500 mt-1">
-                Amtsgericht Berlin • HRB 12345 • Geschäftsführer: Max Mustermann
+                Tel: +49 (0)172 421 66 72 • Email: info@courierly.de • Web: www.courierly.de • USt-IdNr: DE299198928 • St.-Nr.: 33/237/00521
               </p>
             </div>
           </div>

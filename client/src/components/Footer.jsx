@@ -8,9 +8,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
-            <h3 className="text-2xl font-bold text-white mb-4">
+            <h3 className="text-2xl font-bold text-white mb-2">
               Courierly
             </h3>
+            <p className="text-sm text-gray-500 italic mb-4">
+              eine Marke der FB Transporte
+            </p>
             <p className="text-gray-400 mb-4">
               Schneller Kurierdienst & Express-Transport in Berlin und deutschlandweit
             </p>
@@ -21,7 +24,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-primary-500" />
-                <a href="tel:01724216672" className="hover:text-white">0172 421 6672</a>
+                <a href="tel:+4917242166672" className="hover:text-white">+49 (0)172 421 66 72</a>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-primary-500" />
@@ -105,11 +108,17 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">
-          <p className="text-gray-400">
-            © {new Date().getFullYear()} FB Transporte – Inhaber Florian Brach. Alle Rechte vorbehalten.
+          <p className="text-gray-400 mb-2">
+            <strong>Courierly</strong> – eine Marke der <strong>FB Transporte</strong>, Inhaber: Florian Brach
+          </p>
+          <p className="text-gray-500">
+            Adolf-Menzel-Straße 71 · 12621 Berlin · Tel: +49 (0)172 421 66 72 · info@courierly.de · www.courierly.de
           </p>
           <p className="text-gray-500 mt-2">
-            USt-IdNr.: [wird ggf. ergänzt] • Amtsgericht Berlin
+            USt-IdNr.: DE299198928 · St.-Nr.: 33/237/00521
+          </p>
+          <p className="text-gray-600 mt-3 text-xs">
+            © {new Date().getFullYear()} Alle Rechte vorbehalten.
           </p>
         </div>
       </div>

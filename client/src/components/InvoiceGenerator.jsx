@@ -130,14 +130,19 @@ const InvoiceGenerator = ({ order, onClose }) => {
       <body>
         <div class="header">
           <div class="company-info">
-            <div class="company-name">Courierly Express Delivery</div>
-            <div>Musterstraße 123</div>
-            <div>12345 Berlin</div>
-            <div>Deutschland</div>
+            <div class="company-name">Courierly</div>
+            <div style="font-size: 11px; color: #666; margin-top: 5px;">eine Marke der FB Transporte</div>
+            <div style="margin-top: 10px;">Inhaber: Florian Brach</div>
+            <div>Adolf-Menzel-Straße 71</div>
+            <div>12621 Berlin</div>
             <div style="margin-top: 10px;">
-              <div>Tel: +49 30 12345678</div>
+              <div>Tel: +49 (0)172 421 66 72</div>
               <div>Email: info@courierly.de</div>
-              <div>USt-IdNr: DE123456789</div>
+              <div>Web: www.courierly.de</div>
+            </div>
+            <div style="margin-top: 10px;">
+              <div>USt-IdNr: DE299198928</div>
+              <div>St.-Nr.: 33/237/00521</div>
             </div>
           </div>
           <div>
@@ -255,11 +260,11 @@ const InvoiceGenerator = ({ order, onClose }) => {
 
         <div class="footer">
           <div style="text-align: center;">
-            <strong>Courierly Express Delivery</strong><br/>
-            Musterstraße 123 • 12345 Berlin • Deutschland<br/>
-            Tel: +49 30 12345678 • Email: info@courierly.de<br/>
-            USt-IdNr: DE123456789 • Geschäftsführer: Max Mustermann<br/>
-            Amtsgericht Berlin • HRB 12345
+            <strong>Courierly – eine Marke der FB Transporte</strong><br/>
+            Inhaber: Florian Brach<br/>
+            Adolf-Menzel-Straße 71 • 12621 Berlin<br/>
+            Tel: +49 (0)172 421 66 72 • Email: info@courierly.de • Web: www.courierly.de<br/>
+            USt-IdNr: DE299198928 • St.-Nr.: 33/237/00521
           </div>
         </div>
       </body>
