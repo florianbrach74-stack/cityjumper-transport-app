@@ -11,8 +11,12 @@ export const translations = {
     // Hero Section
     'hero.title': 'Express Transport leicht gemacht',
     'hero.subtitle': 'Ihr zuverlässiger Partner für schnelle Kurierdienste und Eiltransporte in ganz Deutschland',
+    'hero.badge': 'Blitzschnell & Zuverlässig',
     'hero.cta.calculate': 'Preis berechnen',
     'hero.cta.register': 'Kostenlos registrieren',
+    'hero.stats.transports': 'Transporte/Monat',
+    'hero.stats.available': 'Verfügbar',
+    'hero.stats.satisfaction': 'Zufriedenheit',
     
     // Features
     'features.title': 'Warum Courierly?',
@@ -62,8 +66,12 @@ export const translations = {
     
     'hero.title': 'Schneller Transport. Einfach gemacht.',
     'hero.subtitle': 'Wir bringen Ihre Sachen schnell von A nach B. In ganz Deutschland.',
+    'hero.badge': 'Sehr schnell und sicher',
     'hero.cta.calculate': 'Was kostet es?',
     'hero.cta.register': 'Kostenlos anmelden',
+    'hero.stats.transports': 'Fahrten pro Monat',
+    'hero.stats.available': 'Immer da',
+    'hero.stats.satisfaction': 'Zufriedene Kunden',
     
     'features.title': 'Warum Courierly gut ist',
     'features.express.title': 'Sehr schnell',
@@ -103,8 +111,12 @@ export const translations = {
     
     'hero.title': 'Express Transport Made Easy',
     'hero.subtitle': 'Your reliable partner for fast courier services and express transport throughout Germany',
+    'hero.badge': 'Lightning Fast & Reliable',
     'hero.cta.calculate': 'Calculate Price',
     'hero.cta.register': 'Register for Free',
+    'hero.stats.transports': 'Transports/Month',
+    'hero.stats.available': 'Available',
+    'hero.stats.satisfaction': 'Satisfaction',
     
     'features.title': 'Why Courierly?',
     'features.express.title': 'Express Delivery',

@@ -7,9 +7,11 @@ import Logo from '../components/Logo';
 import Footer from '../components/Footer';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { formatPrice } from '../utils/formatPrice';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -198,7 +200,7 @@ export default function LandingPage() {
                     className="flex items-center space-x-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition"
                   >
                     <LogOut className="h-5 w-5" />
-                    <span>Abmelden</span>
+                    <span>{t('nav.logout')}</span>
                   </button>
                 </>
               ) : (
@@ -208,13 +210,13 @@ export default function LandingPage() {
                     className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition"
                   >
                     <LogIn className="h-5 w-5" />
-                    <span>Anmelden</span>
+                    <span>{t('nav.login')}</span>
                   </button>
                   <button
                     onClick={() => navigate('/register')}
                     className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition"
                   >
-                    Registrieren
+                    {t('nav.register')}
                   </button>
                 </>
               )}
@@ -256,13 +258,11 @@ export default function LandingPage() {
               </div>
               
               <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight">
-                Express<br/>
-                <span className="text-secondary-400">Transport</span><br/>
-                leicht gemacht
+                {t('hero.title')}
               </h1>
               
               <p className="text-xl md:text-2xl mb-8 text-primary-100 leading-relaxed">
-                Ihr zuverlässiger Partner für schnelle Kurierdienste und Eiltransporte in ganz Deutschland
+                {t('hero.subtitle')}
               </p>
               
               <div className="flex flex-col sm:flex-row justify-center md:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
@@ -271,7 +271,7 @@ export default function LandingPage() {
                   className="group bg-white text-primary-600 px-8 py-4 rounded-xl font-semibold hover:bg-primary-50 transition-all shadow-strong hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center"
                 >
                   <Euro className="h-5 w-5 mr-2" />
-                  Preis berechnen
+                  {t('hero.cta.calculate')}
                   <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </button>
                 {!user && (
@@ -279,7 +279,7 @@ export default function LandingPage() {
                     onClick={() => navigate('/register')}
                     className="bg-secondary-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-secondary-600 transition-all shadow-strong hover:shadow-xl transform hover:-translate-y-1"
                   >
-                    Kostenlos registrieren
+                    {t('hero.cta.register')}
                   </button>
                 )}
               </div>
