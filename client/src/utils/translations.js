@@ -7,6 +7,7 @@ export const translations = {
     'nav.register': 'Registrieren',
     'nav.logout': 'Abmelden',
     'nav.dashboard': 'Dashboard',
+    'nav.settings': 'Einstellungen',
     
     // Hero Section
     'hero.title': 'Express Transport leicht gemacht',
@@ -87,6 +88,7 @@ export const translations = {
     'nav.register': 'Neu anmelden',
     'nav.logout': 'Abmelden',
     'nav.dashboard': 'Meine Seite',
+    'nav.settings': 'Einstellungen',
     
     'hero.title': 'Schneller Transport. Einfach gemacht.',
     'hero.subtitle': 'Wir bringen Ihre Sachen schnell von A nach B. In ganz Deutschland.',
@@ -160,6 +162,7 @@ export const translations = {
     'nav.register': 'Register',
     'nav.logout': 'Logout',
     'nav.dashboard': 'Dashboard',
+    'nav.settings': 'Settings',
     
     'hero.title': 'Express Transport Made Easy',
     'hero.subtitle': 'Your reliable partner for fast courier services and express transport throughout Germany',

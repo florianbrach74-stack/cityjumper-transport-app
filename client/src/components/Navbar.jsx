@@ -3,9 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, User, Home, LayoutDashboard, Settings, Package } from 'lucide-react';
 import Logo from './Logo';
+import LanguageSwitcher from './LanguageSwitcher';
+import { useTranslation } from '../hooks/useTranslation';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -37,7 +40,7 @@ const Navbar = () => {
               className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               <Home className="h-4 w-4" />
-              <span>Startseite</span>
+              <span>{t('nav.home')}</span>
             </Link>
 
             <Link
@@ -45,11 +48,12 @@ const Navbar = () => {
               className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               <Package className="h-4 w-4" />
-              <span>Dashboard</span>
+              <span>{t('nav.dashboard')}</span>
             </Link>
           </div>
 
           <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
             <div className="flex items-center space-x-3 px-4 py-2 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-2">
                 <div className="bg-primary-100 p-2 rounded-full">
@@ -71,7 +75,7 @@ const Navbar = () => {
               className="flex items-center space-x-2 bg-gray-50 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium transition-all"
             >
               <Settings className="h-4 w-4" />
-              <span>Einstellungen</span>
+              <span>{t('nav.settings')}</span>
             </Link>
 
             <button
@@ -79,7 +83,7 @@ const Navbar = () => {
               className="flex items-center space-x-2 bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg text-sm font-medium transition-all"
             >
               <LogOut className="h-4 w-4" />
-              <span>Abmelden</span>
+              <span>{t('nav.logout')}</span>
             </button>
           </div>
         </div>
