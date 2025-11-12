@@ -299,31 +299,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Right: Large Logo */}
-            <div className="hidden md:flex justify-center items-center animate-slide-up">
-              <div className="relative">
-                {/* Large Courierly Logo */}
-                <img 
-                  src="/courierly-logo.png" 
-                  alt="Courierly Logo" 
-                  className="w-full max-w-md h-auto drop-shadow-2xl transform hover:scale-105 transition-transform duration-300"
-                />
-                {/* Glow effect behind logo */}
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 to-orange-400/20 blur-3xl -z-10"></div>
-              </div>
-            </div>
-            
-            {/* Mobile: Smaller Logo */}
-            <div className="md:hidden flex justify-center mt-8">
-              <div className="relative">
-                <img 
-                  src="/courierly-logo.png" 
-                  alt="Courierly Logo" 
-                  className="w-64 h-auto drop-shadow-2xl"
-                />
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 to-orange-400/20 blur-2xl -z-10"></div>
-              </div>
-            </div>
+            {/* Right side - removed logo */}
             
             {/* Old truck illustration - keeping for reference */}
             <div className="hidden">

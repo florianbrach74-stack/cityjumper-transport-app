@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Truck, Mail, Lock, User, Building, Phone, AlertCircle } from 'lucide-react';
+import { Truck, Mail, Lock, User, Building, Phone, AlertCircle, Home } from 'lucide-react';
 import PasswordStrength from '../components/PasswordStrength';
 
 const Register = () => {
@@ -69,6 +69,15 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Back to Home Button */}
+      <Link 
+        to="/"
+        className="absolute top-6 left-6 flex items-center space-x-2 text-primary-700 hover:text-primary-900 font-medium transition-colors group"
+      >
+        <Home className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+        <span>Zur Startseite</span>
+      </Link>
+      
       <div className="max-w-2xl w-full space-y-8">
         <div className="text-center">
           <div className="flex justify-center">
