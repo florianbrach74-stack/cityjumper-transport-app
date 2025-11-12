@@ -54,13 +54,13 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
             <div className="flex justify-between items-start mb-8 pb-6 border-b-2 border-gray-300">
               <div>
                 <div className="text-3xl font-bold text-primary-600 mb-3">
-                  CityJumper
+                  Courierly
                 </div>
-                <p className="text-sm text-gray-700 font-medium">Express Transport GmbH</p>
+                <p className="text-sm text-gray-700 font-medium">Express Delivery GmbH</p>
                 <p className="text-sm text-gray-600">Musterstraße 123</p>
                 <p className="text-sm text-gray-600">10115 Berlin</p>
                 <p className="text-sm text-gray-600 mt-2">Tel: +49 30 12345678</p>
-                <p className="text-sm text-gray-600">Email: info@cityjumper.de</p>
+                <p className="text-sm text-gray-600">Email: info@courierly.de</p>
                 <p className="text-sm text-gray-600 mt-2">USt-IdNr: DE123456789</p>
                 <p className="text-sm text-gray-600">Geschäftsführer: Max Mustermann</p>
               </div>

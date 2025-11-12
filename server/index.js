@@ -44,7 +44,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'CityJumper API is running' });
+  res.json({ status: 'ok', message: 'Courierly API is running' });
 });
 
 // 404 handler

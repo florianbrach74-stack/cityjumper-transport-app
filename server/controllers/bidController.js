@@ -74,7 +74,7 @@ const createBid = async (req, res) => {
               
               <p>Bitte prüfen Sie die Bewerbung im Admin-Dashboard.</p>
               
-              <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr CityJumper System</p>
+              <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
             </div>
           `
         );

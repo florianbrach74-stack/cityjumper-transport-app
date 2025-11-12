@@ -130,13 +130,13 @@ const InvoiceGenerator = ({ order, onClose }) => {
       <body>
         <div class="header">
           <div class="company-info">
-            <div class="company-name">CityJumper Express Transport</div>
+            <div class="company-name">Courierly Express Delivery</div>
             <div>Musterstraße 123</div>
             <div>12345 Berlin</div>
             <div>Deutschland</div>
             <div style="margin-top: 10px;">
               <div>Tel: +49 30 12345678</div>
-              <div>Email: info@cityjumper.de</div>
+              <div>Email: info@courierly.de</div>
               <div>USt-IdNr: DE123456789</div>
             </div>
           </div>
@@ -255,9 +255,9 @@ const InvoiceGenerator = ({ order, onClose }) => {
 
         <div class="footer">
           <div style="text-align: center;">
-            <strong>CityJumper Express Transport</strong><br/>
+            <strong>Courierly Express Delivery</strong><br/>
             Musterstraße 123 • 12345 Berlin • Deutschland<br/>
-            Tel: +49 30 12345678 • Email: info@cityjumper.de<br/>
+            Tel: +49 30 12345678 • Email: info@courierly.de<br/>
             USt-IdNr: DE123456789 • Geschäftsführer: Max Mustermann<br/>
             Amtsgericht Berlin • HRB 12345
           </div>
