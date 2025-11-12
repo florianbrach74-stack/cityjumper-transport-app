@@ -1,13 +1,23 @@
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Simplified Package Icon for Favicon -->
-  <rect x="6" y="8" width="14" height="16" rx="2" stroke="black" stroke-width="2" fill="none"/>
-  <line x1="11" y1="10" x2="15" y2="10" stroke="black" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Package Box -->
+  <rect x="6" y="6" width="16" height="16" rx="3" stroke="#000000" stroke-width="2" fill="none"/>
   
-  <!-- Arrow -->
-  <path d="M 18 14 L 26 16 L 18 18 L 19 16 Z" fill="#FF9500"/>
+  <!-- Top handle -->
+  <line x1="11" y1="8" x2="17" y2="8" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
   
-  <!-- Speed Lines -->
-  <line x1="6" y1="14" x2="12" y2="14" stroke="black" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="14" y1="16" x2="18" y2="16" stroke="#FF9500" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="6" y1="18" x2="10" y2="18" stroke="black" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Left speed lines (black) -->
+  <line x1="4" y1="12" x2="8" y2="12" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="4" y1="16" x2="8" y2="16" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="4" y1="20" x2="8" y2="20" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Right speed lines (orange) -->
+  <line x1="16" y1="12" x2="22" y2="12" stroke="#FF9500" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="16" y1="16" x2="22" y2="16" stroke="#FF9500" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="16" y1="20" x2="22" y2="20" stroke="#FF9500" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Arrow head (orange) -->
+  <path d="M 22 11 L 28 16 L 22 21 Z" fill="#FF9500"/>
+  
+  <!-- Bottom speed lines -->
+  <line x1="2" y1="26" x2="8" y2="26" stroke="#000000" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
 </svg>
