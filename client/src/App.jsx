@@ -19,6 +19,7 @@ import EmployeeSettings from './pages/EmployeeSettings';
 import ContractorOrdersWithAssignment from './pages/ContractorOrdersWithAssignment';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import ChatBot from './components/ChatBot';
 
 const DashboardRouter = () => {
   const { user } = useAuth();
@@ -105,6 +106,8 @@ function App() {
           <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        {/* ChatBot - visible on all pages */}
+        <ChatBot />
       </Router>
     </AuthProvider>
   );
