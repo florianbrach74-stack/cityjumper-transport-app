@@ -15,7 +15,9 @@ import CMRSignature from './pages/CMRSignature';
 import VerificationPage from './pages/VerificationPage';
 import Settings from './pages/Settings';
 import AGB from './pages/AGB';
+import AGBNew from './pages/AGBNew';
 import Widerruf from './pages/Widerruf';
+import WiderrufNew from './pages/WiderrufNew';
 import EmployeeSettings from './pages/EmployeeSettings';
 import ContractorOrdersWithAssignment from './pages/ContractorOrdersWithAssignment';
 import ForgotPassword from './pages/ForgotPassword';
@@ -51,8 +53,10 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/agb" element={<AGB />} />
-          <Route path="/widerruf" element={<Widerruf />} />
+          <Route path="/agb" element={<AGBNew />} />
+          <Route path="/agb-old" element={<AGB />} />
+          <Route path="/widerruf" element={<WiderrufNew />} />
+          <Route path="/widerruf-old" element={<Widerruf />} />
           <Route path="/cmr/:cmrNumber" element={<CMRSignature />} />
           <Route path="/cmr/:cmrNumber/sender" element={<CMRSignature />} />
           <Route path="/cmr/:cmrNumber/carrier" element={<CMRSignature />} />

@@ -31,6 +31,7 @@ export const translations = {
     
     // Calculator
     'calc.title': 'Preis berechnen',
+    'calc.subtitle': 'Erhalten Sie sofort einen unverbindlichen Kostenvoranschlag',
     'calc.pickup': 'Abholadresse',
     'calc.delivery': 'Lieferadresse',
     'calc.vehicle': 'Fahrzeugtyp',
@@ -38,12 +39,35 @@ export const translations = {
     'calc.price': 'Empfohlener Preis',
     'calc.order': 'Jetzt bestellen',
     
+    // Services
+    'services.title': 'Unsere Leistungen',
+    'services.courier.title': 'Kurierdienst',
+    'services.courier.desc': 'Schnelle und zuverlässige Kurierdienste für Dokumente und Pakete',
+    'services.express.title': 'Eiltransport',
+    'services.express.desc': 'Express-Lieferungen mit garantierten Lieferzeiten',
+    'services.bulky.title': 'Sperrgut',
+    'services.bulky.desc': 'Transport von sperrigen Gütern und Paletten',
+    
+    // CTA Section
+    'cta.title': 'Bereit für Ihren ersten Transport?',
+    'cta.subtitle': 'Registrieren Sie sich jetzt kostenlos und erstellen Sie Ihren ersten Auftrag',
+    'cta.button': 'Jetzt kostenlos registrieren',
+    
     // Footer
+    'footer.tagline': 'eine Marke der FB Transporte',
+    'footer.description': 'Schneller Kurierdienst & Express-Transport in Berlin und deutschlandweit',
+    'footer.quickaccess': 'Schnellzugriff',
     'footer.contact': 'Kontakt',
     'footer.legal': 'Rechtliches',
     'footer.agb': 'AGB',
+    'footer.widerruf': 'Widerrufsbelehrung',
     'footer.privacy': 'Datenschutz',
     'footer.imprint': 'Impressum',
+    'footer.login': 'Anmelden',
+    'footer.register': 'Registrieren',
+    'footer.functions': 'Funktionen',
+    'footer.prices': 'Preise',
+    'footer.rights': 'Alle Rechte vorbehalten',
     
     // Common
     'common.loading': 'Laden...',
@@ -84,12 +108,40 @@ export const translations = {
     'features.fair.desc': 'Nicht zu teuer. Klar und einfach.',
     
     'calc.title': 'Preis berechnen',
+    'calc.subtitle': 'Wir sagen Ihnen sofort, was es kostet',
     'calc.pickup': 'Von wo?',
     'calc.delivery': 'Wo hin?',
     'calc.vehicle': 'Welches Auto?',
     'calc.calculate': 'Preis zeigen',
     'calc.price': 'Das kostet es',
     'calc.order': 'Jetzt bestellen',
+    
+    'services.title': 'Was wir machen',
+    'services.courier.title': 'Kurier-Dienst',
+    'services.courier.desc': 'Wir bringen Briefe und Pakete schnell',
+    'services.express.title': 'Sehr schnell',
+    'services.express.desc': 'Wir liefern sehr schnell. Garantiert.',
+    'services.bulky.title': 'Große Sachen',
+    'services.bulky.desc': 'Wir transportieren auch große Sachen',
+    
+    'cta.title': 'Wollen Sie etwas transportieren?',
+    'cta.subtitle': 'Melden Sie sich kostenlos an. Dann können Sie bestellen.',
+    'cta.button': 'Kostenlos anmelden',
+    
+    'footer.tagline': 'von FB Transporte',
+    'footer.description': 'Schneller Transport in Berlin und ganz Deutschland',
+    'footer.quickaccess': 'Schnell zu',
+    'footer.contact': 'Kontakt',
+    'footer.legal': 'Regeln',
+    'footer.agb': 'Regeln',
+    'footer.widerruf': 'Rückgabe-Regeln',
+    'footer.privacy': 'Daten-Schutz',
+    'footer.imprint': 'Über uns',
+    'footer.login': 'Anmelden',
+    'footer.register': 'Neu anmelden',
+    'footer.functions': 'Was geht',
+    'footer.prices': 'Preise',
+    'footer.rights': 'Alle Rechte bei uns',
     
     'common.loading': 'Lädt...',
     'common.error': 'Fehler',
@@ -129,6 +181,7 @@ export const translations = {
     'features.fair.desc': 'Transparent and affordable prices',
     
     'calc.title': 'Calculate Price',
+    'calc.subtitle': 'Get an instant non-binding quote',
     'calc.pickup': 'Pickup Address',
     'calc.delivery': 'Delivery Address',
     'calc.vehicle': 'Vehicle Type',
@@ -136,11 +189,32 @@ export const translations = {
     'calc.price': 'Recommended Price',
     'calc.order': 'Order Now',
     
+    'services.title': 'Our Services',
+    'services.courier.title': 'Courier Service',
+    'services.courier.desc': 'Fast and reliable courier services for documents and packages',
+    'services.express.title': 'Express Transport',
+    'services.express.desc': 'Express deliveries with guaranteed delivery times',
+    'services.bulky.title': 'Bulky Goods',
+    'services.bulky.desc': 'Transport of bulky goods and pallets',
+    
+    'cta.title': 'Ready for your first transport?',
+    'cta.subtitle': 'Register now for free and create your first order',
+    'cta.button': 'Register for free now',
+    
+    'footer.tagline': 'a brand of FB Transporte',
+    'footer.description': 'Fast courier service & express transport in Berlin and throughout Germany',
+    'footer.quickaccess': 'Quick Access',
     'footer.contact': 'Contact',
     'footer.legal': 'Legal',
-    'footer.agb': 'Terms',
-    'footer.privacy': 'Privacy',
+    'footer.agb': 'Terms & Conditions',
+    'footer.widerruf': 'Right of Withdrawal',
+    'footer.privacy': 'Privacy Policy',
     'footer.imprint': 'Imprint',
+    'footer.login': 'Login',
+    'footer.register': 'Register',
+    'footer.functions': 'Features',
+    'footer.prices': 'Prices',
+    'footer.rights': 'All rights reserved',
     
     'common.loading': 'Loading...',
     'common.error': 'Error',
