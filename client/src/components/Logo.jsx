@@ -1,9 +1,9 @@
 export default function Logo({ size = 'md', showText = true, className = '' }) {
   const sizes = {
-    sm: { icon: 'h-14 w-auto', text: 'text-base', subtitle: 'text-xs' },
-    md: { icon: 'h-20 w-auto', text: 'text-xl', subtitle: 'text-sm' },
-    lg: { icon: 'h-28 w-auto', text: 'text-3xl', subtitle: 'text-base' },
-    xl: { icon: 'h-36 w-auto', text: 'text-4xl', subtitle: 'text-lg' },
+    sm: { icon: 'h-16 w-auto', text: 'text-base', subtitle: 'text-xs' },
+    md: { icon: 'h-32 w-auto', text: 'text-2xl', subtitle: 'text-base' },
+    lg: { icon: 'h-40 w-auto', text: 'text-4xl', subtitle: 'text-xl' },
+    xl: { icon: 'h-48 w-auto', text: 'text-5xl', subtitle: 'text-2xl' },
   };
 
   const currentSize = sizes[size] || sizes.md;
