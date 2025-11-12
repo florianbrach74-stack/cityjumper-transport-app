@@ -5,6 +5,7 @@ import AddressSearch from '../components/AddressSearch';
 import RouteMap from '../components/RouteMap';
 import Logo from '../components/Logo';
 import Footer from '../components/Footer';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { formatPrice } from '../utils/formatPrice';
 
 export default function LandingPage() {
@@ -181,7 +182,8 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Logo size="md" showText={true} className="cursor-pointer" onClick={() => navigate('/')} />
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <LanguageSwitcher />
               {user ? (
                 <>
                   <button

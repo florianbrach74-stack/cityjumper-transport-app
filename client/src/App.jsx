@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
@@ -41,8 +42,9 @@ const DashboardRouter = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <LanguageProvider>
+      <AuthProvider>
+        <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
@@ -108,8 +110,9 @@ function App() {
         </Routes>
         {/* ChatBot - visible on all pages */}
         <ChatBot />
-      </Router>
-    </AuthProvider>
+        </Router>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 
