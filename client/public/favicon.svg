@@ -1,23 +1,15 @@
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Package Box -->
-  <rect x="6" y="6" width="16" height="16" rx="3" stroke="#000000" stroke-width="2" fill="none"/>
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="#0ea5e9"/>
   
-  <!-- Top handle -->
-  <line x1="11" y1="8" x2="17" y2="8" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Package Box (white) -->
+  <rect x="8" y="8" width="12" height="12" rx="2" stroke="#ffffff" stroke-width="2" fill="none"/>
   
-  <!-- Left speed lines (black) -->
-  <line x1="4" y1="12" x2="8" y2="12" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="4" y1="16" x2="8" y2="16" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="4" y1="20" x2="8" y2="20" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
-  
-  <!-- Right speed lines (orange) -->
-  <line x1="16" y1="12" x2="22" y2="12" stroke="#FF9500" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="16" y1="16" x2="22" y2="16" stroke="#FF9500" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="16" y1="20" x2="22" y2="20" stroke="#FF9500" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Speed lines (orange) -->
+  <line x1="18" y1="12" x2="24" y2="12" stroke="#fb923c" stroke-width="2" stroke-linecap="round"/>
+  <line x1="18" y1="16" x2="24" y2="16" stroke="#fb923c" stroke-width="2" stroke-linecap="round"/>
+  <line x1="18" y1="20" x2="24" y2="20" stroke="#fb923c" stroke-width="2" stroke-linecap="round"/>
   
   <!-- Arrow head (orange) -->
-  <path d="M 22 11 L 28 16 L 22 21 Z" fill="#FF9500"/>
-  
-  <!-- Bottom speed lines -->
-  <line x1="2" y1="26" x2="8" y2="26" stroke="#000000" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+  <path d="M 24 10 L 29 16 L 24 22 Z" fill="#fb923c"/>
 </svg>
