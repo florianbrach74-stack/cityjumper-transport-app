@@ -345,9 +345,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-display font-bold text-gray-900 mb-4">
-              Warum <span className="text-primary-600">Courierly</span>?
+              {t('features.title')}
             </h2>
-            <p className="text-xl text-gray-600">Ihr zuverlässiger Partner für schnelle Transporte</p>
+            <p className="text-xl text-gray-600">{t('hero.subtitle')}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -355,32 +355,32 @@ export default function LandingPage() {
               <div className="bg-gradient-to-br from-primary-500 to-primary-700 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-soft">
                 <Clock className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-lg font-bold mb-2 text-gray-900">Express-Lieferung</h3>
-              <p className="text-gray-600">Schnelle Abholung und Zustellung am selben Tag möglich</p>
+              <h3 className="text-lg font-bold mb-2 text-gray-900">{t('features.express.title')}</h3>
+              <p className="text-gray-600">{t('features.express.desc')}</p>
             </div>
             
             <div className="group text-center p-6 rounded-2xl hover:bg-white hover:shadow-medium transition-all transform hover:-translate-y-2">
               <div className="bg-gradient-to-br from-success-500 to-success-700 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-soft">
                 <Shield className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-lg font-bold mb-2 text-gray-900">Versichert</h3>
-              <p className="text-gray-600">Ihre Sendung ist während des gesamten Transports versichert</p>
+              <h3 className="text-lg font-bold mb-2 text-gray-900">{t('features.insured.title')}</h3>
+              <p className="text-gray-600">{t('features.insured.desc')}</p>
             </div>
             
             <div className="group text-center p-6 rounded-2xl hover:bg-white hover:shadow-medium transition-all transform hover:-translate-y-2">
               <div className="bg-gradient-to-br from-secondary-500 to-secondary-700 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-soft">
                 <MapPin className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-lg font-bold mb-2 text-gray-900">Deutschlandweit</h3>
-              <p className="text-gray-600">Wir liefern in ganz Deutschland zuverlässig</p>
+              <h3 className="text-lg font-bold mb-2 text-gray-900">{t('features.nationwide.title')}</h3>
+              <p className="text-gray-600">{t('features.nationwide.desc')}</p>
             </div>
             
             <div className="group text-center p-6 rounded-2xl hover:bg-white hover:shadow-medium transition-all transform hover:-translate-y-2">
               <div className="bg-gradient-to-br from-primary-600 to-primary-800 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-soft">
                 <Euro className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-lg font-bold mb-2 text-gray-900">Faire Preise</h3>
-              <p className="text-gray-600">Transparente Preisgestaltung ohne versteckte Kosten</p>
+              <h3 className="text-lg font-bold mb-2 text-gray-900">{t('features.fair.title')}</h3>
+              <p className="text-gray-600">{t('features.fair.desc')}</p>
             </div>
           </div>
         </div>

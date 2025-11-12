@@ -1,6 +1,7 @@
 import { FileText, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../hooks/useTranslation';
 import { agbContent } from '../content/agb';
 
@@ -18,14 +19,17 @@ export default function AGBNew() {
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <div className="flex items-center mb-6">
-            <FileText className="h-10 w-10 text-primary-600 mr-4" />
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900">
-                {content.title}
-              </h1>
-              <p className="text-sm text-gray-600 mt-2">{content.lastUpdated}</p>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <FileText className="h-10 w-10 text-primary-600 mr-4" />
+              <div>
+                <h1 className="text-4xl font-bold text-gray-900">
+                  {content.title}
+                </h1>
+                <p className="text-sm text-gray-600 mt-2">{content.lastUpdated}</p>
+              </div>
             </div>
+            <LanguageSwitcher />
           </div>
         </div>
 
