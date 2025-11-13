@@ -72,21 +72,23 @@ class OrderBid {
         ['rejected', bid.order_id, bidId]
       );
 
-      // Get original customer price before updating
+      // Get current customer price (might have changed since bid was placed)
       const orderResult = await client.query('SELECT price FROM transport_orders WHERE id = $1', [bid.order_id]);
-      const originalPrice = orderResult.rows[0].price;
+      const currentCustomerPrice = orderResult.rows[0].price;
       
-      // Assign order to contractor and update prices
+      // Use the CURRENT customer price, not the price when bid was placed
+      // This ensures the assignment works even if customer increased the price
+      // The contractor still gets their bid amount
       await client.query(
         `UPDATE transport_orders 
          SET contractor_id = $1, 
              status = 'accepted', 
              customer_price = $2,
              contractor_price = $3,
-             price = $3,
+             price = $2,
              accepted_at = CURRENT_TIMESTAMP 
          WHERE id = $4`,
-        [bid.contractor_id, originalPrice, bid.bid_amount, bid.order_id]
+        [bid.contractor_id, currentCustomerPrice, bid.bid_amount, bid.order_id]
       );
 
       await client.query('COMMIT');
