@@ -117,6 +117,24 @@ class OrderBid {
     const result = await pool.query(query, [orderId, contractorId]);
     return result.rows[0];
   }
+
+  // Withdraw a bid (only if still pending)
+  static async withdrawBid(bidId, contractorId) {
+    const query = `
+      DELETE FROM order_bids 
+      WHERE id = $1 
+      AND contractor_id = $2 
+      AND status = 'pending'
+      RETURNING *
+    `;
+    const result = await pool.query(query, [bidId, contractorId]);
+    
+    if (result.rows.length === 0) {
+      throw new Error('Bid not found or cannot be withdrawn (already accepted/rejected)');
+    }
+    
+    return result.rows[0];
+  }
 }
 
 module.exports = OrderBid;

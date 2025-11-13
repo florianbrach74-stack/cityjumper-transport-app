@@ -195,10 +195,32 @@ const rejectBid = async (req, res) => {
   }
 };
 
+// Withdraw a bid (contractor only)
+const withdrawBid = async (req, res) => {
+  try {
+    const { bidId } = req.params;
+    const contractorId = req.user.id;
+    
+    const bid = await OrderBid.withdrawBid(bidId, contractorId);
+    
+    res.json({
+      message: 'Bid withdrawn successfully',
+      bid,
+    });
+  } catch (error) {
+    console.error('Withdraw bid error:', error);
+    if (error.message.includes('cannot be withdrawn')) {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: 'Server error while withdrawing bid' });
+  }
+};
+
 module.exports = {
   createBid,
   getBidsForOrder,
   getMyBids,
   acceptBid,
   rejectBid,
+  withdrawBid,
 };
