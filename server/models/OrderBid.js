@@ -73,8 +73,20 @@ class OrderBid {
       );
 
       // Get current customer price (might have changed since bid was placed)
-      const orderResult = await client.query('SELECT price FROM transport_orders WHERE id = $1', [bid.order_id]);
-      const currentCustomerPrice = orderResult.rows[0].price;
+      const orderResult = await client.query('SELECT price, status FROM transport_orders WHERE id = $1', [bid.order_id]);
+      
+      if (!orderResult.rows[0]) {
+        throw new Error('Order not found');
+      }
+      
+      const order = orderResult.rows[0];
+      
+      // Check if order is still available
+      if (order.status !== 'pending') {
+        throw new Error('Order is no longer available for bidding');
+      }
+      
+      const currentCustomerPrice = order.price;
       
       // Use the CURRENT customer price, not the price when bid was placed
       // This ensures the assignment works even if customer increased the price
@@ -87,7 +99,7 @@ class OrderBid {
              contractor_price = $3,
              price = $2,
              accepted_at = CURRENT_TIMESTAMP 
-         WHERE id = $4`,
+         WHERE id = $4 AND status = 'pending'`,
         [bid.contractor_id, currentCustomerPrice, bid.bid_amount, bid.order_id]
       );
 
