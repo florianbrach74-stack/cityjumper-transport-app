@@ -69,6 +69,15 @@ const emailTemplates = {
           ${order.price ? `<p><strong>Preis:</strong> €${order.price}</p>` : ''}
         </div>
         
+        <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
+          <p style="margin: 0; color: #92400e; font-size: 14px;">
+            <strong>⚠️ Wichtiger Hinweis:</strong> Courierly ist eine Vermittlungsplattform. 
+            Wir können keine Übernahme Ihres Auftrags garantieren. Sie haben jedoch jederzeit die Möglichkeit, 
+            durch eine <strong>Preisanpassung</strong> die Übernahmewahrscheinlichkeit zu erhöhen. 
+            Sie können den Preis in Ihrem Dashboard anpassen.
+          </p>
+        </div>
+        
         <p>Wir werden Sie benachrichtigen, sobald ein Auftragnehmer Ihren Auftrag annimmt.</p>
         
         <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
