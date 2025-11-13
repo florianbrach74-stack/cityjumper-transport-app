@@ -1,5 +1,8 @@
 const User = require('../models/User');
+const VerificationDocument = require('../models/VerificationDocument');
 const { sendEmail } = require('../config/email');
+const path = require('path');
+const fs = require('fs').promises;
 
 // Contractor submits verification documents
 const submitVerification = async (req, res) => {
@@ -215,9 +218,77 @@ const getVerificationStatus = async (req, res) => {
   }
 };
 
+// Get contractor documents (admin only)
+const getContractorDocuments = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const documents = await VerificationDocument.getCurrentDocuments(userId);
+    const user = await User.findById(userId);
+    
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        company_name: user.company_name,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        verification_status: user.verification_status,
+        verified_at: user.verified_at
+      },
+      documents
+    });
+  } catch (error) {
+    console.error('Get contractor documents error:', error);
+    res.status(500).json({ error: 'Fehler beim Abrufen der Dokumente' });
+  }
+};
+
+// Get all contractors with documents (admin only)
+const getAllContractorsWithDocuments = async (req, res) => {
+  try {
+    const contractors = await VerificationDocument.getAllContractorsWithDocuments();
+    res.json({ contractors });
+  } catch (error) {
+    console.error('Get all contractors error:', error);
+    res.status(500).json({ error: 'Fehler beim Abrufen der Auftragnehmer' });
+  }
+};
+
+// Download a verification document (admin only)
+const downloadDocument = async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    
+    const document = await VerificationDocument.findById(documentId);
+    
+    if (!document) {
+      return res.status(404).json({ error: 'Dokument nicht gefunden' });
+    }
+    
+    // Check if file exists
+    const filePath = path.join(__dirname, '..', document.file_path);
+    
+    try {
+      await fs.access(filePath);
+    } catch (error) {
+      return res.status(404).json({ error: 'Datei nicht gefunden auf dem Server' });
+    }
+    
+    // Send file
+    res.download(filePath, document.file_name);
+  } catch (error) {
+    console.error('Download document error:', error);
+    res.status(500).json({ error: 'Fehler beim Herunterladen des Dokuments' });
+  }
+};
+
 module.exports = {
   submitVerification,
   approveContractor,
   rejectContractor,
-  getVerificationStatus
+  getVerificationStatus,
+  getContractorDocuments,
+  getAllContractorsWithDocuments,
+  downloadDocument
 };
