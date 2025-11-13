@@ -9,6 +9,7 @@ import InvoiceGenerator from '../components/InvoiceGenerator';
 import AdminOrderEditModal from '../components/AdminOrderEditModal';
 import PricingSettings from '../components/PricingSettings';
 import ReportsSummary from '../components/ReportsSummary';
+import ContractorDocumentsModal from '../components/ContractorDocumentsModal';
 import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
@@ -28,6 +29,7 @@ export default function AdminDashboard() {
   const [selectedOrderForDetails, setSelectedOrderForDetails] = useState(null);
   const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null);
   const [editingOrderFull, setEditingOrderFull] = useState(null);
+  const [selectedContractorForDocs, setSelectedContractorForDocs] = useState(null);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -740,6 +742,12 @@ export default function AdminDashboard() {
                         >
                           📦 Aufträge ansehen
                         </button>
+                        <button
+                          onClick={() => setSelectedContractorForDocs(user)}
+                          className="px-3 py-1.5 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+                        >
+                          📄 Dokumente ansehen
+                        </button>
                         {user.verification_status !== 'rejected' && (
                           <button
                             onClick={() => rejectContractor(user.id)}
@@ -1117,6 +1125,14 @@ export default function AdminDashboard() {
             setEditingOrderFull(null);
             loadData();
           }}
+        />
+      )}
+
+      {/* Contractor Documents Modal */}
+      {selectedContractorForDocs && (
+        <ContractorDocumentsModal
+          contractor={selectedContractorForDocs}
+          onClose={() => setSelectedContractorForDocs(null)}
         />
       )}
     </div>

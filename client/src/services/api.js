@@ -66,6 +66,9 @@ export const verificationAPI = {
   getStatus: () => api.get('/verification/status'),
   approveContractor: (userId, notes) => api.post(`/verification/${userId}/approve`, { notes }),
   rejectContractor: (userId, reason) => api.post(`/verification/${userId}/reject`, { reason }),
+  getAllContractorsWithDocuments: () => api.get('/verification/contractors'),
+  getContractorDocuments: (userId) => api.get(`/verification/contractors/${userId}/documents`),
+  downloadDocument: (documentId) => `${API_URL}/verification/documents/${documentId}/download`,
 };
 
 export default api;
