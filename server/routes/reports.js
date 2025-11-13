@@ -33,7 +33,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
         FROM transport_orders o
         LEFT JOIN users c ON o.customer_id = c.id
         LEFT JOIN users ct ON o.contractor_id = ct.id
-        WHERE o.status = 'completed' 
+        WHERE (o.status = 'completed' OR o.cancellation_status IS NOT NULL)
           AND o.updated_at >= $1 AND o.updated_at < ($2::date + interval '1 day')
         ORDER BY o.updated_at DESC
       `;
@@ -50,7 +50,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
         FROM transport_orders o
         LEFT JOIN users ct ON o.contractor_id = ct.id
         WHERE o.customer_id = $1 
-          AND o.status = 'completed'
+          AND (o.status = 'completed' OR o.cancellation_status IS NOT NULL)
           AND o.updated_at >= $2 AND o.updated_at < ($3::date + interval '1 day')
         ORDER BY o.updated_at DESC
       `;
@@ -67,7 +67,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
         FROM transport_orders o
         LEFT JOIN users c ON o.customer_id = c.id
         WHERE o.contractor_id = $1 
-          AND o.status = 'completed'
+          AND (o.status = 'completed' OR o.cancellation_status IS NOT NULL)
           AND o.updated_at >= $2 AND o.updated_at < ($3::date + interval '1 day')
         ORDER BY o.updated_at DESC
       `;
@@ -83,10 +83,14 @@ router.get('/summary', authenticateToken, async (req, res) => {
       completedOrders: orders.filter(o => o.status === 'completed').length,
       pendingOrders: orders.filter(o => o.status === 'pending').length,
       inProgressOrders: orders.filter(o => ['accepted', 'in_transit', 'picked_up'].includes(o.status)).length,
+      cancelledOrders: orders.filter(o => o.cancellation_status).length,
       totalRevenue: 0,
       totalContractorPayout: 0,
       totalPlatformCommission: 0,
-      totalWaitingTimeFees: 0
+      totalWaitingTimeFees: 0,
+      totalCancellationFees: 0,
+      totalContractorPenalties: 0,
+      totalCustomerCompensations: 0
     };
 
     orders.forEach(order => {
@@ -94,6 +98,9 @@ router.get('/summary', authenticateToken, async (req, res) => {
       const customerPrice = parseFloat(order.customer_price || order.price) || 0;
       const contractorPrice = parseFloat(order.contractor_price || order.price) || 0;
       const waitingTimeFee = parseFloat(order.waiting_time_fee) || 0;
+      const cancellationFee = parseFloat(order.cancellation_fee) || 0;
+      const contractorPenalty = parseFloat(order.contractor_penalty) || 0;
+      const customerCompensation = parseFloat(order.customer_compensation) || 0;
       
       // Calculate commission: difference between customer price and contractor price
       const commission = customerPrice - contractorPrice;
@@ -116,12 +123,44 @@ router.get('/summary', authenticateToken, async (req, res) => {
         if (order.waiting_time_approved) {
           summary.totalWaitingTimeFees += waitingTimeFee;
         }
+        
+        // Add cancellation fees and penalties
+        if (order.cancellation_status === 'cancelled_by_customer') {
+          summary.totalCancellationFees += cancellationFee;
+          summary.totalRevenue += cancellationFee; // Customer pays cancellation fee
+        } else if (order.cancellation_status === 'cancelled_by_contractor') {
+          summary.totalContractorPenalties += contractorPenalty;
+          summary.totalCustomerCompensations += customerCompensation;
+          summary.totalRevenue += customerCompensation; // Compensation goes to customer
+        }
       } else if (userRole === 'customer') {
         summary.totalRevenue += customerPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
+        
+        // Customer sees cancellation fees they paid
+        if (order.cancellation_status === 'cancelled_by_customer') {
+          summary.totalCancellationFees += cancellationFee;
+          summary.totalRevenue += cancellationFee;
+        }
+        // Customer sees compensation they received
+        if (order.cancellation_status === 'cancelled_by_contractor') {
+          summary.totalCustomerCompensations += customerCompensation;
+          summary.totalRevenue -= customerCompensation; // Reduce their cost
+        }
       } else if (userRole === 'contractor') {
         summary.totalRevenue += contractorPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
         if (order.waiting_time_approved) {
           summary.totalWaitingTimeFees += waitingTimeFee;
+        }
+        
+        // Contractor sees cancellation fees they received (from customer cancellation)
+        if (order.cancellation_status === 'cancelled_by_customer' && order.contractor_id === userId) {
+          summary.totalCancellationFees += cancellationFee;
+          summary.totalRevenue += cancellationFee * 0.85; // Contractor gets 85% of cancellation fee
+        }
+        // Contractor sees penalties they paid
+        if (order.cancellation_status === 'cancelled_by_contractor' && order.contractor_id === userId) {
+          summary.totalContractorPenalties += contractorPenalty;
+          summary.totalRevenue -= contractorPenalty; // Reduce their earnings
         }
       }
     });
