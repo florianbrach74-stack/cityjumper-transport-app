@@ -163,7 +163,7 @@ const ContractorDashboard = () => {
     }
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, cancellationStatus) => {
     const badges = {
       pending: { color: 'bg-yellow-100 text-yellow-800', text: 'Ausstehend', icon: Clock },
       accepted: { color: 'bg-blue-100 text-blue-800', text: 'Angenommen', icon: CheckCircle },
@@ -171,7 +171,19 @@ const ContractorDashboard = () => {
       in_transit: { color: 'bg-purple-100 text-purple-800', text: 'Unterwegs', icon: Truck },
       delivered: { color: 'bg-green-600 text-white', text: 'Zugestellt', icon: CheckCircle },
       completed: { color: 'bg-green-100 text-green-800', text: 'Abgeschlossen', icon: CheckCircle },
+      cancelled: { color: 'bg-red-100 text-red-800', text: 'Storniert', icon: AlertCircle },
     };
+    
+    // If order is cancelled, show cancellation status
+    if (cancellationStatus) {
+      return (
+        <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          <AlertCircle className="h-3 w-3" />
+          <span>Storniert</span>
+        </span>
+      );
+    }
+    
     const badge = badges[status] || badges.pending;
     const Icon = badge.icon;
     return (
@@ -191,7 +203,7 @@ const ContractorDashboard = () => {
             Erstellt am {new Date(order.created_at).toLocaleDateString('de-DE')}
           </p>
         </div>
-        {!showAcceptButton && getStatusBadge(order.status)}
+        {!showAcceptButton && getStatusBadge(order.status, order.cancellation_status)}
       </div>
 
       <div className="space-y-3">
@@ -589,7 +601,7 @@ const ContractorDashboard = () => {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
             >
               <CheckCircle className="h-5 w-5" />
-              <span>Abgeschlossene Aufträge ({myOrders.filter(o => o.status === 'delivered' || o.status === 'completed' || o.status === 'pending_approval').length})</span>
+              <span>Abgeschlossene Aufträge ({myOrders.filter(o => o.status === 'delivered' || o.status === 'completed' || o.status === 'pending_approval' || o.cancellation_status).length})</span>
             </button>
             <button
               onClick={() => setActiveTab('reports')}
@@ -714,17 +726,17 @@ const ContractorDashboard = () => {
           </div>
         ) : activeTab === 'completed' ? (
           <div>
-            {myOrders.filter(o => o.status === 'delivered' || o.status === 'completed' || o.status === 'pending_approval').length === 0 ? (
+            {myOrders.filter(o => o.status === 'delivered' || o.status === 'completed' || o.status === 'pending_approval' || o.cancellation_status).length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                 <CheckCircle className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">Keine abgeschlossenen Aufträge</h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  Sie haben noch keine Aufträge abgeschlossen.
+                  Aufträge erscheinen hier nach der Zustellung oder Stornierung
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {myOrders.filter(o => o.status === 'delivered' || o.status === 'completed' || o.status === 'pending_approval').map((order) => (
+                {myOrders.filter(o => o.status === 'delivered' || o.status === 'completed' || o.status === 'pending_approval' || o.cancellation_status).map((order) => (
                   <OrderCard key={order.id} order={order} showAcceptButton={false} />
                 ))}
               </div>

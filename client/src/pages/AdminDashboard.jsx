@@ -10,6 +10,7 @@ import AdminOrderEditModal from '../components/AdminOrderEditModal';
 import PricingSettings from '../components/PricingSettings';
 import ReportsSummary from '../components/ReportsSummary';
 import ContractorDocumentsModal from '../components/ContractorDocumentsModal';
+import CancellationModal from '../components/CancellationModal';
 import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
@@ -30,6 +31,7 @@ export default function AdminDashboard() {
   const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null);
   const [editingOrderFull, setEditingOrderFull] = useState(null);
   const [selectedContractorForDocs, setSelectedContractorForDocs] = useState(null);
+  const [cancellingOrder, setCancellingOrder] = useState(null);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -525,6 +527,21 @@ export default function AdminDashboard() {
                           >
                             🧾 Rechnung erstellen
                           </button>
+                          {order.status !== 'cancelled' && !order.cancellation_status && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const response = await api.get(`/admin/orders/${order.id}/details`);
+                                  setCancellingOrder(response.data.order);
+                                } catch (error) {
+                                  alert('Fehler beim Laden der Auftragsdaten');
+                                }
+                              }}
+                              className="text-red-600 hover:text-red-900 font-medium text-left"
+                            >
+                              ❌ Stornieren
+                            </button>
+                          )}
                           <div className="flex space-x-2 pt-1">
                             {order.status === 'pending' && (
                               <button
@@ -1133,6 +1150,19 @@ export default function AdminDashboard() {
         <ContractorDocumentsModal
           contractor={selectedContractorForDocs}
           onClose={() => setSelectedContractorForDocs(null)}
+        />
+      )}
+
+      {/* Cancellation Modal */}
+      {cancellingOrder && (
+        <CancellationModal
+          order={cancellingOrder}
+          onClose={() => setCancellingOrder(null)}
+          onSuccess={() => {
+            setCancellingOrder(null);
+            loadData();
+            alert('Auftrag erfolgreich storniert!');
+          }}
         />
       )}
     </div>
