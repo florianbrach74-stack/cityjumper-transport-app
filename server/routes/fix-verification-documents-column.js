@@ -7,17 +7,17 @@ router.post('/fix-verification-documents-column', async (req, res) => {
   try {
     console.log('🚀 Fixing verification_documents file_path column size...');
     
-    // Increase file_path column size from 500 to 2000 characters
+    // Change file_path column to TEXT (unlimited length)
     await pool.query(`
       ALTER TABLE verification_documents 
-      ALTER COLUMN file_path TYPE VARCHAR(2000);
+      ALTER COLUMN file_path TYPE TEXT;
     `);
     
-    console.log('✅ Column size increased to 2000 characters');
+    console.log('✅ Column changed to TEXT (unlimited length)');
     
     res.json({
       success: true,
-      message: 'file_path column size increased to 2000 characters'
+      message: 'file_path column changed to TEXT (unlimited length)'
     });
     
   } catch (error) {
