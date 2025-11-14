@@ -32,8 +32,24 @@ app.use('/api/employees', require('./routes/employees'));
 app.use('/api/contractors', require('./routes/contractors'));
 app.use('/api/pricing', require('./routes/pricing'));
 app.use('/api/reports', require('./routes/reports'));
-// Invoice routes temporarily disabled due to Railway cache issue
-// Will be re-enabled after cache clears
+
+// Invoice routes (inline to avoid Railway cache issues)
+const invoiceController = require('./controllers/invoiceController');
+const { authenticate } = require('./middleware/auth');
+const requireAdminInline = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin-Zugriff erforderlich' });
+  }
+  next();
+};
+app.post('/api/invoices/bulk', authenticate, requireAdminInline, invoiceController.createBulkInvoice);
+app.get('/api/invoices', authenticate, requireAdminInline, invoiceController.getAllInvoices);
+app.get('/api/invoices/:invoiceId', authenticate, requireAdminInline, invoiceController.getInvoice);
+app.get('/api/invoices/:invoiceId/pdf', authenticate, requireAdminInline, invoiceController.generateInvoicePDF);
+app.post('/api/invoices/:invoiceId/send', authenticate, requireAdminInline, invoiceController.sendInvoiceEmail);
+app.patch('/api/invoices/:invoiceId/status', authenticate, requireAdminInline, invoiceController.updateInvoiceStatus);
+app.delete('/api/invoices/:invoiceId', authenticate, requireAdminInline, invoiceController.deleteInvoice);
+
 app.use('/api/cancellation', require('./routes/cancellation'));
 app.use('/api', require('./routes/test-email'));
 app.use('/api/employee-assignment', require('./routes/employee-assignment'));
