@@ -41,6 +41,7 @@ app.use('/api', require('./routes/create-verification-table'));
 app.use('/api', require('./routes/migrate-existing-documents'));
 app.use('/api', require('./routes/reset-verification-documents'));
 app.use('/api', require('./routes/debug-verification-docs'));
+app.use('/api', require('./routes/test-cloudinary'));
 app.use('/api', require('./routes/fix-verification-documents-column'));
 
 // Serve static files (CMR PDFs)
