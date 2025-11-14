@@ -32,18 +32,41 @@ export default function ContractorDocumentsModal({ contractor, onClose }) {
     return labels[type] || type;
   };
 
-  const downloadDocument = (documentId, fileName) => {
-    const token = localStorage.getItem('token');
-    const url = verificationAPI.downloadDocument(documentId);
-    
-    // Create a temporary link and click it
-    const link = document.createElement('a');
-    link.href = `${url}?token=${token}`;
-    link.download = fileName;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const downloadDocument = async (documentId, fileName) => {
+    try {
+      const token = localStorage.getItem('token');
+      const url = verificationAPI.downloadDocument(documentId);
+      
+      // Fetch with authorization header
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download fehlgeschlagen');
+      }
+      
+      // Get the blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Fehler beim Herunterladen des Dokuments');
+    }
   };
 
   return (
