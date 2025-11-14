@@ -39,6 +39,7 @@ app.use('/api', require('./routes/debug-employees'));
 app.use('/api', require('./routes/run-migration'));
 app.use('/api', require('./routes/create-verification-table'));
 app.use('/api', require('./routes/migrate-existing-documents'));
+app.use('/api', require('./routes/reset-verification-documents'));
 app.use('/api', require('./routes/fix-verification-documents-column'));
 
 // Serve static files (CMR PDFs)
