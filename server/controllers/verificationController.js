@@ -313,17 +313,20 @@ const downloadDocument = async (req, res) => {
       return res.status(404).json({ error: 'Dokument nicht gefunden' });
     }
     
-    // Check if file exists
+    // If file_path is a URL (Cloudinary), redirect to it
+    if (document.file_path.startsWith('http://') || document.file_path.startsWith('https://')) {
+      return res.redirect(document.file_path);
+    }
+    
+    // Otherwise, try to serve local file
     const filePath = path.join(__dirname, '..', document.file_path);
     
     try {
       await fs.access(filePath);
+      res.download(filePath, document.file_name);
     } catch (error) {
       return res.status(404).json({ error: 'Datei nicht gefunden auf dem Server' });
     }
-    
-    // Send file
-    res.download(filePath, document.file_name);
   } catch (error) {
     console.error('Download document error:', error);
     res.status(500).json({ error: 'Fehler beim Herunterladen des Dokuments' });
