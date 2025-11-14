@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../hooks/useTranslation';
-import { agbContent } from '../content/agb';
+import { agbFullContent } from '../content/agb-full';
 
 export default function AGBNew() {
   const navigate = useNavigate();
   const { language, easyLanguage } = useTranslation();
   
-  const lang = easyLanguage && language === 'de' ? 'de_easy' : language;
-  const content = agbContent[lang] || agbContent.de;
+  const lang = easyLanguage && language === 'de' ? 'easy' : language;
+  const content = agbFullContent[lang] || agbFullContent.de;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -33,6 +33,33 @@ export default function AGBNew() {
           </div>
         </div>
 
+        {/* Company Info */}
+        {content.company && (
+          <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 className="text-2xl font-bold text-primary-600 mb-4">
+              {content.company.name}
+            </h2>
+            <div className="text-gray-700 space-y-1">
+              <p>{content.company.address}</p>
+              <p>{content.company.city}</p>
+              <p className="mt-3">
+                <strong>{language === 'en' ? 'Phone:' : 'Telefon:'}</strong> {content.company.phone}
+              </p>
+              <p>
+                <strong>Email:</strong> <a href={`mailto:${content.company.email}`} className="text-primary-600 hover:underline">{content.company.email}</a>
+              </p>
+              <p>
+                <strong>Website:</strong> <a href={`https://${content.company.website}`} className="text-primary-600 hover:underline">{content.company.website}</a>
+              </p>
+              {content.company.ustId && (
+                <p className="mt-3 text-sm text-gray-600">
+                  {language === 'en' ? 'VAT ID:' : 'USt-IdNr.:'} {content.company.ustId}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Content */}
         <div className="bg-white rounded-lg shadow-lg p-8 space-y-8">
           {content.sections.map((section, index) => (
@@ -40,9 +67,17 @@ export default function AGBNew() {
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 {section.title}
               </h2>
-              <p className="text-gray-700 whitespace-pre-line leading-relaxed">
-                {section.content}
-              </p>
+              <div className="text-gray-700 space-y-3">
+                {Array.isArray(section.content) ? (
+                  section.content.map((paragraph, pIndex) => (
+                    <p key={pIndex} className="leading-relaxed">
+                      {paragraph}
+                    </p>
+                  ))
+                ) : (
+                  <p className="leading-relaxed">{section.content}</p>
+                )}
+              </div>
             </section>
           ))}
         </div>

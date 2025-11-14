@@ -53,8 +53,8 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/agb" element={<AGB />} />
-          <Route path="/agb-new" element={<AGBNew />} />
+          <Route path="/agb" element={<AGBNew />} />
+          <Route path="/agb-old" element={<AGB />} />
           <Route path="/widerruf" element={<Widerruf />} />
           <Route path="/widerruf-new" element={<WiderrufNew />} />
           <Route path="/cmr/:cmrNumber" element={<CMRSignature />} />
