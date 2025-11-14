@@ -3,6 +3,7 @@ const VerificationDocument = require('../models/VerificationDocument');
 const { sendEmail } = require('../config/email');
 const path = require('path');
 const fs = require('fs').promises;
+const axios = require('axios');
 
 // Contractor submits verification documents
 const submitVerification = async (req, res) => {
@@ -313,19 +314,35 @@ const downloadDocument = async (req, res) => {
       return res.status(404).json({ error: 'Dokument nicht gefunden' });
     }
     
-    // If file_path is a URL (Cloudinary), redirect to it
+    // If file_path is a URL (Cloudinary), fetch and stream it
     if (document.file_path.startsWith('http://') || document.file_path.startsWith('https://')) {
-      return res.redirect(document.file_path);
-    }
-    
-    // Otherwise, try to serve local file
-    const filePath = path.join(__dirname, '..', document.file_path);
-    
-    try {
-      await fs.access(filePath);
-      res.download(filePath, document.file_name);
-    } catch (error) {
-      return res.status(404).json({ error: 'Datei nicht gefunden auf dem Server' });
+      try {
+        const response = await axios({
+          method: 'get',
+          url: document.file_path,
+          responseType: 'stream'
+        });
+        
+        // Set headers for download
+        res.setHeader('Content-Type', document.mime_type || 'application/octet-stream');
+        res.setHeader('Content-Disposition', `attachment; filename="${document.file_name}"`);
+        
+        // Pipe the stream to response
+        response.data.pipe(res);
+      } catch (error) {
+        console.error('Error fetching from Cloudinary:', error.message);
+        return res.status(404).json({ error: 'Datei konnte nicht von Cloudinary geladen werden' });
+      }
+    } else {
+      // Otherwise, try to serve local file
+      const filePath = path.join(__dirname, '..', document.file_path);
+      
+      try {
+        await fs.access(filePath);
+        res.download(filePath, document.file_name);
+      } catch (error) {
+        return res.status(404).json({ error: 'Datei nicht gefunden auf dem Server' });
+      }
     }
   } catch (error) {
     console.error('Download document error:', error);
