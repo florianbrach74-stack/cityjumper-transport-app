@@ -14,6 +14,7 @@ export default function ContractorDocumentsModal({ contractor, onClose }) {
     try {
       setLoading(true);
       const response = await verificationAPI.getContractorDocuments(contractor.id);
+      console.log('📄 Loaded documents:', response.data.documents);
       setDocuments(response.data.documents || []);
     } catch (error) {
       console.error('Error loading documents:', error);
