@@ -333,6 +333,30 @@ const downloadDocument = async (req, res) => {
         console.error('Error fetching from Cloudinary:', error.message);
         return res.status(404).json({ error: 'Datei konnte nicht von Cloudinary geladen werden' });
       }
+    } else if (document.file_path.startsWith('data:')) {
+      // Handle base64 data
+      try {
+        // Extract base64 data
+        const matches = document.file_path.match(/^data:([^;]+);base64,(.+)$/);
+        if (!matches) {
+          return res.status(400).json({ error: 'Ungültiges Base64-Format' });
+        }
+        
+        const mimeType = matches[1];
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+        
+        // Set headers for download
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Disposition', `attachment; filename="${document.file_name}"`);
+        res.setHeader('Content-Length', buffer.length);
+        
+        // Send buffer
+        res.send(buffer);
+      } catch (error) {
+        console.error('Error converting base64:', error.message);
+        return res.status(500).json({ error: 'Fehler beim Konvertieren der Datei' });
+      }
     } else {
       // Otherwise, try to serve local file
       const filePath = path.join(__dirname, '..', document.file_path);
