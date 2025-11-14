@@ -72,9 +72,6 @@ router.put('/:id/price', authorizeRole('customer'), async (req, res) => {
       return res.status(400).json({ message: 'Neuer Preis muss höher sein als der aktuelle Preis' });
     }
 
-    // Calculate contractor price (85% of customer price, 15% platform commission)
-    const contractorPrice = Math.round(price * 0.85 * 100) / 100;
-
     // Store original price if this is the first update
     if (!order.minimum_price_at_creation) {
       await pool.query(
@@ -83,16 +80,17 @@ router.put('/:id/price', authorizeRole('customer'), async (req, res) => {
       );
     }
 
-    // Update price, contractor_price, and price_updated_at
+    // Update ONLY customer price, NOT contractor_price
+    // Contractor keeps their original bid price, customer pays more
     await pool.query(
-      'UPDATE transport_orders SET price = $1, contractor_price = $2, price_updated_at = NOW(), updated_at = NOW() WHERE id = $3',
-      [price, contractorPrice, id]
+      'UPDATE transport_orders SET price = $1, price_updated_at = NOW(), updated_at = NOW() WHERE id = $2',
+      [price, id]
     );
 
     res.json({ 
       message: 'Preis erfolgreich aktualisiert',
       newPrice: price,
-      contractorPrice: contractorPrice
+      contractorPrice: order.contractor_price // Keep original contractor price
     });
   } catch (error) {
     console.error('Error updating order price:', error);
