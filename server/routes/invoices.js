@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate, requireAdmin } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const {
   createBulkInvoice,
   getAllInvoices,
@@ -11,8 +11,17 @@ const {
   deleteInvoice
 } = require('../controllers/invoiceController');
 
-// All routes require authentication and admin role
+// All routes require authentication
 router.use(authenticate);
+
+// Admin check middleware
+const requireAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin-Zugriff erforderlich' });
+  }
+  next();
+};
+
 router.use(requireAdmin);
 
 // Create bulk invoice from multiple orders
