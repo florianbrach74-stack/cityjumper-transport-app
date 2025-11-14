@@ -37,6 +37,53 @@ const submitVerification = async (req, res) => {
       userId
     ]);
 
+    // Also save documents to verification_documents table for permanent storage
+    try {
+      // Save insurance document
+      if (insuranceDocumentUrl) {
+        await VerificationDocument.create({
+          userId,
+          documentType: 'insurance',
+          fileName: 'Versicherungsnachweis',
+          filePath: insuranceDocumentUrl,
+          fileSize: null,
+          mimeType: 'application/pdf',
+          uploadedBy: userId
+        });
+      }
+
+      // Save business license
+      if (businessLicenseUrl) {
+        await VerificationDocument.create({
+          userId,
+          documentType: 'business_license',
+          fileName: 'Gewerbeschein',
+          filePath: businessLicenseUrl,
+          fileSize: null,
+          mimeType: 'application/pdf',
+          uploadedBy: userId
+        });
+      }
+
+      // Save minimum wage signature
+      if (minimumWageSignature) {
+        await VerificationDocument.create({
+          userId,
+          documentType: 'minimum_wage_signature',
+          fileName: 'Mindestlohn-Unterschrift',
+          filePath: minimumWageSignature,
+          fileSize: null,
+          mimeType: 'image/png',
+          uploadedBy: userId
+        });
+      }
+
+      console.log(`✅ Verification documents saved to permanent storage for user ${userId}`);
+    } catch (docError) {
+      console.error('⚠️ Error saving to verification_documents table (non-critical):', docError.message);
+      // Don't fail the verification submission if this fails
+    }
+
     // Notify admins (optional - don't fail if email fails)
     try {
       // Get all admin users from database directly

@@ -38,6 +38,7 @@ app.use('/api/employee-assignment', require('./routes/employee-assignment'));
 app.use('/api', require('./routes/debug-employees'));
 app.use('/api', require('./routes/run-migration'));
 app.use('/api', require('./routes/create-verification-table'));
+app.use('/api', require('./routes/migrate-existing-documents'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
