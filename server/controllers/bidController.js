@@ -139,7 +139,7 @@ const acceptBid = async (req, res) => {
       // Don't fail the bid acceptance if CMR creation fails
     }
 
-    // Send email to contractor (optional)
+    // Send email to contractor
     try {
       await sendEmail(
         contractor.email,
@@ -166,7 +166,40 @@ const acceptBid = async (req, res) => {
         `
       );
     } catch (emailError) {
-      console.error('⚠️ Email notification failed (non-critical):', emailError.message);
+      console.error('⚠️ Contractor email notification failed (non-critical):', emailError.message);
+    }
+
+    // Send email to customer
+    try {
+      await sendEmail(
+        customer.email,
+        '✅ Ihr Transportauftrag wurde vermittelt',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Auftrag erfolgreich vermittelt!</h2>
+            <p>Hallo ${customer.first_name || 'Kunde'},</p>
+            <p>Gute Nachrichten! Ihr Transportauftrag wurde erfolgreich an einen Auftragnehmer vermittelt.</p>
+            
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0;">Auftrags-Details:</h3>
+              <p><strong>Auftragsnummer:</strong> #${order.id}</p>
+              <p><strong>Auftragnehmer:</strong> ${contractor.company_name || `${contractor.first_name} ${contractor.last_name}`}</p>
+              <p><strong>Abholung:</strong> ${order.pickup_address}, ${order.pickup_city}, ${order.pickup_postal_code}</p>
+              <p><strong>Zustellung:</strong> ${order.delivery_address}, ${order.delivery_city}, ${order.delivery_postal_code}</p>
+              <p><strong>Abholdatum:</strong> ${new Date(order.pickup_date).toLocaleDateString('de-DE')}</p>
+              <p><strong>Preis:</strong> €${order.price}</p>
+            </div>
+            
+            <p>Der Auftragnehmer wird sich um die Abholung und Zustellung kümmern. Sie werden über den Fortschritt informiert.</p>
+            
+            <p>Sie können den Status jederzeit in Ihrem Dashboard verfolgen.</p>
+            
+            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
+          </div>
+        `
+      );
+    } catch (emailError) {
+      console.error('⚠️ Customer email notification failed (non-critical):', emailError.message);
     }
 
     res.json({
