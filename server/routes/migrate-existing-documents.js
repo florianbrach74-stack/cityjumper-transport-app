@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 const VerificationDocument = require('../models/VerificationDocument');
+const cloudinary = require('../config/cloudinary');
 
 // Migrate existing verification documents to permanent storage (Admin only, one-time use)
 router.post('/migrate-existing-documents', async (req, res) => {
@@ -26,11 +27,23 @@ router.post('/migrate-existing-documents', async (req, res) => {
       try {
         // Migrate insurance document
         if (user.insurance_document_url) {
+          let cloudinaryUrl = user.insurance_document_url;
+          
+          // If it's base64, upload to Cloudinary
+          if (user.insurance_document_url.startsWith('data:')) {
+            console.log(`📤 Uploading insurance document for user ${user.id} to Cloudinary...`);
+            const uploadResult = await cloudinary.uploader.upload(user.insurance_document_url, {
+              folder: 'verification-documents',
+              resource_type: 'auto'
+            });
+            cloudinaryUrl = uploadResult.secure_url;
+          }
+          
           await VerificationDocument.create({
             userId: user.id,
             documentType: 'insurance',
             fileName: 'Versicherungsnachweis',
-            filePath: user.insurance_document_url,
+            filePath: cloudinaryUrl,
             fileSize: null,
             mimeType: 'application/pdf',
             uploadedBy: user.id
@@ -40,11 +53,23 @@ router.post('/migrate-existing-documents', async (req, res) => {
         
         // Migrate business license
         if (user.business_license_url) {
+          let cloudinaryUrl = user.business_license_url;
+          
+          // If it's base64, upload to Cloudinary
+          if (user.business_license_url.startsWith('data:')) {
+            console.log(`📤 Uploading business license for user ${user.id} to Cloudinary...`);
+            const uploadResult = await cloudinary.uploader.upload(user.business_license_url, {
+              folder: 'verification-documents',
+              resource_type: 'auto'
+            });
+            cloudinaryUrl = uploadResult.secure_url;
+          }
+          
           await VerificationDocument.create({
             userId: user.id,
             documentType: 'business_license',
             fileName: 'Gewerbeschein',
-            filePath: user.business_license_url,
+            filePath: cloudinaryUrl,
             fileSize: null,
             mimeType: 'application/pdf',
             uploadedBy: user.id
@@ -54,11 +79,23 @@ router.post('/migrate-existing-documents', async (req, res) => {
         
         // Migrate minimum wage signature
         if (user.minimum_wage_signature) {
+          let cloudinaryUrl = user.minimum_wage_signature;
+          
+          // If it's base64, upload to Cloudinary
+          if (user.minimum_wage_signature.startsWith('data:')) {
+            console.log(`📤 Uploading signature for user ${user.id} to Cloudinary...`);
+            const uploadResult = await cloudinary.uploader.upload(user.minimum_wage_signature, {
+              folder: 'verification-documents',
+              resource_type: 'auto'
+            });
+            cloudinaryUrl = uploadResult.secure_url;
+          }
+          
           await VerificationDocument.create({
             userId: user.id,
             documentType: 'minimum_wage_signature',
             fileName: 'Mindestlohn-Unterschrift',
-            filePath: user.minimum_wage_signature,
+            filePath: cloudinaryUrl,
             fileSize: null,
             mimeType: 'image/png',
             uploadedBy: user.id
