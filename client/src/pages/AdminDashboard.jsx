@@ -11,6 +11,7 @@ import PricingSettings from '../components/PricingSettings';
 import ReportsSummary from '../components/ReportsSummary';
 import ContractorDocumentsModal from '../components/ContractorDocumentsModal';
 import CancellationModal from '../components/CancellationModal';
+import BulkInvoiceModal from '../components/BulkInvoiceModal';
 import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
@@ -32,6 +33,8 @@ export default function AdminDashboard() {
   const [editingOrderFull, setEditingOrderFull] = useState(null);
   const [selectedContractorForDocs, setSelectedContractorForDocs] = useState(null);
   const [cancellingOrder, setCancellingOrder] = useState(null);
+  const [selectedOrdersForInvoice, setSelectedOrdersForInvoice] = useState([]);
+  const [showBulkInvoiceModal, setShowBulkInvoiceModal] = useState(false);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -429,10 +432,50 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {activeTab === 'orders' && (
           <div className="bg-white shadow rounded-lg overflow-hidden">
+            {/* Bulk Invoice Actions */}
+            {selectedOrdersForInvoice.length > 0 && (
+              <div className="bg-blue-50 border-b border-blue-200 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm font-medium text-blue-900">
+                      {selectedOrdersForInvoice.length} Auftrag{selectedOrdersForInvoice.length !== 1 ? 'e' : ''} ausgewählt
+                    </span>
+                    <button
+                      onClick={() => setSelectedOrdersForInvoice([])}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Auswahl aufheben
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setShowBulkInvoiceModal(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+                  >
+                    <span>📄</span>
+                    <span>Sammelrechnung erstellen</span>
+                  </button>
+                </div>
+              </div>
+            )}
+            
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <input
+                        type="checkbox"
+                        checked={selectedOrdersForInvoice.length === orders.filter(o => o.status === 'completed').length && orders.filter(o => o.status === 'completed').length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedOrdersForInvoice(orders.filter(o => o.status === 'completed').map(o => o.id));
+                          } else {
+                            setSelectedOrdersForInvoice([]);
+                          }
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kunde</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Auftragnehmer</th>
@@ -444,7 +487,23 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {orders.map((order) => (
-                    <tr key={order.id}>
+                    <tr key={order.id} className={selectedOrdersForInvoice.includes(order.id) ? 'bg-blue-50' : ''}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {order.status === 'completed' && (
+                          <input
+                            type="checkbox"
+                            checked={selectedOrdersForInvoice.includes(order.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedOrdersForInvoice([...selectedOrdersForInvoice, order.id]);
+                              } else {
+                                setSelectedOrdersForInvoice(selectedOrdersForInvoice.filter(id => id !== order.id));
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{order.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {order.customer_first_name} {order.customer_last_name}
@@ -1162,6 +1221,21 @@ export default function AdminDashboard() {
             setCancellingOrder(null);
             loadData();
             alert('Auftrag erfolgreich storniert!');
+          }}
+        />
+      )}
+
+      {/* Bulk Invoice Modal */}
+      {showBulkInvoiceModal && selectedOrdersForInvoice.length > 0 && (
+        <BulkInvoiceModal
+          orders={orders.filter(o => selectedOrdersForInvoice.includes(o.id))}
+          onClose={() => setShowBulkInvoiceModal(false)}
+          onSuccess={(invoice) => {
+            setShowBulkInvoiceModal(false);
+            setSelectedOrdersForInvoice([]);
+            loadData();
+            // Open PDF in new tab
+            window.open(`${process.env.REACT_APP_API_URL}/invoices/${invoice.id}/pdf`, '_blank');
           }}
         />
       )}
