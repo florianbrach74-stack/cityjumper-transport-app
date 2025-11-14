@@ -90,17 +90,15 @@ class OrderBid {
       
       // Use the CURRENT customer price, not the price when bid was placed
       // This ensures the assignment works even if customer increased the price
-      // The contractor still gets their bid amount
+      // The contractor gets their bid amount (stored in the bid record)
       await client.query(
         `UPDATE transport_orders 
          SET contractor_id = $1, 
              status = 'accepted', 
-             customer_price = $2,
-             contractor_price = $3,
              price = $2,
              accepted_at = CURRENT_TIMESTAMP 
-         WHERE id = $4 AND status = 'pending'`,
-        [bid.contractor_id, currentCustomerPrice, bid.bid_amount, bid.order_id]
+         WHERE id = $3 AND status = 'pending'`,
+        [bid.contractor_id, currentCustomerPrice, bid.order_id]
       );
 
       await client.query('COMMIT');
