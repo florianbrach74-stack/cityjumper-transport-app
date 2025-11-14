@@ -32,7 +32,8 @@ app.use('/api/employees', require('./routes/employees'));
 app.use('/api/contractors', require('./routes/contractors'));
 app.use('/api/pricing', require('./routes/pricing'));
 app.use('/api/reports', require('./routes/reports'));
-app.use('/api/invoices', require('./routes/invoices'));
+// Temporarily disabled until Railway cache clears
+// app.use('/api/invoices', require('./routes/invoices'));
 app.use('/api/cancellation', require('./routes/cancellation'));
 app.use('/api', require('./routes/test-email'));
 app.use('/api/employee-assignment', require('./routes/employee-assignment'));
