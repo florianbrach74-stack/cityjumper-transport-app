@@ -295,6 +295,12 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
     const invoiceDate = new Date().toLocaleDateString('de-DE');
     const dueDateFormatted = dueDate ? new Date(dueDate).toLocaleDateString('de-DE') : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE');
 
+    console.log('📧 Email check:', {
+      shouldSendEmail,
+      customerEmail: orders[0].customer_email,
+      willSend: shouldSendEmail && orders[0].customer_email
+    });
+
     // Send email if requested
     if (shouldSendEmail && orders[0].customer_email) {
       try {
