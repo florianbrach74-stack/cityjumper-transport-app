@@ -469,10 +469,17 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     doc.fillColor('#000000');
     y += 20;
     
+    // Calculate totals for display
+    let subtotalWithoutWaiting = 0;
+    let totalWaitingFees = 0;
+    
     // Orders
     orders.forEach((order) => {
       const price = parseFloat(order.price) || 0;
       const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
+      
+      subtotalWithoutWaiting += price;
+      totalWaitingFees += waitingFee;
       
       // Build full pickup address
       let pickupLocation = '';
@@ -527,18 +534,26 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     doc.moveTo(50, y).lineTo(550, y).stroke();
     y += 15;
     
-    // Convert database values to numbers
-    const subtotal = parseFloat(invoice.subtotal) || 0;
-    const taxAmount = parseFloat(invoice.tax_amount) || 0;
-    const totalAmount = parseFloat(invoice.total_amount) || 0;
+    const nettoWithoutWaiting = subtotalWithoutWaiting;
+    const nettoWithWaiting = subtotalWithoutWaiting + totalWaitingFees;
+    const taxAmount = nettoWithWaiting * 0.19;
+    const totalAmount = nettoWithWaiting + taxAmount;
     
     doc.fontSize(10)
        .text('Zwischensumme (Fahrten):', 350, y)
-       .text(`€ ${subtotal.toFixed(2)}`, 480, y, { align: 'right' });
+       .text(`€ ${nettoWithoutWaiting.toFixed(2)}`, 480, y, { align: 'right' });
     y += 15;
     
+    if (totalWaitingFees > 0) {
+      doc.fillColor('#f59e0b')
+         .text('Wartezeit-Gebühren:', 350, y)
+         .text(`€ ${totalWaitingFees.toFixed(2)}`, 480, y, { align: 'right' });
+      doc.fillColor('#000000');
+      y += 15;
+    }
+    
     doc.text('Nettobetrag:', 350, y)
-       .text(`€ ${subtotal.toFixed(2)}`, 480, y, { align: 'right' });
+       .text(`€ ${nettoWithWaiting.toFixed(2)}`, 480, y, { align: 'right' });
     y += 15;
     
     doc.text('zzgl. 19% MwSt.:', 350, y)
