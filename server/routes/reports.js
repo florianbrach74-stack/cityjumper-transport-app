@@ -306,6 +306,7 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
   }
   try {
     const { invoiceNumber } = req.params;
+    console.log('📥 PDF download request for invoice:', invoiceNumber);
     
     // Get invoice details
     const invoiceResult = await pool.query(
@@ -314,10 +315,12 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     );
     
     if (invoiceResult.rows.length === 0) {
+      console.error('❌ Invoice not found:', invoiceNumber);
       return res.status(404).json({ error: 'Invoice not found' });
     }
     
     const invoice = invoiceResult.rows[0];
+    console.log('✅ Invoice found:', invoiceNumber);
     
     // If PDF URL exists in Cloudinary, redirect to it
     if (invoice.pdf_url) {
@@ -326,7 +329,18 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     
     // Get invoice items (orders)
     const itemsResult = await pool.query(
-      `SELECT io.*, o.*, 
+      `SELECT io.*, 
+              o.id as order_id,
+              o.pickup_address,
+              o.pickup_city,
+              o.pickup_postal_code,
+              o.delivery_address,
+              o.delivery_city,
+              o.delivery_postal_code,
+              o.price,
+              o.waiting_time_fee,
+              o.waiting_time_approved,
+              o.created_at,
               c.first_name as customer_first_name, 
               c.last_name as customer_last_name,
               c.company_name as customer_company,
@@ -344,11 +358,14 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     );
     
     const orders = itemsResult.rows;
+    console.log('📦 Orders found:', orders.length);
     
     if (orders.length === 0) {
+      console.error('❌ No orders found for invoice:', invoiceNumber);
       return res.status(404).json({ error: 'No orders found for this invoice' });
     }
     
+    console.log('🎨 Generating PDF...');
     // Generate PDF (reuse existing PDF generation code)
     const PDFDocument = require('pdfkit');
     const doc = new PDFDocument({ margin: 50 });
@@ -513,9 +530,13 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
        .text('USt-IdNr: DE299198928 | Steuernummer: 33/237/00521', 50, y + 24, { align: 'center', width: 500 });
     
     doc.end();
+    console.log('✅ PDF generated successfully for invoice:', req.params.invoiceNumber);
   } catch (error) {
-    console.error('Error generating invoice PDF:', error);
-    res.status(500).json({ error: error.message });
+    console.error('❌ Error generating invoice PDF:', error);
+    console.error('Error stack:', error.stack);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message });
+    }
   }
 });
 
