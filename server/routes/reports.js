@@ -291,15 +291,14 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
 
     totals.total = totals.subtotal + totals.waitingTimeFees;
 
-    // Generate sequential invoice number
-    const invoiceNumberResult = await pool.query('SELECT get_next_invoice_number() as invoice_number');
-    const invoiceNumber = invoiceNumberResult.rows[0].invoice_number;
-    
     const invoiceDate = new Date().toLocaleDateString('de-DE');
     const dueDateFormatted = dueDate ? new Date(dueDate).toLocaleDateString('de-DE') : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE');
     
-    console.log('📄 Generated invoice number:', invoiceNumber);
-
+    // PREVIEW next invoice number (without reserving it)
+    const previewResult = await pool.query('SELECT preview_next_invoice_number() as invoice_number');
+    let invoiceNumber = previewResult.rows[0].invoice_number;
+    console.log('👁️ Preview invoice number:', invoiceNumber);
+    
     console.log('📧 Email check:', {
       shouldSendEmail,
       customerEmail: orders[0].customer_email,
@@ -308,6 +307,10 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
 
     // Send email if requested
     if (shouldSendEmail && orders[0].customer_email) {
+      // RESERVE the invoice number NOW (actually increment counter)
+      const reserveResult = await pool.query('SELECT reserve_next_invoice_number() as invoice_number');
+      invoiceNumber = reserveResult.rows[0].invoice_number;
+      console.log('📄 Reserved invoice number:', invoiceNumber);
       try {
         const { sendEmail } = require('../config/email');
         const PDFDocument = require('pdfkit');
