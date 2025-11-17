@@ -389,7 +389,8 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     doc.fontSize(28).text('RECHNUNG', 350, 50, { align: 'right' });
     doc.fontSize(10)
        .text(`Nr: ${invoiceNumber}`, 350, 90, { align: 'right' })
-       .text(`Datum: ${invoiceDate}`, 350, 110, { align: 'right' });
+       .text(`Datum: ${invoiceDate}`, 350, 110, { align: 'right' })
+       .text(`Fällig: ${dueDate}`, 350, 130, { align: 'right' });
     
     // Customer info
     doc.fontSize(11).text('Rechnungsempfänger:', 50, 290);
@@ -700,7 +701,8 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         doc.fontSize(28).text('RECHNUNG', 350, 50, { align: 'right' });
         doc.fontSize(10)
            .text(`Nr: ${invoiceNumber}`, 350, 90, { align: 'right' })
-           .text(`Datum: ${invoiceDate}`, 350, 110, { align: 'right' });
+           .text(`Datum: ${invoiceDate}`, 350, 110, { align: 'right' })
+           .text(`Fällig: ${dueDateFormatted}`, 350, 130, { align: 'right' });
         
         // Customer info
         doc.fontSize(11).text('Rechnungsempfänger:', 50, 290);
