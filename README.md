@@ -39,7 +39,9 @@ Courierly ist eine vollständige Transport-Management-Plattform, die Kunden, Auf
 - 🔒 **Mindestlohn-Validierung**: Echtzeit-Prüfung verhindert Unterschreitung des Mindestlohns
 - 🗺️ **Interaktive Karten**: Leaflet.js mit vollständiger Routenvisualisierung
 - 📊 **Reporting & Abrechnungen**: Zeitraum-Filter, CSV-Export, Sammelrechnungen
-- 📄 **Professionelle Rechnungen**: MwSt-Berechnung, editierbare Felder, PDF-Vorschau
+- 📄 **Professionelle Rechnungen**: PDF-Download, Email-Versand, Wartezeit-Gebühren separat ausgewiesen
+- 🔄 **Auto-Refresh**: Dashboard aktualisiert sich automatisch alle 60 Sekunden
+- 💾 **Position-Persistenz**: Aktiver Tab bleibt nach Reload erhalten
 - 🔴 **Intelligentes Stornierungssystem**: AGB-konforme Gebühren, automatische Preisanpassungen
 - ⚖️ **Rechtliche Compliance**: AGB, Widerrufsbelehrung, Consent-Tracking
 - 📱 **Responsive Design**: Optimiert für Desktop, Tablet & Mobile
@@ -50,6 +52,7 @@ Courierly ist eine vollständige Transport-Management-Plattform, die Kunden, Auf
 - ✍️ **Digitale Signaturen**: Touch-optimierte Unterschrifts-Erfassung
 - 🏢 **Firmendaten-Verwaltung**: Vollständige Rechnungsinformationen für B2B & B2C
 - 👥 **Admin-Vollzugriff**: Komplette Kunden- & Auftragnehmer-Verwaltung
+- ✉️ **Email-Eindeutigkeit**: Jede Email-Adresse kann nur einmal registriert werden
 
 ---
 
@@ -93,26 +96,36 @@ Courierly ist eine vollständige Transport-Management-Plattform, die Kunden, Auf
 
 ### 📄 Professionelle Rechnungen
 - **Vollständiger Rechnungskopf**
-  - Firmenadresse, USt-IdNr
-  - Geschäftsführer, Amtsgericht
+  - Logo optimal positioniert (y=10, keine Überlappung)
+  - Firmenadresse mit 10px Zeilenabstand
+  - USt-IdNr, Steuernummer
+  - Fälligkeitsdatum (Rechnungsdatum + 14 Tage)
   
-- **Editierbare Felder**
-  - Rechnungsnummer (klickbar)
-  - Rechnungsdatum (klickbar)
+- **Rechnungsempfänger**
+  - Vollständige Kundendaten
+  - 10px Zeilenabstand für optimale Lesbarkeit
+  - Firmenname, Adresse, PLZ, Ort, Email
   
-- **MwSt-Berechnung**
-  - 19% MwSt (umschaltbar)
-  - Kleinunternehmer-Option (§19 UStG)
-  - Netto/Brutto-Ausweisung
+- **Leistungsübersicht**
+  - Vollständige Adressen in Route-Spalte
+  - Format: "Straße Hausnr., PLZ Ort - Straße Hausnr., PLZ Ort"
+  - Wartezeit-Gebühren separat ausgewiesen (Orange)
+  
+- **Berechnung**
+  - Zwischensumme (Fahrten): Nur Transportkosten
+  - Wartezeit-Gebühren: Separate Zeile in Orange
+  - Nettobetrag: Summe aus beiden
+  - zzgl. 19% MwSt.
+  - Gesamtbetrag
   
 - **Zahlungsinformationen**
   - IBAN, BIC, Bank
-  - Zahlungsziel (14 Tage)
-  - Verwendungszweck
+  - Zahlungsziel (14 Tage ab Rechnungsdatum)
   
-- **PDF-Vorschau**
-  - Vor Versand prüfen
-  - "Jetzt senden" oder "Abbrechen"
+- **PDF-Funktionen**
+  - Download als PDF
+  - Email-Versand an Kunde
+  - Konsistentes Format (Email = Download)
 
 ### ⚖️ Rechtliche Compliance
 - **AGB-Seite** (`/agb`)
@@ -248,6 +261,8 @@ Courierly ist eine vollständige Transport-Management-Plattform, die Kunden, Auf
 
 - **Administrator** 👨‍💼
   - **Alle Aufträge & Benutzer**: Vollständige Übersicht
+  - **Auto-Refresh**: Dashboard aktualisiert sich automatisch alle 60 Sekunden
+  - **Position-Persistenz**: Aktiver Tab (Aufträge, Kunden, Abrechnung, etc.) bleibt nach Reload erhalten
   - **Bewerbungs-Management**: 
     - Bewerbungen ansehen mit Preis & Marge
     - Akzeptieren → CMR wird automatisch erstellt
@@ -271,8 +286,9 @@ Courierly ist eine vollständige Transport-Management-Plattform, die Kunden, Auf
   - **Rechnungs-Generator** 🆕:
     - Professionelle PDF-Rechnungen erstellen
     - Automatische Übernahme aller Firmendaten
-    - Netto/Brutto-Berechnung (19% MwSt.)
-    - Druckfunktion
+    - Wartezeit-Gebühren separat ausgewiesen
+    - PDF-Download & Email-Versand
+    - Konsistentes Format
   - **Aufträge zuweisen**: An Auftragnehmer oder Mitarbeiter
   - **System-Verwaltung**: Alle Funktionen
   - Profil & Passwort ändern
