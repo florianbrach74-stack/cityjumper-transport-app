@@ -295,6 +295,11 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     
     const invoice = invoiceResult.rows[0];
     
+    // If PDF URL exists in Cloudinary, redirect to it
+    if (invoice.pdf_url) {
+      return res.redirect(invoice.pdf_url);
+    }
+    
     // Get invoice items (orders)
     const itemsResult = await pool.query(
       `SELECT io.*, o.*, 
@@ -781,16 +786,36 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         
         console.log('✅ Email with PDF sent to:', orders[0].customer_email);
         
-        // Save invoice to database
+        // Upload PDF to Cloudinary and save invoice to database
         try {
+          const cloudinary = require('../config/cloudinary');
           const taxAmount = totals.total * 0.19;
           const totalWithTax = totals.total + taxAmount;
           
-          // Insert invoice
+          // Upload PDF to Cloudinary
+          const uploadResult = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+              {
+                resource_type: 'raw',
+                folder: 'invoices',
+                public_id: `invoice_${invoiceNumber}`,
+                format: 'pdf'
+              },
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+              }
+            );
+            uploadStream.end(pdfBuffer);
+          });
+          
+          console.log('☁️ PDF uploaded to Cloudinary:', uploadResult.secure_url);
+          
+          // Insert invoice with PDF URL
           await pool.query(
-            `INSERT INTO sent_invoices (invoice_number, customer_id, invoice_date, due_date, subtotal, tax_amount, total_amount, created_by)
-             VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7)`,
-            [invoiceNumber, orders[0].customer_id, dueDate || null, totals.total, taxAmount, totalWithTax, req.user.id]
+            `INSERT INTO sent_invoices (invoice_number, customer_id, invoice_date, due_date, subtotal, tax_amount, total_amount, pdf_url, created_by)
+             VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8)`,
+            [invoiceNumber, orders[0].customer_id, dueDate || null, totals.total, taxAmount, totalWithTax, uploadResult.secure_url, req.user.id]
           );
           
           // Link orders to invoice and mark as invoiced
@@ -810,7 +835,7 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
             );
           }
           
-          console.log('💾 Invoice saved to database:', invoiceNumber);
+          console.log('💾 Invoice saved to database with PDF URL:', invoiceNumber);
         } catch (dbError) {
           console.error('❌ Failed to save invoice to database:', dbError);
         }
