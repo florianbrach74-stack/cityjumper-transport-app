@@ -108,10 +108,27 @@ export default function ReportsSummary({ userRole }) {
   };
 
   const sendInvoice = async () => {
-    // In a real implementation, this would send the email
-    // For now, we just show a success message
-    alert('Rechnung wurde erfolgreich an den Kunden gesendet!');
-    setInvoicePreview(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/reports/bulk-invoice`,
+        { 
+          orderIds: [invoicePreview.orders[0].id],
+          sendEmail: true
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data.emailSent) {
+        alert('Rechnung wurde erfolgreich per Email an den Kunden gesendet!');
+      } else {
+        alert('Rechnung erstellt, aber Email-Versand fehlgeschlagen. Bitte manuell versenden.');
+      }
+      setInvoicePreview(null);
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      alert(error.response?.data?.error || 'Fehler beim Versenden der Rechnung');
+    }
   };
 
   const previewBulkInvoice = async () => {
@@ -135,9 +152,28 @@ export default function ReportsSummary({ userRole }) {
   };
 
   const sendBulkInvoice = async () => {
-    alert(`Sammelrechnung für ${invoicePreview.orders.length} Aufträge wurde erfolgreich an den Kunden gesendet!`);
-    setSelectedOrders([]);
-    setInvoicePreview(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/reports/bulk-invoice`,
+        { 
+          orderIds: selectedOrders,
+          sendEmail: true
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data.emailSent) {
+        alert(`Sammelrechnung für ${invoicePreview.orders.length} Aufträge wurde erfolgreich per Email an den Kunden gesendet!`);
+      } else {
+        alert(`Sammelrechnung für ${invoicePreview.orders.length} Aufträge erstellt, aber Email-Versand fehlgeschlagen. Bitte manuell versenden.`);
+      }
+      setSelectedOrders([]);
+      setInvoicePreview(null);
+    } catch (error) {
+      console.error('Error sending bulk invoice:', error);
+      alert(error.response?.data?.error || 'Fehler beim Versenden der Sammelrechnung');
+    }
   };
 
   const exportToCSV = () => {
