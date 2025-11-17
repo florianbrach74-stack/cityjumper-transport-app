@@ -378,10 +378,10 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     // Add logo in top left corner
     const logoPath = path.join(__dirname, '..', 'assets', 'courierly-logo.png');
     try {
-      doc.image(logoPath, 50, 20, { width: 100 });
+      doc.image(logoPath, 50, 10, { width: 100 });
     } catch (err) {
       console.log('⚠️ Logo not found, using text instead');
-      doc.fontSize(18).fillColor('#2563eb').text('Courierly', 50, 20);
+      doc.fontSize(18).fillColor('#2563eb').text('Courierly', 50, 10);
     }
     
     // Header - Left side (Company info - starts AFTER logo)
@@ -389,14 +389,14 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     doc.fillColor('#000000');
     
     doc.fontSize(9)
-       .text('Inhaber: Florian Brach', 50, 135)
-       .text('Adolf-Menzel-Straße 71', 50, 140)
-       .text('12621 Berlin', 50, 145)
-       .text('Tel: +49 (0)172 421 66 72', 50, 150)
-       .text('Email: info@courierly.de', 50, 155)
-       .text('Web: www.courierly.de', 50, 160)
-       .text('USt-IdNr: DE299198928', 50, 165)
-       .text('St.-Nr.: 33/237/00521', 50, 170);
+       .text('Inhaber: Florian Brach', 50, 140)
+       .text('Adolf-Menzel-Straße 71', 50, 150)
+       .text('12621 Berlin', 50, 160)
+       .text('Tel: +49 (0)172 421 66 72', 50, 170)
+       .text('Email: info@courierly.de', 50, 180)
+       .text('Web: www.courierly.de', 50, 190)
+       .text('USt-IdNr: DE299198928', 50, 200)
+       .text('St.-Nr.: 33/237/00521', 50, 210);
     
     // Header - Right side (Invoice title)
     const invoiceDate = new Date(invoice.invoice_date).toLocaleDateString('de-DE');
@@ -739,11 +739,11 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         // Add logo in top left corner
         const logoPath = path.join(__dirname, '..', 'assets', 'courierly-logo.png');
         try {
-          doc.image(logoPath, 50, 20, { width: 100 });
+          doc.image(logoPath, 50, 10, { width: 100 });
         } catch (err) {
           console.log('⚠️ Logo not found, using text instead');
           // Fallback to text if logo not found
-          doc.fontSize(18).fillColor('#2563eb').text('Courierly', 50, 20);
+          doc.fontSize(18).fillColor('#2563eb').text('Courierly', 50, 10);
         }
         
         // Header - Left side (Company info - starts AFTER logo)
@@ -751,14 +751,14 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         doc.fillColor('#000000');
         
         doc.fontSize(9)
-           .text('Inhaber: Florian Brach', 50, 135)
-           .text('Adolf-Menzel-Straße 71', 50, 140)
-           .text('12621 Berlin', 50, 145)
-           .text('Tel: +49 (0)172 421 66 72', 50, 150)
-           .text('Email: info@courierly.de', 50, 155)
-           .text('Web: www.courierly.de', 50, 160)
-           .text('USt-IdNr: DE299198928', 50, 165)
-           .text('St.-Nr.: 33/237/00521', 50, 170);
+           .text('Inhaber: Florian Brach', 50, 140)
+           .text('Adolf-Menzel-Straße 71', 50, 150)
+           .text('12621 Berlin', 50, 160)
+           .text('Tel: +49 (0)172 421 66 72', 50, 170)
+           .text('Email: info@courierly.de', 50, 180)
+           .text('Web: www.courierly.de', 50, 190)
+           .text('USt-IdNr: DE299198928', 50, 200)
+           .text('St.-Nr.: 33/237/00521', 50, 210);
         
         // Header - Right side (Invoice title)
         doc.fontSize(28).text('RECHNUNG', 350, 50, { align: 'right' });
