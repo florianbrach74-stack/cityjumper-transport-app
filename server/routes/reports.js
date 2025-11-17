@@ -310,10 +310,10 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
           `${idx + 1}. Auftrag #${order.id} - ${order.pickup_city} → ${order.delivery_city} (${new Date(order.created_at).toLocaleDateString('de-DE')}) - €${parseFloat(order.price).toFixed(2)}`
         ).join('\n');
 
-        await sendEmail({
-          to: orders[0].customer_email,
-          subject: `Sammelrechnung ${invoiceNumber} von Courierly`,
-          html: `
+        await sendEmail(
+          orders[0].customer_email,
+          `Sammelrechnung ${invoiceNumber} von Courierly`,
+          `
             <h2>Ihre Sammelrechnung von Courierly</h2>
             <p>Sehr geehrte/r ${orders[0].customer_first_name} ${orders[0].customer_last_name},</p>
             <p>anbei erhalten Sie Ihre Sammelrechnung für ${orders.length} Auftrag${orders.length > 1 ? 'e' : ''}.</p>
@@ -336,7 +336,7 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
             <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
             <p>Mit freundlichen Grüßen<br>Ihr Courierly Team</p>
           `
-        });
+        );
         
         console.log('✅ Email sent to:', orders[0].customer_email);
       } catch (emailError) {
