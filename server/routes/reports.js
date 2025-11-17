@@ -599,10 +599,67 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
 
     // Send email if requested
     if (shouldSendEmail && orders[0].customer_email) {
-      // RESERVE the invoice number NOW (actually increment counter)
-      const reserveResult = await pool.query('SELECT reserve_next_invoice_number() as invoice_number');
-      invoiceNumber = reserveResult.rows[0].invoice_number;
-      console.log('📄 Reserved invoice number:', invoiceNumber);
+      console.log('🔄 Starting invoice creation process...');
+      
+      // Start a database transaction
+      const client = await pool.connect();
+      
+      try {
+        await client.query('BEGIN');
+        console.log('✅ Transaction started');
+        
+        // RESERVE the invoice number NOW (actually increment counter)
+        const reserveResult = await client.query('SELECT reserve_next_invoice_number() as invoice_number');
+        invoiceNumber = reserveResult.rows[0].invoice_number;
+        console.log('📄 Reserved invoice number:', invoiceNumber);
+        
+        // CRITICAL: Save invoice to DB FIRST (within transaction)
+        const taxAmount = totals.total * 0.19;
+        const totalWithTax = totals.total + taxAmount;
+        
+        console.log('💾 Saving invoice to database...');
+        
+        // Insert invoice
+        await client.query(
+          `INSERT INTO sent_invoices (invoice_number, customer_id, invoice_date, due_date, subtotal, tax_amount, total_amount, created_by)
+           VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7)`,
+          [invoiceNumber, orders[0].customer_id, dueDate || null, totals.total, taxAmount, totalWithTax, req.user.id]
+        );
+        console.log('✅ Invoice saved');
+        
+        // Link orders to invoice and mark as invoiced
+        for (const order of orders) {
+          const orderTotal = parseFloat(order.price) + (order.waiting_time_approved ? parseFloat(order.waiting_time_fee) : 0);
+          
+          // Insert invoice item
+          await client.query(
+            `INSERT INTO invoice_order_items (invoice_number, order_id, amount) VALUES ($1, $2, $3)`,
+            [invoiceNumber, order.id, orderTotal]
+          );
+          
+          // Mark order as invoiced
+          await client.query(
+            `UPDATE transport_orders SET invoiced_at = CURRENT_TIMESTAMP, invoice_number = $1, payment_status = 'unpaid' WHERE id = $2`,
+            [invoiceNumber, order.id]
+          );
+        }
+        console.log('✅ Orders marked as invoiced:', orderIds);
+        
+        // COMMIT transaction - invoice is now saved!
+        await client.query('COMMIT');
+        console.log('✅ Transaction committed - invoice saved to database');
+        
+      } catch (dbError) {
+        // ROLLBACK on error
+        await client.query('ROLLBACK');
+        console.error('❌ CRITICAL: Database transaction failed, rolling back:', dbError);
+        client.release();
+        throw new Error(`Failed to save invoice: ${dbError.message}`);
+      }
+      
+      client.release();
+      
+      // NOW generate and send the email (after DB is saved)
       try {
         const { sendEmail } = require('../config/email');
         const PDFDocument = require('pdfkit');
@@ -810,78 +867,37 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         
         console.log('✅ Email with PDF sent to:', orders[0].customer_email);
         
-        // CRITICAL: Mark orders as invoiced FIRST (before Cloudinary upload)
-        // This ensures orders are marked even if Cloudinary fails
-        const taxAmount = totals.total * 0.19;
-        const totalWithTax = totals.total + taxAmount;
-        
+        // Now upload PDF to Cloudinary (non-critical, can fail)
         try {
-          console.log('💾 Marking orders as invoiced...');
+          const cloudinary = require('../config/cloudinary');
+          const uploadResult = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+              {
+                resource_type: 'raw',
+                folder: 'invoices',
+                public_id: `invoice_${invoiceNumber}`,
+                format: 'pdf'
+              },
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+              }
+            );
+            uploadStream.end(pdfBuffer);
+          });
           
-          // Insert invoice (without PDF URL first)
+          console.log('☁️ PDF uploaded to Cloudinary:', uploadResult.secure_url);
+          
+          // Update invoice with PDF URL
           await pool.query(
-            `INSERT INTO sent_invoices (invoice_number, customer_id, invoice_date, due_date, subtotal, tax_amount, total_amount, created_by)
-             VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7)`,
-            [invoiceNumber, orders[0].customer_id, dueDate || null, totals.total, taxAmount, totalWithTax, req.user.id]
+            `UPDATE sent_invoices SET pdf_url = $1 WHERE invoice_number = $2`,
+            [uploadResult.secure_url, invoiceNumber]
           );
           
-          // Link orders to invoice and mark as invoiced
-          for (const order of orders) {
-            const orderTotal = parseFloat(order.price) + (order.waiting_time_approved ? parseFloat(order.waiting_time_fee) : 0);
-            
-            // Insert invoice item
-            await pool.query(
-              `INSERT INTO invoice_order_items (invoice_number, order_id, amount) VALUES ($1, $2, $3)`,
-              [invoiceNumber, order.id, orderTotal]
-            );
-            
-            // Mark order as invoiced
-            await pool.query(
-              `UPDATE transport_orders SET invoiced_at = CURRENT_TIMESTAMP, invoice_number = $1, payment_status = 'unpaid' WHERE id = $2`,
-              [invoiceNumber, order.id]
-            );
-          }
-          
-          console.log('✅ Orders marked as invoiced:', orderIds);
-          
-          // Now upload PDF to Cloudinary (non-critical, can fail)
-          try {
-            const cloudinary = require('../config/cloudinary');
-            const uploadResult = await new Promise((resolve, reject) => {
-              const uploadStream = cloudinary.uploader.upload_stream(
-                {
-                  resource_type: 'raw',
-                  folder: 'invoices',
-                  public_id: `invoice_${invoiceNumber}`,
-                  format: 'pdf'
-                },
-                (error, result) => {
-                  if (error) reject(error);
-                  else resolve(result);
-                }
-              );
-              uploadStream.end(pdfBuffer);
-            });
-            
-            console.log('☁️ PDF uploaded to Cloudinary:', uploadResult.secure_url);
-            
-            // Update invoice with PDF URL
-            await pool.query(
-              `UPDATE sent_invoices SET pdf_url = $1 WHERE invoice_number = $2`,
-              [uploadResult.secure_url, invoiceNumber]
-            );
-            
-            console.log('✅ Invoice PDF URL saved');
-          } catch (cloudinaryError) {
-            console.error('⚠️ Cloudinary upload failed (non-critical):', cloudinaryError.message);
-            // Don't fail the request - invoice is already saved
-          }
-          
-        } catch (dbError) {
-          console.error('❌ CRITICAL: Failed to save invoice to database:', dbError);
-          console.error('Error details:', dbError);
-          // This is critical - we should notify the user
-          throw new Error(`Database error: ${dbError.message}`);
+          console.log('✅ Invoice PDF URL saved');
+        } catch (cloudinaryError) {
+          console.error('⚠️ Cloudinary upload failed (non-critical):', cloudinaryError.message);
+          // Don't fail the request - invoice is already saved
         }
       } catch (emailError) {
         console.error('❌ Email sending failed:', emailError);
