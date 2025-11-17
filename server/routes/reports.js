@@ -427,10 +427,29 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         doc.fillColor('#000000').fontSize(10);
         
         if (notes) {
-          doc.moveDown(2);
-          doc.fontSize(10).text('Anmerkungen:');
-          doc.fontSize(9).text(notes);
+          y += 30;
+          doc.fontSize(10).text('Anmerkungen:', 50, y);
+          y += 15;
+          doc.fontSize(9).text(notes, 50, y);
+          y += 30;
+        } else {
+          y += 30;
         }
+        
+        // Bank details
+        doc.fontSize(10).text('Zahlungsinformationen:', 50, y);
+        y += 15;
+        doc.fontSize(9)
+           .text('Bank: Deutsche Bank', 50, y)
+           .text('IBAN: DE92 1005 0000 1062 9152 80', 50, y + 15)
+           .text('BIC: BELADEBEXXX', 50, y + 30);
+        
+        // Footer
+        y += 60;
+        doc.fontSize(8).fillColor('#6b7280')
+           .text('Vielen Dank für Ihr Vertrauen! | Courierly – eine Marke der FB Transporte', 50, y, { align: 'center', width: 500 })
+           .text('Adolf-Menzel Straße 71 | 12621 Berlin | DE 92 1005 0000 1062 9152 80 | BELADEBEXXX', 50, y + 12, { align: 'center', width: 500 })
+           .text('USt-IdNr: DE299198928 | Steuernummer: 33/237/00521', 50, y + 24, { align: 'center', width: 500 });
         
         doc.end();
         
