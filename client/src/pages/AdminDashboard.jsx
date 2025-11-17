@@ -16,7 +16,10 @@ import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('orders');
+  // Restore activeTab from localStorage
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('adminActiveTab') || 'orders';
+  });
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState(null);
@@ -36,6 +39,11 @@ export default function AdminDashboard() {
   const [selectedOrdersForInvoice, setSelectedOrdersForInvoice] = useState([]);
   const [showBulkInvoiceModal, setShowBulkInvoiceModal] = useState(false);
 
+  // Save activeTab to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('adminActiveTab', activeTab);
+  }, [activeTab]);
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (user.role !== 'admin') {
@@ -43,6 +51,13 @@ export default function AdminDashboard() {
       return;
     }
     loadData();
+
+    // Auto-refresh every 60 seconds
+    const refreshInterval = setInterval(() => {
+      loadData();
+    }, 60000);
+
+    return () => clearInterval(refreshInterval);
   }, [navigate]);
 
   const loadData = async () => {
