@@ -264,7 +264,22 @@ router.patch('/invoice/:invoiceNumber/payment-status', authenticateToken, author
 });
 
 // Get invoice PDF
-router.get('/invoice/:invoiceNumber/pdf', authenticateToken, async (req, res) => {
+router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
+  // Get token from query parameter or header
+  const token = req.query.token || req.headers.authorization?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+  
+  // Verify token manually
+  const jwt = require('jsonwebtoken');
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
   try {
     const { invoiceNumber } = req.params;
     
