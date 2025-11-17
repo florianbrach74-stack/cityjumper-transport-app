@@ -307,9 +307,9 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
               c.last_name as customer_last_name,
               c.company_name as customer_company,
               c.email as customer_email,
-              c.street as customer_street,
-              c.city as customer_city,
-              c.postal_code as customer_postal_code,
+              c.company_address as customer_street,
+              c.company_city as customer_city,
+              c.company_postal_code as customer_postal_code,
               c.phone as customer_phone
        FROM invoice_order_items io
        JOIN transport_orders o ON io.order_id = o.id
@@ -507,9 +507,9 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
               c.first_name as customer_first_name,
               c.last_name as customer_last_name,
               c.company_name as customer_company,
-              c.street as customer_street,
-              c.city as customer_city,
-              c.postal_code as customer_postal_code,
+              c.company_address as customer_street,
+              c.company_city as customer_city,
+              c.company_postal_code as customer_postal_code,
               c.phone as customer_phone
        FROM transport_orders o
        LEFT JOIN users c ON o.customer_id = c.id

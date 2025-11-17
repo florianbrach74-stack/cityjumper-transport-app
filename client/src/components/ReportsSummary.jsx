@@ -212,14 +212,13 @@ export default function ReportsSummary({ userRole }) {
     try {
       const token = localStorage.getItem('token');
       await axios.patch(
-        `${import.meta.env.VITE_API_URL}/api/reports/invoice/${invoiceNumber}/payment-status`,
+        `${import.meta.env.VITE_API_URL}/reports/invoice/${invoiceNumber}/payment-status`,
         { paymentStatus: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
       // Refresh orders
-      fetchOrders();
-      alert('Zahlungsstatus aktualisiert!');
+      fetchSummary();
     } catch (error) {
       console.error('Error updating payment status:', error);
       alert(error.response?.data?.error || 'Fehler beim Aktualisieren des Zahlungsstatus');
