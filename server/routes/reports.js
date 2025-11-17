@@ -474,12 +474,36 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
       const price = parseFloat(order.price) || 0;
       const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
       
-      const pickupLocation = order.pickup_postal_code && order.pickup_city 
-        ? `${order.pickup_postal_code} ${order.pickup_city}` 
-        : (order.pickup_address || order.pickup_city || 'N/A');
-      const deliveryLocation = order.delivery_postal_code && order.delivery_city 
-        ? `${order.delivery_postal_code} ${order.delivery_city}` 
-        : (order.delivery_address || order.delivery_city || 'N/A');
+      // Build full pickup address
+      let pickupLocation = '';
+      if (order.pickup_address) {
+        pickupLocation = order.pickup_address;
+        if (order.pickup_postal_code && order.pickup_city) {
+          pickupLocation += `, ${order.pickup_postal_code} ${order.pickup_city}`;
+        } else if (order.pickup_city) {
+          pickupLocation += `, ${order.pickup_city}`;
+        }
+      } else if (order.pickup_postal_code && order.pickup_city) {
+        pickupLocation = `${order.pickup_postal_code} ${order.pickup_city}`;
+      } else {
+        pickupLocation = order.pickup_city || 'N/A';
+      }
+      
+      // Build full delivery address
+      let deliveryLocation = '';
+      if (order.delivery_address) {
+        deliveryLocation = order.delivery_address;
+        if (order.delivery_postal_code && order.delivery_city) {
+          deliveryLocation += `, ${order.delivery_postal_code} ${order.delivery_city}`;
+        } else if (order.delivery_city) {
+          deliveryLocation += `, ${order.delivery_city}`;
+        }
+      } else if (order.delivery_postal_code && order.delivery_city) {
+        deliveryLocation = `${order.delivery_postal_code} ${order.delivery_city}`;
+      } else {
+        deliveryLocation = order.delivery_city || 'N/A';
+      }
+      
       const route = `${pickupLocation} - ${deliveryLocation}`;
       doc.fontSize(10)
          .text(`#${order.order_id}`, 50, y)
@@ -800,12 +824,36 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
           const price = parseFloat(order.price) || 0;
           const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
           
-          const pickupLocation = order.pickup_postal_code && order.pickup_city 
-            ? `${order.pickup_postal_code} ${order.pickup_city}` 
-            : (order.pickup_address || order.pickup_city || 'N/A');
-          const deliveryLocation = order.delivery_postal_code && order.delivery_city 
-            ? `${order.delivery_postal_code} ${order.delivery_city}` 
-            : (order.delivery_address || order.delivery_city || 'N/A');
+          // Build full pickup address
+          let pickupLocation = '';
+          if (order.pickup_address) {
+            pickupLocation = order.pickup_address;
+            if (order.pickup_postal_code && order.pickup_city) {
+              pickupLocation += `, ${order.pickup_postal_code} ${order.pickup_city}`;
+            } else if (order.pickup_city) {
+              pickupLocation += `, ${order.pickup_city}`;
+            }
+          } else if (order.pickup_postal_code && order.pickup_city) {
+            pickupLocation = `${order.pickup_postal_code} ${order.pickup_city}`;
+          } else {
+            pickupLocation = order.pickup_city || 'N/A';
+          }
+          
+          // Build full delivery address
+          let deliveryLocation = '';
+          if (order.delivery_address) {
+            deliveryLocation = order.delivery_address;
+            if (order.delivery_postal_code && order.delivery_city) {
+              deliveryLocation += `, ${order.delivery_postal_code} ${order.delivery_city}`;
+            } else if (order.delivery_city) {
+              deliveryLocation += `, ${order.delivery_city}`;
+            }
+          } else if (order.delivery_postal_code && order.delivery_city) {
+            deliveryLocation = `${order.delivery_postal_code} ${order.delivery_city}`;
+          } else {
+            deliveryLocation = order.delivery_city || 'N/A';
+          }
+          
           const route = `${pickupLocation} - ${deliveryLocation}`;
           doc.fontSize(10)
              .text(`#${order.id}`, 50, y)
