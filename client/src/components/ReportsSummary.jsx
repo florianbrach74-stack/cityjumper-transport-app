@@ -449,6 +449,9 @@ export default function ReportsSummary({ userRole }) {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Rechnung
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Zahlungsstatus
+                    </th>
                   </>
                 )}
               </tr>
@@ -509,13 +512,39 @@ export default function ReportsSummary({ userRole }) {
                           {formatPrice(commission)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => previewSingleInvoice(order.id)}
-                            className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
-                          >
-                            <FileText className="h-4 w-4 mr-1" />
-                            Rechnung
-                          </button>
+                          {order.invoice_number ? (
+                            <div className="flex flex-col space-y-1">
+                              <span className="text-xs font-semibold text-blue-600">
+                                {order.invoice_number}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {order.invoiced_at ? new Date(order.invoiced_at).toLocaleDateString('de-DE') : '-'}
+                              </span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => previewSingleInvoice(order.id)}
+                              className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              Rechnung
+                            </button>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {order.invoice_number ? (
+                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                              order.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                              order.payment_status === 'overdue' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {order.payment_status === 'paid' ? 'Bezahlt' :
+                               order.payment_status === 'overdue' ? 'Überfällig' :
+                               'Offen'}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
                         </td>
                       </>
                     )}
