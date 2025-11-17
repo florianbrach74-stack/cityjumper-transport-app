@@ -440,7 +440,7 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         doc.fontSize(10).text('Zahlungsinformationen:', 50, y);
         y += 15;
         doc.fontSize(9)
-           .text('Bank: Deutsche Bank', 50, y)
+           .text('Bank: Berliner Sparkasse', 50, y)
            .text('IBAN: DE92 1005 0000 1062 9152 80', 50, y + 15)
            .text('BIC: BELADEBEXXX', 50, y + 30);
         
