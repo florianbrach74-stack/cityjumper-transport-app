@@ -273,6 +273,15 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
     if (customerIds.length > 1) {
       return res.status(400).json({ error: 'Alle Aufträge müssen vom selben Kunden sein' });
     }
+    
+    // Check if any orders are already invoiced
+    const alreadyInvoiced = orders.filter(o => o.invoiced_at || o.invoice_number);
+    if (alreadyInvoiced.length > 0 && shouldSendEmail) {
+      const invoicedIds = alreadyInvoiced.map(o => `#${o.id}`).join(', ');
+      return res.status(400).json({ 
+        error: `Folgende Aufträge wurden bereits abgerechnet: ${invoicedIds}. Bitte entfernen Sie diese aus der Auswahl.` 
+      });
+    }
 
     // Calculate totals
     const totals = {
@@ -485,6 +494,40 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         );
         
         console.log('✅ Email with PDF sent to:', orders[0].customer_email);
+        
+        // Save invoice to database
+        try {
+          const taxAmount = totals.total * 0.19;
+          const totalWithTax = totals.total + taxAmount;
+          
+          // Insert invoice
+          await pool.query(
+            `INSERT INTO sent_invoices (invoice_number, customer_id, invoice_date, due_date, subtotal, tax_amount, total_amount, created_by)
+             VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7)`,
+            [invoiceNumber, orders[0].customer_id, dueDate || null, totals.total, taxAmount, totalWithTax, req.user.id]
+          );
+          
+          // Link orders to invoice and mark as invoiced
+          for (const order of orders) {
+            const orderTotal = parseFloat(order.price) + (order.waiting_time_approved ? parseFloat(order.waiting_time_fee) : 0);
+            
+            // Insert invoice item
+            await pool.query(
+              `INSERT INTO invoice_order_items (invoice_number, order_id, amount) VALUES ($1, $2, $3)`,
+              [invoiceNumber, order.id, orderTotal]
+            );
+            
+            // Mark order as invoiced
+            await pool.query(
+              `UPDATE transport_orders SET invoiced_at = CURRENT_TIMESTAMP, invoice_number = $1 WHERE id = $2`,
+              [invoiceNumber, order.id]
+            );
+          }
+          
+          console.log('💾 Invoice saved to database:', invoiceNumber);
+        } catch (dbError) {
+          console.error('❌ Failed to save invoice to database:', dbError);
+        }
       } catch (emailError) {
         console.error('❌ Email sending failed:', emailError);
         // Don't fail the whole request if email fails
