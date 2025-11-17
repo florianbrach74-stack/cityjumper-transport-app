@@ -366,19 +366,18 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         orders.forEach((order, idx) => {
           const price = parseFloat(order.price) || 0;
           const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
-          const total = price + waitingFee;
           
           doc.fontSize(10)
              .text(`#${order.id}`, 50, y)
              .text(`${order.pickup_city} → ${order.delivery_city}`, 150, y)
              .text(new Date(order.created_at).toLocaleDateString('de-DE'), 350, y)
-             .text(`€${price.toFixed(2)}`, 480, y, { align: 'right' });
+             .text(`€ ${price.toFixed(2)}`, 480, y, { align: 'right' });
           
           y += 15;
           
           if (waitingFee > 0) {
             doc.fontSize(8).fillColor('#f59e0b')
-               .text(`inkl. €${waitingFee.toFixed(2)} Wartezeit`, 480, y, { align: 'right' });
+               .text(`zzgl. € ${waitingFee.toFixed(2)} Wartezeit`, 480, y, { align: 'right' });
             doc.fillColor('#000000').fontSize(10);
             y += 15;
           }
@@ -392,29 +391,29 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         
         doc.fontSize(10)
            .text('Zwischensumme (Fahrten):', 350, y)
-           .text(`€${totals.subtotal.toFixed(2)}`, 480, y, { align: 'right' });
+           .text(`€ ${totals.subtotal.toFixed(2)}`, 480, y, { align: 'right' });
         y += 15;
         
         if (totals.waitingTimeFees > 0) {
           doc.fillColor('#f59e0b')
              .text('Wartezeit-Gebühren:', 350, y)
-             .text(`€${totals.waitingTimeFees.toFixed(2)}`, 480, y, { align: 'right' });
+             .text(`€ ${totals.waitingTimeFees.toFixed(2)}`, 480, y, { align: 'right' });
           doc.fillColor('#000000');
           y += 15;
         }
         
         doc.text('Nettobetrag:', 350, y)
-           .text(`€${totals.total.toFixed(2)}`, 480, y, { align: 'right' });
+           .text(`€ ${totals.total.toFixed(2)}`, 480, y, { align: 'right' });
         y += 15;
         
         const taxAmount = totals.total * 0.19;
         doc.text('zzgl. 19% MwSt.:', 350, y)
-           .text(`€${taxAmount.toFixed(2)}`, 480, y, { align: 'right' });
+           .text(`€ ${taxAmount.toFixed(2)}`, 480, y, { align: 'right' });
         y += 20;
         
         doc.fontSize(12).fillColor('#16a34a')
            .text('Gesamtbetrag:', 350, y)
-           .text(`€${(totals.total + taxAmount).toFixed(2)}`, 480, y, { align: 'right' });
+           .text(`€ ${(totals.total + taxAmount).toFixed(2)}`, 480, y, { align: 'right' });
         doc.fillColor('#000000').fontSize(10);
         
         if (notes) {
