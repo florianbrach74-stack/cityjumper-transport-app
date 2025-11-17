@@ -236,7 +236,7 @@ router.get('/by-customer', authenticateToken, authorizeRole('admin'), async (req
 router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
     console.log('Bulk invoice request:', req.body);
-    const { orderIds, customerId } = req.body;
+    const { orderIds, customerId, sendEmail: shouldSendEmail, notes, dueDate } = req.body;
 
     if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
       console.error('Invalid orderIds:', orderIds);
@@ -291,6 +291,54 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
 
     totals.total = totals.subtotal + totals.waitingTimeFees;
 
+    const invoiceNumber = `INV-${Date.now()}`;
+    const invoiceDate = new Date().toLocaleDateString('de-DE');
+    const dueDateFormatted = dueDate ? new Date(dueDate).toLocaleDateString('de-DE') : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE');
+
+    // Send email if requested
+    if (shouldSendEmail && orders[0].customer_email) {
+      try {
+        const { sendEmail } = require('../config/email');
+        
+        const ordersList = orders.map((order, idx) => 
+          `${idx + 1}. Auftrag #${order.id} - ${order.pickup_city} → ${order.delivery_city} (${new Date(order.created_at).toLocaleDateString('de-DE')}) - €${parseFloat(order.price).toFixed(2)}`
+        ).join('\n');
+
+        await sendEmail({
+          to: orders[0].customer_email,
+          subject: `Sammelrechnung ${invoiceNumber} von Courierly`,
+          html: `
+            <h2>Ihre Sammelrechnung von Courierly</h2>
+            <p>Sehr geehrte/r ${orders[0].customer_first_name} ${orders[0].customer_last_name},</p>
+            <p>anbei erhalten Sie Ihre Sammelrechnung für ${orders.length} Auftrag${orders.length > 1 ? 'e' : ''}.</p>
+            
+            <h3>Rechnungsdetails:</h3>
+            <p><strong>Rechnungsnummer:</strong> ${invoiceNumber}<br>
+            <strong>Rechnungsdatum:</strong> ${invoiceDate}<br>
+            <strong>Fälligkeitsdatum:</strong> ${dueDateFormatted}</p>
+            
+            <h3>Positionen:</h3>
+            <pre style="font-family: monospace; background: #f5f5f5; padding: 10px; border-radius: 5px;">${ordersList}</pre>
+            
+            <h3>Summen:</h3>
+            <p><strong>Zwischensumme:</strong> €${totals.subtotal.toFixed(2)}<br>
+            ${totals.waitingTimeFees > 0 ? `<strong>Wartezeit-Gebühren:</strong> €${totals.waitingTimeFees.toFixed(2)}<br>` : ''}
+            <strong>Gesamtsumme:</strong> €${totals.total.toFixed(2)}</p>
+            
+            ${notes ? `<p><strong>Anmerkungen:</strong><br>${notes}</p>` : ''}
+            
+            <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
+            <p>Mit freundlichen Grüßen<br>Ihr Courierly Team</p>
+          `
+        });
+        
+        console.log('✅ Email sent to:', orders[0].customer_email);
+      } catch (emailError) {
+        console.error('❌ Email sending failed:', emailError);
+        // Don't fail the whole request if email fails
+      }
+    }
+
     res.json({
       success: true,
       invoice: {
@@ -302,8 +350,9 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         },
         totals,
         invoiceDate: new Date().toISOString(),
-        invoiceNumber: `INV-${Date.now()}`
-      }
+        invoiceNumber
+      },
+      emailSent: shouldSendEmail && orders[0].customer_email
     });
   } catch (error) {
     console.error('Generate bulk invoice error:', error);

@@ -35,47 +35,24 @@ export default function BulkInvoiceModal({ orders, onClose, onSuccess }) {
         `${idx + 1}. Auftrag #${order.id} - ${order.pickup_city} → ${order.delivery_city} (${new Date(order.created_at).toLocaleDateString('de-DE')}) - €${parseFloat(order.price).toFixed(2)}`
       ).join('\n');
       
-      // Send email if checkbox is checked
-      if (sendEmail) {
-        try {
-          await api.post('/test-email', {
-            to: customer.customer_email || 'florianbrach74@gmail.com',
-            subject: `Sammelrechnung ${invoiceNumber} von Courierly`,
-            html: `
-              <h2>Ihre Sammelrechnung von Courierly</h2>
-              <p>Sehr geehrte/r ${customer.customer_first_name} ${customer.customer_last_name},</p>
-              <p>anbei erhalten Sie Ihre Sammelrechnung für ${orders.length} Aufträge.</p>
-              
-              <h3>Rechnungsdetails:</h3>
-              <p><strong>Rechnungsnummer:</strong> ${invoiceNumber}<br>
-              <strong>Rechnungsdatum:</strong> ${invoiceDate}<br>
-              <strong>Fälligkeitsdatum:</strong> ${dueDateFormatted}</p>
-              
-              <h3>Positionen:</h3>
-              <pre>${ordersList}</pre>
-              
-              <h3>Summen:</h3>
-              <p><strong>Zwischensumme:</strong> €${subtotal.toFixed(2)}<br>
-              <strong>MwSt. ${taxRate}%:</strong> €${taxAmount.toFixed(2)}<br>
-              <strong>Gesamtsumme:</strong> €${totalAmount.toFixed(2)}</p>
-              
-              ${notes ? `<p><strong>Anmerkungen:</strong><br>${notes}</p>` : ''}
-              
-              <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-              <p>Mit freundlichen Grüßen<br>Ihr Courierly Team</p>
-            `
-          });
-          
-          alert(`Sammelrechnung ${invoiceNumber} erfolgreich erstellt und per Email versendet!`);
-        } catch (emailError) {
-          console.error('Email error:', emailError);
-          alert(`Sammelrechnung ${invoiceNumber} erstellt, aber Email-Versand fehlgeschlagen. Bitte manuell versenden.`);
-        }
+      // Call the bulk invoice endpoint with sendEmail flag
+      const response = await api.post('/reports/bulk-invoice', {
+        orderIds: orders.map(o => o.id),
+        customerId: customer.customer_id,
+        sendEmail,
+        notes,
+        dueDate: dueDate || null
+      });
+      
+      if (response.data.emailSent) {
+        alert(`Sammelrechnung ${response.data.invoice.invoiceNumber} erfolgreich erstellt und per Email versendet!`);
+      } else if (sendEmail) {
+        alert(`Sammelrechnung ${response.data.invoice.invoiceNumber} erstellt, aber Email-Versand fehlgeschlagen. Bitte manuell versenden.`);
       } else {
-        alert(`Sammelrechnung ${invoiceNumber} erfolgreich erstellt!`);
+        alert(`Sammelrechnung ${response.data.invoice.invoiceNumber} erfolgreich erstellt!`);
       }
       
-      onSuccess({ invoiceNumber, orders, subtotal, taxAmount, totalAmount });
+      onSuccess(response.data.invoice);
       onClose();
       
     } catch (err) {
