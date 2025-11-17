@@ -494,22 +494,27 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     doc.moveTo(50, y).lineTo(550, y).stroke();
     y += 15;
     
+    // Convert database values to numbers
+    const subtotal = parseFloat(invoice.subtotal) || 0;
+    const taxAmount = parseFloat(invoice.tax_amount) || 0;
+    const totalAmount = parseFloat(invoice.total_amount) || 0;
+    
     doc.fontSize(10)
        .text('Zwischensumme (Fahrten):', 350, y)
-       .text(`€ ${invoice.subtotal.toFixed(2)}`, 480, y, { align: 'right' });
+       .text(`€ ${subtotal.toFixed(2)}`, 480, y, { align: 'right' });
     y += 15;
     
     doc.text('Nettobetrag:', 350, y)
-       .text(`€ ${invoice.subtotal.toFixed(2)}`, 480, y, { align: 'right' });
+       .text(`€ ${subtotal.toFixed(2)}`, 480, y, { align: 'right' });
     y += 15;
     
     doc.text('zzgl. 19% MwSt.:', 350, y)
-       .text(`€ ${invoice.tax_amount.toFixed(2)}`, 480, y, { align: 'right' });
+       .text(`€ ${taxAmount.toFixed(2)}`, 480, y, { align: 'right' });
     y += 20;
     
     doc.fontSize(12).fillColor('#16a34a')
        .text('Gesamtbetrag:', 350, y)
-       .text(`€ ${invoice.total_amount.toFixed(2)}`, 480, y, { align: 'right' });
+       .text(`€ ${totalAmount.toFixed(2)}`, 480, y, { align: 'right' });
     doc.fillColor('#000000').fontSize(10);
     
     y += 30;
