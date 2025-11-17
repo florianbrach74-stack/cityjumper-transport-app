@@ -369,18 +369,18 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     }
     
     // Header - Left side (Company info below logo)
-    doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 130);
+    doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 140);
     doc.fillColor('#000000');
     
     doc.fontSize(9)
-       .text('Inhaber: Florian Brach', 50, 140)
-       .text('Adolf-Menzel-Straße 71', 50, 155)
-       .text('12621 Berlin', 50, 170)
-       .text('Tel: +49 (0)172 421 66 72', 50, 190)
-       .text('Email: info@courierly.de', 50, 205)
-       .text('Web: www.courierly.de', 50, 220)
-       .text('USt-IdNr: DE299198928', 50, 240)
-       .text('St.-Nr.: 33/237/00521', 50, 255);
+       .text('Inhaber: Florian Brach', 50, 160)
+       .text('Adolf-Menzel-Straße 71', 50, 175)
+       .text('12621 Berlin', 50, 190)
+       .text('Tel: +49 (0)172 421 66 72', 50, 210)
+       .text('Email: info@courierly.de', 50, 225)
+       .text('Web: www.courierly.de', 50, 240)
+       .text('USt-IdNr: DE299198928', 50, 260)
+       .text('St.-Nr.: 33/237/00521', 50, 275);
     
     // Header - Right side (Invoice title)
     const invoiceDate = new Date(invoice.invoice_date).toLocaleDateString('de-DE');
@@ -392,8 +392,8 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
        .text(`Datum: ${invoiceDate}`, 350, 110, { align: 'right' });
     
     // Customer info
-    doc.fontSize(11).text('Rechnungsempfänger:', 50, 270);
-    let customerY = 290;
+    doc.fontSize(11).text('Rechnungsempfänger:', 50, 290);
+    let customerY = 310;
     
     // Company name (if available)
     if (orders[0].customer_company) {
@@ -448,9 +448,10 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
       const price = parseFloat(order.price) || 0;
       const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
       
+      const route = `${order.pickup_address || order.pickup_city} → ${order.delivery_address || order.delivery_city}`;
       doc.fontSize(10)
          .text(`#${order.order_id}`, 50, y)
-         .text(`${order.pickup_city} → ${order.delivery_city}`, 150, y)
+         .text(route, 150, y, { width: 180 })
          .text(new Date(order.created_at).toLocaleDateString('de-DE'), 350, y)
          .text(`€ ${price.toFixed(2)}`, 480, y, { align: 'right' });
       
@@ -682,18 +683,18 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         }
         
         // Header - Left side (Company info below logo)
-        doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 130);
+        doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 140);
         doc.fillColor('#000000');
         
         doc.fontSize(9)
-           .text('Inhaber: Florian Brach', 50, 150)
-           .text('Adolf-Menzel-Straße 71', 50, 165)
-           .text('12621 Berlin', 50, 180)
-           .text('Tel: +49 (0)172 421 66 72', 50, 200)
-           .text('Email: info@courierly.de', 50, 215)
-           .text('Web: www.courierly.de', 50, 230)
-           .text('USt-IdNr: DE299198928', 50, 250)
-           .text('St.-Nr.: 33/237/00521', 50, 265);
+           .text('Inhaber: Florian Brach', 50, 160)
+           .text('Adolf-Menzel-Straße 71', 50, 175)
+           .text('12621 Berlin', 50, 190)
+           .text('Tel: +49 (0)172 421 66 72', 50, 210)
+           .text('Email: info@courierly.de', 50, 225)
+           .text('Web: www.courierly.de', 50, 240)
+           .text('USt-IdNr: DE299198928', 50, 260)
+           .text('St.-Nr.: 33/237/00521', 50, 275);
         
         // Header - Right side (Invoice title)
         doc.fontSize(28).text('RECHNUNG', 350, 50, { align: 'right' });
@@ -702,8 +703,8 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
            .text(`Datum: ${invoiceDate}`, 350, 110, { align: 'right' });
         
         // Customer info
-        doc.fontSize(11).text('Rechnungsempfänger:', 50, 270);
-        let customerY = 290;
+        doc.fontSize(11).text('Rechnungsempfänger:', 50, 290);
+        let customerY = 310;
         
         // Company name (if available)
         if (orders[0].customer_company) {
@@ -758,9 +759,10 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
           const price = parseFloat(order.price) || 0;
           const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
           
+          const route = `${order.pickup_address || order.pickup_city} → ${order.delivery_address || order.delivery_city}`;
           doc.fontSize(10)
              .text(`#${order.id}`, 50, y)
-             .text(`${order.pickup_city} → ${order.delivery_city}`, 150, y)
+             .text(route, 150, y, { width: 180 })
              .text(new Date(order.created_at).toLocaleDateString('de-DE'), 350, y)
              .text(`€ ${price.toFixed(2)}`, 480, y, { align: 'right' });
           
