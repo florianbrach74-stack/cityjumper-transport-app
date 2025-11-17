@@ -208,6 +208,32 @@ export default function ReportsSummary({ userRole }) {
 
   const formatPrice = (price) => `€${parseFloat(price || 0).toFixed(2)}`;
 
+  const handlePaymentStatusChange = async (invoiceNumber, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.patch(
+        `${import.meta.env.VITE_API_URL}/api/reports/invoice/${invoiceNumber}/payment-status`,
+        { paymentStatus: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Refresh orders
+      fetchOrders();
+      alert('Zahlungsstatus aktualisiert!');
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      alert(error.response?.data?.error || 'Fehler beim Aktualisieren des Zahlungsstatus');
+    }
+  };
+
+  const downloadInvoice = (invoiceNumber) => {
+    const token = localStorage.getItem('token');
+    window.open(
+      `${import.meta.env.VITE_API_URL}/api/reports/invoice/${invoiceNumber}/pdf?token=${token}`,
+      '_blank'
+    );
+  };
+
   if (loading && !summary) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -514,9 +540,12 @@ export default function ReportsSummary({ userRole }) {
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {order.invoice_number ? (
                             <div className="flex flex-col space-y-1">
-                              <span className="text-xs font-semibold text-blue-600">
+                              <button
+                                onClick={() => downloadInvoice(order.invoice_number)}
+                                className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline text-left"
+                              >
                                 {order.invoice_number}
-                              </span>
+                              </button>
                               <span className="text-xs text-gray-500">
                                 {order.invoiced_at ? new Date(order.invoiced_at).toLocaleDateString('de-DE') : '-'}
                               </span>
@@ -533,15 +562,19 @@ export default function ReportsSummary({ userRole }) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {order.invoice_number ? (
-                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                              order.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
-                              order.payment_status === 'overdue' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {order.payment_status === 'paid' ? 'Bezahlt' :
-                               order.payment_status === 'overdue' ? 'Überfällig' :
-                               'Offen'}
-                            </span>
+                            <select
+                              value={order.payment_status || 'unpaid'}
+                              onChange={(e) => handlePaymentStatusChange(order.invoice_number, e.target.value)}
+                              className={`px-2 py-1 text-xs font-semibold rounded-full border-0 cursor-pointer ${
+                                order.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                                order.payment_status === 'overdue' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}
+                            >
+                              <option value="unpaid">Offen</option>
+                              <option value="paid">Bezahlt</option>
+                              <option value="overdue">Überfällig</option>
+                            </select>
                           ) : (
                             <span className="text-xs text-gray-400">-</span>
                           )}

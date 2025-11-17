@@ -234,6 +234,204 @@ router.get('/by-customer', authenticateToken, authorizeRole('admin'), async (req
 });
 
 // Generate bulk invoice for multiple orders (Admin only)
+// Update payment status
+router.patch('/invoice/:invoiceNumber/payment-status', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  try {
+    const { invoiceNumber } = req.params;
+    const { paymentStatus } = req.body;
+    
+    if (!['unpaid', 'paid', 'overdue'].includes(paymentStatus)) {
+      return res.status(400).json({ error: 'Invalid payment status' });
+    }
+    
+    // Update invoice
+    await pool.query(
+      `UPDATE sent_invoices SET payment_status = $1, paid_at = $2 WHERE invoice_number = $3`,
+      [paymentStatus, paymentStatus === 'paid' ? new Date() : null, invoiceNumber]
+    );
+    
+    // Update all orders with this invoice number
+    await pool.query(
+      `UPDATE transport_orders SET payment_status = $1 WHERE invoice_number = $2`,
+      [paymentStatus, invoiceNumber]
+    );
+    
+    res.json({ success: true, message: 'Payment status updated' });
+  } catch (error) {
+    console.error('Error updating payment status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get invoice PDF
+router.get('/invoice/:invoiceNumber/pdf', authenticateToken, async (req, res) => {
+  try {
+    const { invoiceNumber } = req.params;
+    
+    // Get invoice details
+    const invoiceResult = await pool.query(
+      `SELECT * FROM sent_invoices WHERE invoice_number = $1`,
+      [invoiceNumber]
+    );
+    
+    if (invoiceResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+    
+    const invoice = invoiceResult.rows[0];
+    
+    // Get invoice items (orders)
+    const itemsResult = await pool.query(
+      `SELECT io.*, o.*, 
+              c.first_name as customer_first_name, 
+              c.last_name as customer_last_name,
+              c.company as customer_company,
+              c.email as customer_email
+       FROM invoice_order_items io
+       JOIN transport_orders o ON io.order_id = o.id
+       JOIN users c ON o.customer_id = c.id
+       WHERE io.invoice_number = $1
+       ORDER BY o.id`,
+      [invoiceNumber]
+    );
+    
+    const orders = itemsResult.rows;
+    
+    if (orders.length === 0) {
+      return res.status(404).json({ error: 'No orders found for this invoice' });
+    }
+    
+    // Generate PDF (reuse existing PDF generation code)
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument({ margin: 50 });
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Rechnung_${invoiceNumber}.pdf"`);
+    
+    doc.pipe(res);
+    
+    // Add logo
+    const logoPath = path.join(__dirname, '..', 'assets', 'courierly-logo.png');
+    try {
+      doc.image(logoPath, 50, 50, { width: 150, height: 60 });
+    } catch (err) {
+      console.log('⚠️ Logo not found, using text instead');
+      doc.fontSize(24).fillColor('#2563eb').text('Courierly', 50, 50);
+      doc.fontSize(10).fillColor('#6b7280').text('eine Marke der FB Transporte', 50, 80);
+    }
+    
+    // Header - Left side (Company info below logo)
+    doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 120);
+    doc.fillColor('#000000');
+    
+    doc.fontSize(9)
+       .text('Inhaber: Florian Brach', 50, 140)
+       .text('Adolf-Menzel-Straße 71', 50, 155)
+       .text('12621 Berlin', 50, 170)
+       .text('Tel: +49 (0)172 421 66 72', 50, 190)
+       .text('Email: info@courierly.de', 50, 205)
+       .text('Web: www.courierly.de', 50, 220)
+       .text('USt-IdNr: DE299198928', 50, 240)
+       .text('St.-Nr.: 33/237/00521', 50, 255);
+    
+    // Header - Right side (Invoice title)
+    const invoiceDate = new Date(invoice.invoice_date).toLocaleDateString('de-DE');
+    const dueDate = invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('de-DE') : '-';
+    
+    doc.fontSize(28).text('RECHNUNG', 350, 50, { align: 'right' });
+    doc.fontSize(10)
+       .text(`Nr: ${invoiceNumber}`, 350, 90, { align: 'right' })
+       .text(`Datum: ${invoiceDate}`, 350, 110, { align: 'right' });
+    
+    // Customer info
+    doc.fontSize(11).text('Rechnungsempfänger:', 50, 270);
+    doc.fontSize(10)
+       .text(orders[0].customer_company || `${orders[0].customer_first_name} ${orders[0].customer_last_name}`, 50, 290)
+       .text(orders[0].customer_email, 50, 305);
+    
+    // Table header
+    doc.fontSize(11).text('Leistungen:', 50, 350);
+    doc.moveTo(50, 370).lineTo(550, 370).stroke();
+    
+    // Table columns
+    let y = 385;
+    doc.fontSize(9).fillColor('#6b7280')
+       .text('Auftrag', 50, y)
+       .text('Route', 150, y)
+       .text('Datum', 350, y)
+       .text('Betrag', 480, y, { align: 'right' });
+    doc.fillColor('#000000');
+    y += 20;
+    
+    // Orders
+    orders.forEach((order) => {
+      const price = parseFloat(order.price) || 0;
+      const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
+      
+      doc.fontSize(10)
+         .text(`#${order.order_id}`, 50, y)
+         .text(`${order.pickup_city} → ${order.delivery_city}`, 150, y)
+         .text(new Date(order.created_at).toLocaleDateString('de-DE'), 350, y)
+         .text(`€ ${price.toFixed(2)}`, 480, y, { align: 'right' });
+      
+      y += 15;
+      
+      if (waitingFee > 0) {
+        doc.fontSize(8).fillColor('#f59e0b')
+           .text(`zzgl. € ${waitingFee.toFixed(2)} Wartezeit`, 480, y, { align: 'right' });
+        doc.fillColor('#000000').fontSize(10);
+        y += 15;
+      }
+    });
+    
+    y += 20;
+    
+    // Totals
+    doc.moveTo(50, y).lineTo(550, y).stroke();
+    y += 15;
+    
+    doc.fontSize(10)
+       .text('Zwischensumme (Fahrten):', 350, y)
+       .text(`€ ${invoice.subtotal.toFixed(2)}`, 480, y, { align: 'right' });
+    y += 15;
+    
+    doc.text('Nettobetrag:', 350, y)
+       .text(`€ ${invoice.subtotal.toFixed(2)}`, 480, y, { align: 'right' });
+    y += 15;
+    
+    doc.text('zzgl. 19% MwSt.:', 350, y)
+       .text(`€ ${invoice.tax_amount.toFixed(2)}`, 480, y, { align: 'right' });
+    y += 20;
+    
+    doc.fontSize(12).fillColor('#16a34a')
+       .text('Gesamtbetrag:', 350, y)
+       .text(`€ ${invoice.total_amount.toFixed(2)}`, 480, y, { align: 'right' });
+    doc.fillColor('#000000').fontSize(10);
+    
+    y += 30;
+    
+    // Bank details
+    doc.fontSize(10).text('Zahlungsinformationen:', 50, y);
+    y += 15;
+    doc.fontSize(9)
+       .text('Bank: Berliner Sparkasse', 50, y)
+       .text('IBAN: DE92 1005 0000 1062 9152 80', 50, y + 15)
+       .text('BIC: BELADEBEXXX', 50, y + 30);
+    
+    // Footer
+    y += 60;
+    doc.fontSize(8).fillColor('#6b7280')
+       .text('Vielen Dank für Ihr Vertrauen! | Courierly – eine Marke der FB Transporte', 50, y, { align: 'center', width: 500 })
+       .text('Adolf-Menzel Straße 71 | 12621 Berlin | DE 92 1005 0000 1062 9152 80 | BELADEBEXXX', 50, y + 12, { align: 'center', width: 500 })
+       .text('USt-IdNr: DE299198928 | Steuernummer: 33/237/00521', 50, y + 24, { align: 'center', width: 500 });
+    
+    doc.end();
+  } catch (error) {
+    console.error('Error generating invoice PDF:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
     console.log('Bulk invoice request:', req.body);
