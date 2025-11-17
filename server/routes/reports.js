@@ -361,14 +361,14 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     // Add logo in top left corner
     const logoPath = path.join(__dirname, '..', 'assets', 'courierly-logo.png');
     try {
-      doc.image(logoPath, 50, 40, { width: 120 });
+      doc.image(logoPath, 50, 30, { width: 100 });
     } catch (err) {
       console.log('⚠️ Logo not found, using text instead');
-      doc.fontSize(20).fillColor('#2563eb').text('Courierly', 50, 40);
+      doc.fontSize(18).fillColor('#2563eb').text('Courierly', 50, 30);
     }
     
     // Header - Left side (Company info - starts AFTER logo)
-    doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 110);
+    doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 100);
     doc.fillColor('#000000');
     
     doc.fontSize(9)
@@ -448,7 +448,13 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
       const price = parseFloat(order.price) || 0;
       const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
       
-      const route = `${order.pickup_address || order.pickup_city} → ${order.delivery_address || order.delivery_city}`;
+      const pickupLocation = order.pickup_postal_code && order.pickup_city 
+        ? `${order.pickup_postal_code} ${order.pickup_city}` 
+        : (order.pickup_address || order.pickup_city || 'N/A');
+      const deliveryLocation = order.delivery_postal_code && order.delivery_city 
+        ? `${order.delivery_postal_code} ${order.delivery_city}` 
+        : (order.delivery_address || order.delivery_city || 'N/A');
+      const route = `${pickupLocation} - ${deliveryLocation}`;
       doc.fontSize(10)
          .text(`#${order.order_id}`, 50, y)
          .text(route, 150, y, { width: 180 })
@@ -674,15 +680,15 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         // Add logo in top left corner
         const logoPath = path.join(__dirname, '..', 'assets', 'courierly-logo.png');
         try {
-          doc.image(logoPath, 50, 40, { width: 120 });
+          doc.image(logoPath, 50, 30, { width: 100 });
         } catch (err) {
           console.log('⚠️ Logo not found, using text instead');
           // Fallback to text if logo not found
-          doc.fontSize(20).fillColor('#2563eb').text('Courierly', 50, 40);
+          doc.fontSize(18).fillColor('#2563eb').text('Courierly', 50, 30);
         }
         
         // Header - Left side (Company info - starts AFTER logo)
-        doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 110);
+        doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 100);
         doc.fillColor('#000000');
         
         doc.fontSize(9)
@@ -759,7 +765,13 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
           const price = parseFloat(order.price) || 0;
           const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
           
-          const route = `${order.pickup_address || order.pickup_city} → ${order.delivery_address || order.delivery_city}`;
+          const pickupLocation = order.pickup_postal_code && order.pickup_city 
+            ? `${order.pickup_postal_code} ${order.pickup_city}` 
+            : (order.pickup_address || order.pickup_city || 'N/A');
+          const deliveryLocation = order.delivery_postal_code && order.delivery_city 
+            ? `${order.delivery_postal_code} ${order.delivery_city}` 
+            : (order.delivery_address || order.delivery_city || 'N/A');
+          const route = `${pickupLocation} - ${deliveryLocation}`;
           doc.fontSize(10)
              .text(`#${order.id}`, 50, y)
              .text(route, 150, y, { width: 180 })
