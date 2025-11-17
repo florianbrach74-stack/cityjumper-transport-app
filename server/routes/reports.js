@@ -424,29 +424,29 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     // Company name (if available)
     if (orders[0].customer_company) {
       doc.fontSize(10).text(orders[0].customer_company, 50, customerY);
-      customerY += 15;
+      customerY += 10;
     }
     
     // Name
     doc.fontSize(10).text(`${orders[0].customer_first_name || ''} ${orders[0].customer_last_name || ''}`.trim(), 50, customerY);
-    customerY += 15;
+    customerY += 10;
     
     // Street
     if (orders[0].customer_street) {
       doc.text(orders[0].customer_street, 50, customerY);
-      customerY += 15;
+      customerY += 10;
     }
     
     // Postal code + City
     if (orders[0].customer_postal_code || orders[0].customer_city) {
       doc.text(`${orders[0].customer_postal_code || ''} ${orders[0].customer_city || ''}`.trim(), 50, customerY);
-      customerY += 15;
+      customerY += 10;
     }
     
     // Email
     if (orders[0].customer_email) {
       doc.text(orders[0].customer_email, 50, customerY);
-      customerY += 15;
+      customerY += 10;
     }
     
     // Phone (if available)
@@ -774,29 +774,29 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         // Company name (if available)
         if (orders[0].customer_company) {
           doc.fontSize(10).text(orders[0].customer_company, 50, customerY);
-          customerY += 15;
+          customerY += 10;
         }
         
         // Name
         doc.fontSize(10).text(`${orders[0].customer_first_name || ''} ${orders[0].customer_last_name || ''}`.trim(), 50, customerY);
-        customerY += 15;
+        customerY += 10;
         
         // Street
         if (orders[0].customer_street) {
           doc.text(orders[0].customer_street, 50, customerY);
-          customerY += 15;
+          customerY += 10;
         }
         
         // Postal code + City
         if (orders[0].customer_postal_code || orders[0].customer_city) {
           doc.text(`${orders[0].customer_postal_code || ''} ${orders[0].customer_city || ''}`.trim(), 50, customerY);
-          customerY += 15;
+          customerY += 10;
         }
         
         // Email
         if (orders[0].customer_email) {
           doc.text(orders[0].customer_email, 50, customerY);
-          customerY += 15;
+          customerY += 10;
         }
         
         // Phone (if available)
