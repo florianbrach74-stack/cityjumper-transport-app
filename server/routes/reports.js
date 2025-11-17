@@ -291,9 +291,14 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
 
     totals.total = totals.subtotal + totals.waitingTimeFees;
 
-    const invoiceNumber = `INV-${Date.now()}`;
+    // Generate sequential invoice number
+    const invoiceNumberResult = await pool.query('SELECT get_next_invoice_number() as invoice_number');
+    const invoiceNumber = invoiceNumberResult.rows[0].invoice_number;
+    
     const invoiceDate = new Date().toLocaleDateString('de-DE');
     const dueDateFormatted = dueDate ? new Date(dueDate).toLocaleDateString('de-DE') : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE');
+    
+    console.log('📄 Generated invoice number:', invoiceNumber);
 
     console.log('📧 Email check:', {
       shouldSendEmail,
