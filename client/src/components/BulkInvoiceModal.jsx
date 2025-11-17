@@ -36,13 +36,21 @@ export default function BulkInvoiceModal({ orders, onClose, onSuccess }) {
       ).join('\n');
       
       // Call the bulk invoice endpoint with sendEmail flag
+      console.log('🔍 BulkInvoiceModal - Sending request with:', {
+        sendEmail,
+        sendEmailType: typeof sendEmail,
+        sendEmailValue: sendEmail
+      });
+      
       const response = await api.post('/reports/bulk-invoice', {
         orderIds: orders.map(o => o.id),
         customerId: customer.customer_id,
-        sendEmail,
+        sendEmail: sendEmail === true, // Explicitly convert to boolean
         notes,
         dueDate: dueDate || null
       });
+      
+      console.log('✅ Response:', response.data);
       
       if (response.data.emailSent) {
         alert(`Sammelrechnung ${response.data.invoice.invoiceNumber} erfolgreich erstellt und per Email versendet!`);
@@ -68,12 +76,15 @@ export default function BulkInvoiceModal({ orders, onClose, onSuccess }) {
       <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold">Sammelrechnung erstellen</h2>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">📄 Rechnungsvorschau</h2>
+            <p className="text-xs text-gray-400">v2.0 - Email Support</p>
+          </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
           >
-            <X className="h-6 w-6" />
+            <X size={24} />
           </button>
         </div>
 
