@@ -305,40 +305,123 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
     if (shouldSendEmail && orders[0].customer_email) {
       try {
         const { sendEmail } = require('../config/email');
+        const PDFDocument = require('pdfkit');
         
-        const ordersList = orders.map((order, idx) => 
-          `${idx + 1}. Auftrag #${order.id} - ${order.pickup_city} → ${order.delivery_city} (${new Date(order.created_at).toLocaleDateString('de-DE')}) - €${parseFloat(order.price).toFixed(2)}`
-        ).join('\n');
-
+        // Generate PDF
+        const doc = new PDFDocument({ margin: 50 });
+        const chunks = [];
+        
+        doc.on('data', chunk => chunks.push(chunk));
+        
+        // Header
+        doc.fontSize(20).text('Courierly', { align: 'left' });
+        doc.fontSize(10).text('Express Delivery Service', { align: 'left' });
+        doc.moveDown();
+        
+        // Company info
+        doc.fontSize(9)
+           .text('Inhaber: Florian Brach')
+           .text('Adolf-Menzel-Straße 71')
+           .text('12621 Berlin')
+           .text('Tel: +49 (0)172 421 66 72')
+           .text('Email: info@courierly.de')
+           .text('Web: www.courierly.de')
+           .moveDown();
+        
+        // Invoice title
+        doc.fontSize(24).text('RECHNUNG', { align: 'right' });
+        doc.fontSize(10)
+           .text(`Nr: ${invoiceNumber}`, { align: 'right' })
+           .text(`Datum: ${invoiceDate}`, { align: 'right' })
+           .text(`Fälligkeitsdatum: ${dueDateFormatted}`, { align: 'right' })
+           .moveDown(2);
+        
+        // Customer info
+        doc.fontSize(12).text('Rechnungsempfänger:');
+        doc.fontSize(10)
+           .text(orders[0].customer_company || `${orders[0].customer_first_name} ${orders[0].customer_last_name}`)
+           .text(orders[0].customer_email)
+           .moveDown(2);
+        
+        // Table header
+        doc.fontSize(10).text('Leistungen:', { underline: true });
+        doc.moveDown(0.5);
+        
+        // Orders
+        orders.forEach((order, idx) => {
+          const price = parseFloat(order.price) || 0;
+          const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
+          const total = price + waitingFee;
+          
+          doc.text(
+            `${idx + 1}. Auftrag #${order.id} - ${order.pickup_city} → ${order.delivery_city} (${new Date(order.created_at).toLocaleDateString('de-DE')})`,
+            { continued: true }
+          );
+          doc.text(`€${total.toFixed(2)}`, { align: 'right' });
+          
+          if (waitingFee > 0) {
+            doc.fontSize(8).text(`   inkl. €${waitingFee.toFixed(2)} Wartezeit`, { align: 'left' });
+            doc.fontSize(10);
+          }
+        });
+        
+        doc.moveDown();
+        
+        // Totals
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown(0.5);
+        
+        doc.text('Zwischensumme:', { continued: true });
+        doc.text(`€${totals.subtotal.toFixed(2)}`, { align: 'right' });
+        
+        if (totals.waitingTimeFees > 0) {
+          doc.text('Wartezeit-Gebühren:', { continued: true });
+          doc.text(`€${totals.waitingTimeFees.toFixed(2)}`, { align: 'right' });
+        }
+        
+        doc.fontSize(12).text('Gesamtsumme:', { continued: true, bold: true });
+        doc.text(`€${totals.total.toFixed(2)}`, { align: 'right' });
+        
+        if (notes) {
+          doc.moveDown(2);
+          doc.fontSize(10).text('Anmerkungen:');
+          doc.fontSize(9).text(notes);
+        }
+        
+        doc.end();
+        
+        // Wait for PDF to be generated
+        await new Promise((resolve) => {
+          doc.on('end', resolve);
+        });
+        
+        const pdfBuffer = Buffer.concat(chunks);
+        
+        // Send email with PDF attachment
         await sendEmail(
           orders[0].customer_email,
           `Sammelrechnung ${invoiceNumber} von Courierly`,
           `
             <h2>Ihre Sammelrechnung von Courierly</h2>
             <p>Sehr geehrte/r ${orders[0].customer_first_name} ${orders[0].customer_last_name},</p>
-            <p>anbei erhalten Sie Ihre Sammelrechnung für ${orders.length} Auftrag${orders.length > 1 ? 'e' : ''}.</p>
+            <p>anbei erhalten Sie Ihre Sammelrechnung für ${orders.length} Auftrag${orders.length > 1 ? 'e' : ''} als PDF-Anhang.</p>
             
             <h3>Rechnungsdetails:</h3>
             <p><strong>Rechnungsnummer:</strong> ${invoiceNumber}<br>
             <strong>Rechnungsdatum:</strong> ${invoiceDate}<br>
-            <strong>Fälligkeitsdatum:</strong> ${dueDateFormatted}</p>
-            
-            <h3>Positionen:</h3>
-            <pre style="font-family: monospace; background: #f5f5f5; padding: 10px; border-radius: 5px;">${ordersList}</pre>
-            
-            <h3>Summen:</h3>
-            <p><strong>Zwischensumme:</strong> €${totals.subtotal.toFixed(2)}<br>
-            ${totals.waitingTimeFees > 0 ? `<strong>Wartezeit-Gebühren:</strong> €${totals.waitingTimeFees.toFixed(2)}<br>` : ''}
+            <strong>Fälligkeitsdatum:</strong> ${dueDateFormatted}<br>
             <strong>Gesamtsumme:</strong> €${totals.total.toFixed(2)}</p>
-            
-            ${notes ? `<p><strong>Anmerkungen:</strong><br>${notes}</p>` : ''}
             
             <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
             <p>Mit freundlichen Grüßen<br>Ihr Courierly Team</p>
-          `
+          `,
+          [{
+            filename: `Rechnung_${invoiceNumber}.pdf`,
+            content: pdfBuffer
+          }]
         );
         
-        console.log('✅ Email sent to:', orders[0].customer_email);
+        console.log('✅ Email with PDF sent to:', orders[0].customer_email);
       } catch (emailError) {
         console.error('❌ Email sending failed:', emailError);
         // Don't fail the whole request if email fails
