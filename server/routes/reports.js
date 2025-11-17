@@ -234,6 +234,30 @@ router.get('/by-customer', authenticateToken, authorizeRole('admin'), async (req
 });
 
 // Generate bulk invoice for multiple orders (Admin only)
+// Fix missing invoice numbers (manual repair)
+router.post('/fix-invoice-orders', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  try {
+    const { invoiceNumber, orderIds } = req.body;
+    
+    if (!invoiceNumber || !orderIds || !Array.isArray(orderIds)) {
+      return res.status(400).json({ error: 'Invoice number and order IDs required' });
+    }
+    
+    // Update orders
+    for (const orderId of orderIds) {
+      await pool.query(
+        `UPDATE transport_orders SET invoiced_at = CURRENT_TIMESTAMP, invoice_number = $1, payment_status = 'unpaid' WHERE id = $2`,
+        [invoiceNumber, orderId]
+      );
+    }
+    
+    res.json({ success: true, message: `${orderIds.length} orders updated` });
+  } catch (error) {
+    console.error('Error fixing invoice orders:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Update payment status
 router.patch('/invoice/:invoiceNumber/payment-status', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
