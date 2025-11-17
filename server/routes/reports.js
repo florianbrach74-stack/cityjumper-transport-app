@@ -301,7 +301,11 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
               c.first_name as customer_first_name, 
               c.last_name as customer_last_name,
               c.company as customer_company,
-              c.email as customer_email
+              c.email as customer_email,
+              c.street as customer_street,
+              c.city as customer_city,
+              c.postal_code as customer_postal_code,
+              c.phone as customer_phone
        FROM invoice_order_items io
        JOIN transport_orders o ON io.order_id = o.id
        JOIN users c ON o.customer_id = c.id
@@ -360,9 +364,41 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     
     // Customer info
     doc.fontSize(11).text('Rechnungsempfänger:', 50, 270);
-    doc.fontSize(10)
-       .text(orders[0].customer_company || `${orders[0].customer_first_name} ${orders[0].customer_last_name}`, 50, 290)
-       .text(orders[0].customer_email, 50, 305);
+    let customerY = 290;
+    
+    // Company name (if available)
+    if (orders[0].customer_company) {
+      doc.fontSize(10).text(orders[0].customer_company, 50, customerY);
+      customerY += 15;
+    }
+    
+    // Name
+    doc.fontSize(10).text(`${orders[0].customer_first_name || ''} ${orders[0].customer_last_name || ''}`.trim(), 50, customerY);
+    customerY += 15;
+    
+    // Street
+    if (orders[0].customer_street) {
+      doc.text(orders[0].customer_street, 50, customerY);
+      customerY += 15;
+    }
+    
+    // Postal code + City
+    if (orders[0].customer_postal_code || orders[0].customer_city) {
+      doc.text(`${orders[0].customer_postal_code || ''} ${orders[0].customer_city || ''}`.trim(), 50, customerY);
+      customerY += 15;
+    }
+    
+    // Email
+    if (orders[0].customer_email) {
+      doc.text(orders[0].customer_email, 50, customerY);
+      customerY += 15;
+    }
+    
+    // Phone (if available)
+    if (orders[0].customer_phone) {
+      doc.text(orders[0].customer_phone, 50, customerY);
+      customerY += 15;
+    }
     
     // Table header
     doc.fontSize(11).text('Leistungen:', 50, 350);
@@ -465,7 +501,11 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
               c.email as customer_email,
               c.first_name as customer_first_name,
               c.last_name as customer_last_name,
-              c.company_name as customer_company
+              c.company as customer_company,
+              c.street as customer_street,
+              c.city as customer_city,
+              c.postal_code as customer_postal_code,
+              c.phone as customer_phone
        FROM transport_orders o
        LEFT JOIN users c ON o.customer_id = c.id
        WHERE o.id = ANY($1)
@@ -577,9 +617,41 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         
         // Customer info
         doc.fontSize(11).text('Rechnungsempfänger:', 50, 270);
-        doc.fontSize(10)
-           .text(orders[0].customer_company || `${orders[0].customer_first_name} ${orders[0].customer_last_name}`, 50, 290)
-           .text(orders[0].customer_email, 50, 305);
+        let customerY = 290;
+        
+        // Company name (if available)
+        if (orders[0].customer_company) {
+          doc.fontSize(10).text(orders[0].customer_company, 50, customerY);
+          customerY += 15;
+        }
+        
+        // Name
+        doc.fontSize(10).text(`${orders[0].customer_first_name || ''} ${orders[0].customer_last_name || ''}`.trim(), 50, customerY);
+        customerY += 15;
+        
+        // Street
+        if (orders[0].customer_street) {
+          doc.text(orders[0].customer_street, 50, customerY);
+          customerY += 15;
+        }
+        
+        // Postal code + City
+        if (orders[0].customer_postal_code || orders[0].customer_city) {
+          doc.text(`${orders[0].customer_postal_code || ''} ${orders[0].customer_city || ''}`.trim(), 50, customerY);
+          customerY += 15;
+        }
+        
+        // Email
+        if (orders[0].customer_email) {
+          doc.text(orders[0].customer_email, 50, customerY);
+          customerY += 15;
+        }
+        
+        // Phone (if available)
+        if (orders[0].customer_phone) {
+          doc.text(orders[0].customer_phone, 50, customerY);
+          customerY += 15;
+        }
         
         // Table header
         doc.fontSize(11).text('Leistungen:', 50, 350);
