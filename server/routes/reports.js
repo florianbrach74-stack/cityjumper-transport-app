@@ -313,39 +313,46 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         
         doc.on('data', chunk => chunks.push(chunk));
         
-        // Header
-        doc.fontSize(20).text('Courierly', { align: 'left' });
-        doc.fontSize(10).text('Express Delivery Service', { align: 'left' });
-        doc.moveDown();
+        // Header - Left side (Company)
+        doc.fontSize(24).fillColor('#2563eb').text('Courierly', 50, 50);
+        doc.fontSize(10).fillColor('#6b7280').text('eine Marke der FB Transporte', 50, 80);
+        doc.fillColor('#000000');
         
-        // Company info
         doc.fontSize(9)
-           .text('Inhaber: Florian Brach')
-           .text('Adolf-Menzel-Straße 71')
-           .text('12621 Berlin')
-           .text('Tel: +49 (0)172 421 66 72')
-           .text('Email: info@courierly.de')
-           .text('Web: www.courierly.de')
-           .moveDown();
+           .text('Inhaber: Florian Brach', 50, 110)
+           .text('Adolf-Menzel-Straße 71', 50, 125)
+           .text('12621 Berlin', 50, 140)
+           .text('Tel: +49 (0)172 421 66 72', 50, 160)
+           .text('Email: info@courierly.de', 50, 175)
+           .text('Web: www.courierly.de', 50, 190)
+           .text('USt-IdNr: DE299198928', 50, 210)
+           .text('St.-Nr.: 33/237/00521', 50, 225);
         
-        // Invoice title
-        doc.fontSize(24).text('RECHNUNG', { align: 'right' });
+        // Header - Right side (Invoice title)
+        doc.fontSize(28).text('RECHNUNG', 350, 50, { align: 'right' });
         doc.fontSize(10)
-           .text(`Nr: ${invoiceNumber}`, { align: 'right' })
-           .text(`Datum: ${invoiceDate}`, { align: 'right' })
-           .text(`Fälligkeitsdatum: ${dueDateFormatted}`, { align: 'right' })
-           .moveDown(2);
+           .text(`Nr: ${invoiceNumber}`, 350, 90, { align: 'right' })
+           .text(`Datum: ${invoiceDate}`, 350, 110, { align: 'right' });
         
         // Customer info
-        doc.fontSize(12).text('Rechnungsempfänger:');
+        doc.fontSize(11).text('Rechnungsempfänger:', 50, 270);
         doc.fontSize(10)
-           .text(orders[0].customer_company || `${orders[0].customer_first_name} ${orders[0].customer_last_name}`)
-           .text(orders[0].customer_email)
-           .moveDown(2);
+           .text(orders[0].customer_company || `${orders[0].customer_first_name} ${orders[0].customer_last_name}`, 50, 290)
+           .text(orders[0].customer_email, 50, 305);
         
         // Table header
-        doc.fontSize(10).text('Leistungen:', { underline: true });
-        doc.moveDown(0.5);
+        doc.fontSize(11).text('Leistungen:', 50, 350);
+        doc.moveTo(50, 370).lineTo(550, 370).stroke();
+        
+        // Table columns
+        let y = 385;
+        doc.fontSize(9).fillColor('#6b7280')
+           .text('Auftrag', 50, y)
+           .text('Route', 150, y)
+           .text('Datum', 350, y)
+           .text('Betrag', 480, y, { align: 'right' });
+        doc.fillColor('#000000');
+        y += 20;
         
         // Orders
         orders.forEach((order, idx) => {
@@ -353,34 +360,54 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
           const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
           const total = price + waitingFee;
           
-          doc.text(
-            `${idx + 1}. Auftrag #${order.id} - ${order.pickup_city} → ${order.delivery_city} (${new Date(order.created_at).toLocaleDateString('de-DE')})`,
-            { continued: true }
-          );
-          doc.text(`€${total.toFixed(2)}`, { align: 'right' });
+          doc.fontSize(10)
+             .text(`#${order.id}`, 50, y)
+             .text(`${order.pickup_city} → ${order.delivery_city}`, 150, y)
+             .text(new Date(order.created_at).toLocaleDateString('de-DE'), 350, y)
+             .text(`€${price.toFixed(2)}`, 480, y, { align: 'right' });
+          
+          y += 15;
           
           if (waitingFee > 0) {
-            doc.fontSize(8).text(`   inkl. €${waitingFee.toFixed(2)} Wartezeit`, { align: 'left' });
-            doc.fontSize(10);
+            doc.fontSize(8).fillColor('#f59e0b')
+               .text(`inkl. €${waitingFee.toFixed(2)} Wartezeit`, 480, y, { align: 'right' });
+            doc.fillColor('#000000').fontSize(10);
+            y += 15;
           }
         });
         
-        doc.moveDown();
+        y += 20;
         
         // Totals
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-        doc.moveDown(0.5);
+        doc.moveTo(50, y).lineTo(550, y).stroke();
+        y += 15;
         
-        doc.text('Zwischensumme:', { continued: true });
-        doc.text(`€${totals.subtotal.toFixed(2)}`, { align: 'right' });
+        doc.fontSize(10)
+           .text('Zwischensumme (Fahrten):', 350, y)
+           .text(`€${totals.subtotal.toFixed(2)}`, 480, y, { align: 'right' });
+        y += 15;
         
         if (totals.waitingTimeFees > 0) {
-          doc.text('Wartezeit-Gebühren:', { continued: true });
-          doc.text(`€${totals.waitingTimeFees.toFixed(2)}`, { align: 'right' });
+          doc.fillColor('#f59e0b')
+             .text('Wartezeit-Gebühren:', 350, y)
+             .text(`€${totals.waitingTimeFees.toFixed(2)}`, 480, y, { align: 'right' });
+          doc.fillColor('#000000');
+          y += 15;
         }
         
-        doc.fontSize(12).text('Gesamtsumme:', { continued: true, bold: true });
-        doc.text(`€${totals.total.toFixed(2)}`, { align: 'right' });
+        doc.text('Nettobetrag:', 350, y)
+           .text(`€${totals.total.toFixed(2)}`, 480, y, { align: 'right' });
+        y += 15;
+        
+        const taxAmount = totals.total * 0.19;
+        doc.text('zzgl. 19% MwSt.:', 350, y)
+           .text(`€${taxAmount.toFixed(2)}`, 480, y, { align: 'right' });
+        y += 20;
+        
+        doc.fontSize(12).fillColor('#16a34a')
+           .text('Gesamtbetrag:', 350, y)
+           .text(`€${(totals.total + taxAmount).toFixed(2)}`, 480, y, { align: 'right' });
+        doc.fillColor('#000000').fontSize(10);
         
         if (notes) {
           doc.moveDown(2);
