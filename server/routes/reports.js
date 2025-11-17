@@ -378,14 +378,14 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     // Add logo in top left corner
     const logoPath = path.join(__dirname, '..', 'assets', 'courierly-logo.png');
     try {
-      doc.image(logoPath, 50, 30, { width: 100 });
+      doc.image(logoPath, 50, 20, { width: 100 });
     } catch (err) {
       console.log('⚠️ Logo not found, using text instead');
-      doc.fontSize(18).fillColor('#2563eb').text('Courierly', 50, 30);
+      doc.fontSize(18).fillColor('#2563eb').text('Courierly', 50, 20);
     }
     
     // Header - Left side (Company info - starts AFTER logo)
-    doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 100);
+    doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 90);
     doc.fillColor('#000000');
     
     doc.fontSize(9)
@@ -400,7 +400,16 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
     
     // Header - Right side (Invoice title)
     const invoiceDate = new Date(invoice.invoice_date).toLocaleDateString('de-DE');
-    const dueDate = invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('de-DE') : '-';
+    
+    // Calculate due date: invoice date + 14 days
+    let dueDate;
+    if (invoice.due_date) {
+      dueDate = new Date(invoice.due_date).toLocaleDateString('de-DE');
+    } else {
+      const dueDateObj = new Date(invoice.invoice_date);
+      dueDateObj.setDate(dueDateObj.getDate() + 14);
+      dueDate = dueDateObj.toLocaleDateString('de-DE');
+    }
     
     doc.fontSize(28).text('RECHNUNG', 350, 50, { align: 'right' });
     doc.fontSize(10)
@@ -706,15 +715,15 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         // Add logo in top left corner
         const logoPath = path.join(__dirname, '..', 'assets', 'courierly-logo.png');
         try {
-          doc.image(logoPath, 50, 30, { width: 100 });
+          doc.image(logoPath, 50, 20, { width: 100 });
         } catch (err) {
           console.log('⚠️ Logo not found, using text instead');
           // Fallback to text if logo not found
-          doc.fontSize(18).fillColor('#2563eb').text('Courierly', 50, 30);
+          doc.fontSize(18).fillColor('#2563eb').text('Courierly', 50, 20);
         }
         
         // Header - Left side (Company info - starts AFTER logo)
-        doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 100);
+        doc.fillColor('#6b7280').fontSize(9).text('eine Marke der FB Transporte', 50, 90);
         doc.fillColor('#000000');
         
         doc.fontSize(9)
