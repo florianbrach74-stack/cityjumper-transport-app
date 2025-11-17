@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const pool = require('../config/database');
+const path = require('path');
 
 // Get order summary for a date range
 router.get('/summary', authenticateToken, async (req, res) => {
@@ -321,9 +322,18 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         
         doc.on('data', chunk => chunks.push(chunk));
         
-        // Header - Left side (Company)
-        doc.fontSize(24).fillColor('#2563eb').text('Courierly', 50, 50);
-        doc.fontSize(10).fillColor('#6b7280').text('eine Marke der FB Transporte', 50, 80);
+        // Add logo
+        const logoPath = path.join(__dirname, '..', 'assets', 'courierly-logo.png');
+        try {
+          doc.image(logoPath, 50, 40, { width: 120 });
+        } catch (err) {
+          console.log('⚠️ Logo not found, using text instead');
+          // Fallback to text if logo not found
+          doc.fontSize(24).fillColor('#2563eb').text('Courierly', 50, 50);
+        }
+        
+        // Header - Left side (Company info below logo)
+        doc.fontSize(10).fillColor('#6b7280').text('eine Marke der FB Transporte', 50, 100);
         doc.fillColor('#000000');
         
         doc.fontSize(9)
