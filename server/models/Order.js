@@ -176,10 +176,15 @@ class Order {
         o.pallets,
         -- Preis (OK)
         o.price,
+        -- Belade-/Entlade-Hilfe (wichtig für Preiskalkulation)
+        o.needs_loading_help,
+        o.needs_unloading_help,
+        o.loading_help_fee,
         -- KEINE Beschreibung/Transportgut vor Zuweisung
         -- KEINE genauen Adressen
         -- KEINE Kontaktdaten
         -- KEINE special_requirements
+        -- KEINE legal_delivery (erst nach Zuweisung)
         -- Beiladung Info
         o.is_partial_load,
         o.partial_load_deadline
