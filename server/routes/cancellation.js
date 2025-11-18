@@ -175,7 +175,12 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
   
   try {
     const { orderId } = req.params;
-    const { reason, priceIncrease, notes } = req.body;
+    const { 
+      reason, 
+      cancellationType, // 'paid' or 'free' (force majeure)
+      newPrice, // Manual price for new contractor
+      notes 
+    } = req.body;
     const userId = req.user.id;
     
     await client.query('BEGIN');
@@ -199,19 +204,34 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
       return res.status(400).json({ error: 'Auftrag bereits storniert' });
     }
     
-    // Calculate contractor penalty based on AGB (same as customer cancellation)
-    const feeInfo = calculateCancellationFee(order, 'contractor');
-    const contractorPenalty = feeInfo.cancellationFee;
+    let penaltyAmount = 0;
+    let finalPrice = parseFloat(order.price);
     
-    // Price increase for new contractor (max = cancellation fee)
-    const increase = Math.min(
-      parseFloat(priceIncrease) || 0,
-      contractorPenalty
-    );
+    // Determine penalty based on cancellation type
+    if (cancellationType === 'free') {
+      // Force majeure - no penalty, price stays same
+      penaltyAmount = 0;
+      finalPrice = parseFloat(order.price);
+    } else {
+      // Paid cancellation - calculate penalty
+      const feeInfo = calculateCancellationFee(order, 'contractor');
+      penaltyAmount = feeInfo.cancellationFee;
+      
+      // Admin sets new price manually (can be higher or same)
+      finalPrice = newPrice ? parseFloat(newPrice) : parseFloat(order.price);
+    }
     
-    const newPrice = parseFloat(order.price) + increase;
+    // Create penalty record if paid cancellation
+    if (cancellationType === 'paid' && penaltyAmount > 0) {
+      await client.query(
+        `INSERT INTO contractor_penalties 
+         (contractor_id, order_id, penalty_amount, reason, cancellation_type, status, admin_notes)
+         VALUES ($1, $2, $3, $4, $5, 'pending', $6)`,
+        [order.contractor_id, orderId, penaltyAmount, reason, cancellationType, notes]
+      );
+    }
     
-    // Update order - set to pending with increased price
+    // Update order - set to pending with new price
     await client.query(
       `UPDATE transport_orders 
        SET cancellation_status = 'cancelled_by_contractor',
@@ -219,33 +239,33 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
            cancellation_reason = $1,
            cancellation_timestamp = NOW(),
            contractor_penalty = $2,
-           customer_compensation = $3,
-           price = $4,
+           price = $3,
            contractor_price = NULL,
            contractor_id = NULL,
-           cancellation_notes = $5,
+           cancellation_notes = $4,
            status = 'pending'
-       WHERE id = $6`,
-      [reason, contractorPenalty, increase, newPrice, notes, orderId]
+       WHERE id = $5`,
+      [reason, penaltyAmount, finalPrice, notes, orderId]
     );
     
     // Create history entry
     await client.query(
       `INSERT INTO cancellation_history 
-       (order_id, cancelled_by, cancellation_reason, contractor_penalty, 
-        customer_compensation, created_by)
-       VALUES ($1, 'contractor', $2, $3, $4, $5)`,
-      [orderId, reason, contractorPenalty, increase, userId]
+       (order_id, cancelled_by, cancellation_reason, contractor_penalty, created_by)
+       VALUES ($1, 'contractor', $2, $3, $4)`,
+      [orderId, reason, penaltyAmount, userId]
     );
     
     await client.query('COMMIT');
     
     res.json({
       success: true,
-      message: 'Auftragnehmer-Stornierung verarbeitet. Auftrag wieder verfügbar mit erhöhtem Preis.',
-      contractorPenalty,
-      priceIncrease: increase,
-      newPrice,
+      message: cancellationType === 'free' 
+        ? 'Auftragnehmer-Stornierung (Höhere Gewalt) verarbeitet. Keine Strafe.'
+        : 'Auftragnehmer-Stornierung verarbeitet. Strafe erfasst.',
+      cancellationType,
+      penaltyAmount,
+      finalPrice,
       originalPrice: parseFloat(order.price)
     });
     

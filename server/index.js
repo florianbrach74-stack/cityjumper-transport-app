@@ -54,6 +54,8 @@ app.use('/api', require('./routes/fix-verification-documents-column'));
 app.use('/api', require('./routes/test-update-order'));
 app.use('/api', require('./routes/run-loading-help-migration'));
 app.use('/api', require('./routes/fix-order-25'));
+app.use('/api', require('./routes/create-penalties-table'));
+app.use('/api', require('./routes/penalties'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
