@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../hooks/useTranslation';
-import { agbFullContent } from '../content/agb-full';
+import { agbContent } from '../content/agb';
 
 export default function AGBNew() {
   const navigate = useNavigate();
   const { language, easyLanguage } = useTranslation();
   
   const lang = easyLanguage && language === 'de' ? 'easy' : language;
-  const content = agbFullContent[lang] || agbFullContent.de;
+  const content = agbContent[lang] || agbContent.de;
 
   return (
     <div className="min-h-screen bg-gray-50">
