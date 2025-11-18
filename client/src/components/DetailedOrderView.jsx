@@ -343,7 +343,7 @@ const DetailedOrderView = ({ orderId, onClose }) => {
                           <div>
                             <div className="font-semibold text-amber-900 text-sm">Rechtssichere Zustellung</div>
                             <div className="text-xs text-amber-800 mt-1">
-                              WICHTIG: Dem Kunden das Transportgut zeigen lassen (z.B. Kündigung), um im Rechtsstreit bestätigen zu können, was transportiert wurde. Andernfalls kann nur bestätigt werden, dass ein Brief mit unbekanntem Inhalt zugestellt wurde.
+                              WICHTIG: Lassen Sie sich vom Kunden das Transportgut zeigen (z.B. Kündigung), um im Rechtsstreit bestätigen zu können, was Sie transportiert haben. Andernfalls können Sie nur bestätigen, dass Sie einen Brief mit unbekanntem Inhalt zugestellt haben.
                             </div>
                           </div>
                         </div>

@@ -835,7 +835,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                           Wichtiger Hinweis zur rechtssicheren Zustellung
                         </h5>
                         <p className="text-sm text-amber-800 leading-relaxed">
-                          Damit es eine rechtssichere Zustellung wird und der Kurier im Falle eines Rechtsstreits auch bestätigen kann, was er gefahren hat, ist es notwendig, dass Sie dem Fahrer das Transportgut (z.B. die Kündigung) zeigen. Andernfalls hat die Erfahrung gezeigt, dass sonst gerne behauptet wird, dass in dem Umschlag ein weißes Blatt oder ähnliches war. Der Kurier kann, wenn er es nicht gesehen hat, nur bestätigen, dass er einen Brief mit unbekanntem Inhalt zugestellt hat.
+                          Damit es eine rechtssichere Zustellung wird und der Kurier im Falle eines Rechtsstreits auch bestätigen kann, was er transportiert hat, ist es notwendig, dass Sie dem Fahrer das Transportgut (z.B. die Kündigung) zeigen. Andernfalls hat die Erfahrung gezeigt, dass sonst gerne behauptet wird, dass in dem Umschlag ein weißes Blatt oder ähnliches war. Der Kurier kann, wenn er den Inhalt nicht gesehen hat, nur bestätigen, dass er einen Brief mit unbekanntem Inhalt zugestellt hat.
                         </p>
                         <button
                           type="button"
