@@ -5,8 +5,33 @@ const pool = require('../config/database');
 
 // Calculate cancellation fee based on AGB rules
 function calculateCancellationFee(order, cancelledBy) {
+  // Safety check: ensure pickup_date exists
+  if (!order.pickup_date) {
+    console.error('Order missing pickup_date:', order.id);
+    return {
+      feePercentage: 0,
+      cancellationFee: 0,
+      hoursUntilPickup: 0,
+      driverStatus: 'unknown',
+      originalPrice: parseFloat(order.price) || 0
+    };
+  }
+  
   const pickupDateTime = new Date(`${order.pickup_date}T${order.pickup_time_from || '00:00'}`);
   const now = new Date();
+  
+  // Check if date is valid
+  if (isNaN(pickupDateTime.getTime())) {
+    console.error('Invalid pickup date:', order.pickup_date);
+    return {
+      feePercentage: 0,
+      cancellationFee: 0,
+      hoursUntilPickup: 0,
+      driverStatus: 'unknown',
+      originalPrice: parseFloat(order.price) || 0
+    };
+  }
+  
   const hoursUntilPickup = (pickupDateTime - now) / (1000 * 60 * 60);
   
   let feePercentage = 0;
