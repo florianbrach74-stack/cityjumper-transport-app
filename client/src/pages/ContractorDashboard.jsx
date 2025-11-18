@@ -278,11 +278,6 @@ const ContractorDashboard = () => {
         {/* Additional Services */}
         {(order.needs_loading_help || order.needs_unloading_help || order.legal_delivery) && (
           <div className="flex flex-wrap gap-2 pt-3 border-t">
-            {order.legal_delivery && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                ⚖️ Rechtssichere Zustellung
-              </span>
-            )}
             {order.needs_loading_help && (
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                 📦 Beladehilfe (+€6)
@@ -291,6 +286,11 @@ const ContractorDashboard = () => {
             {order.needs_unloading_help && (
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                 📤 Entladehilfe (+€6)
+              </span>
+            )}
+            {order.needs_unloading_help && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                ⚖️ Rechtssichere Zustellung (DEBUG: {order.legal_delivery ? 'TRUE' : 'FALSE'})
               </span>
             )}
           </div>
