@@ -38,7 +38,18 @@ async function autoMigrate() {
     const contractorIdResult = await pool.query(checkContractorId);
     const contractorIdMigrated = contractorIdResult.rows.length > 0;
     
-    if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated) {
+    // Check if loading help columns exist
+    const checkLoadingHelp = `
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'transport_orders' 
+      AND column_name IN ('needs_loading_help', 'needs_unloading_help', 'loading_help_fee', 'legal_delivery');
+    `;
+    
+    const loadingHelpResult = await pool.query(checkLoadingHelp);
+    const loadingHelpMigrated = loadingHelpResult.rows.length >= 4;
+    
+    if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated && loadingHelpMigrated) {
       console.log('✓ All migrations already applied, skipping...');
       return;
     }
@@ -103,6 +114,20 @@ async function autoMigrate() {
       console.log('  ✓ Employee assignment mode added');
     }
     
+    // Add loading help and legal delivery columns
+    if (!loadingHelpMigrated) {
+      console.log('🔧 Adding loading help and legal delivery columns...');
+      await pool.query(`
+        ALTER TABLE transport_orders 
+        ADD COLUMN IF NOT EXISTS needs_loading_help BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS needs_unloading_help BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS loading_help_fee DECIMAL(10, 2) DEFAULT 0.00,
+        ADD COLUMN IF NOT EXISTS legal_delivery BOOLEAN DEFAULT FALSE;
+      `);
+      console.log('  ✓ Loading help columns added');
+      console.log('  ✓ Legal delivery column added');
+    }
+    
     console.log('✅ Migration completed successfully!');
     console.log('📦 New features are now available:');
     console.log('  ✓ Multi-stop orders (multiple pickups/deliveries)');
@@ -111,6 +136,8 @@ async function autoMigrate() {
     console.log('  ✓ Automatic pricing: +6€ per extra stop');
     console.log('  ✓ Employee-Contractor relationship (contractor_id)');
     console.log('  ✓ Employee assignment mode (all_access / manual_assignment)');
+    console.log('  ✓ Loading/Unloading help (+€6 each)');
+    console.log('  ✓ Legal delivery with content verification');
     
   } catch (error) {
     console.error('⚠️  Migration error (may be safe to ignore if already applied):', error.message);
