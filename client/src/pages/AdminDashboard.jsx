@@ -519,7 +519,26 @@ export default function AdminDashboard() {
                           />
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{order.id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex items-center gap-2">
+                          <span>#{order.id}</span>
+                          {order.legal_delivery && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800" title="Rechtssichere Zustellung">
+                              ⚖️
+                            </span>
+                          )}
+                          {order.needs_loading_help && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800" title="Beladehilfe">
+                              📦
+                            </span>
+                          )}
+                          {order.needs_unloading_help && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800" title="Entladehilfe">
+                              📤
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {order.customer_first_name} {order.customer_last_name}
                       </td>

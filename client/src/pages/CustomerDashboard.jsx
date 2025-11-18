@@ -250,10 +250,31 @@ const CustomerDashboard = () => {
                   {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval') : (o.status === 'completed' || o.status === 'pending_approval')).map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">#{order.id}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-gray-900">#{order.id}</div>
+                          {order.legal_delivery && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800">
+                              ⚖️
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-gray-500">
                           {new Date(order.created_at).toLocaleDateString('de-DE')}
                         </div>
+                        {(order.needs_loading_help || order.needs_unloading_help) && (
+                          <div className="flex gap-1 mt-1">
+                            {order.needs_loading_help && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800">
+                                📦
+                              </span>
+                            )}
+                            {order.needs_unloading_help && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800">
+                                📤
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-start space-x-2">
