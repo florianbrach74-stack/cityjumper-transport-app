@@ -288,9 +288,9 @@ const ContractorDashboard = () => {
                 📤 Entladehilfe (+€6)
               </span>
             )}
-            {order.needs_unloading_help && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                ⚖️ Rechtssichere Zustellung (DEBUG: {order.legal_delivery ? 'TRUE' : 'FALSE'})
+            {order.legal_delivery && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-300">
+                ⚖️ Rechtssichere Zustellung
               </span>
             )}
           </div>
