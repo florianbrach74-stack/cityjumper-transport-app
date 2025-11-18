@@ -161,9 +161,6 @@ const BidModal = ({ order, onClose, onSuccess }) => {
                     {' '}einverstanden. Ich verpflichte mich, Kunden des Auftraggebers nicht direkt oder indirekt zu kontaktieren und die Geheimhaltungspflicht einzuhalten.
                   </label>
                 </div>
-                <p className="text-xs text-amber-700 mt-2 ml-7">
-                  ⚠️ Verstoß gegen die Kundenschutzvereinbarung: Vertragsstrafe von €10.000,00
-                </p>
               </div>
             </div>
           </div>
