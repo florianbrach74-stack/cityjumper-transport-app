@@ -174,7 +174,12 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         const extraStopsCost = totalExtraStops * EXTRA_STOP_FEE;
         setExtraStopsFee(extraStopsCost);
         
-        const calculatedMinimumPrice = distanceCost + timeCost + START_FEE + extraStopsCost;
+        // Berechne Belade-/Entlade-Hilfe-Gebühr
+        const LOADING_HELP_FEE = 6.00;
+        const helpFee = (needsLoadingHelp ? LOADING_HELP_FEE : 0) + (needsUnloadingHelp ? LOADING_HELP_FEE : 0);
+        setLoadingHelpFee(helpFee);
+        
+        const calculatedMinimumPrice = distanceCost + timeCost + START_FEE + extraStopsCost + helpFee;
         const recommendedPrice = calculatedMinimumPrice * 1.2;
         
         setMinimumPrice(calculatedMinimumPrice);
@@ -191,8 +196,12 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   
   // Aktualisiere Preis und Extra-Stops-Gebühr wenn Stops sich ändern
   useEffect(() => {
+    const PRICE_PER_KM = 0.50;
+    const HOURLY_RATE = 22.50;
+    const START_FEE = 6.00;
     const EXTRA_STOP_FEE = 6.00;
     const LOADING_HELP_FEE = 6.00;
+    
     const totalExtraStops = pickupStops.length + deliveryStops.length;
     const calculatedFee = totalExtraStops * EXTRA_STOP_FEE;
     setExtraStopsFee(calculatedFee);
@@ -201,10 +210,26 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     const helpFee = (needsLoadingHelp ? LOADING_HELP_FEE : 0) + (needsUnloadingHelp ? LOADING_HELP_FEE : 0);
     setLoadingHelpFee(helpFee);
     
-    if (routeInfo && formData.price) {
-      validatePrice(formData.price);
+    // Aktualisiere Preis automatisch, wenn Route vorhanden ist
+    if (routeInfo) {
+      const distanceCost = routeInfo.distance * PRICE_PER_KM;
+      const durationHours = routeInfo.durationMinutes / 60;
+      const timeCost = durationHours * HOURLY_RATE;
+      
+      const calculatedMinimumPrice = distanceCost + timeCost + START_FEE + calculatedFee + helpFee;
+      const recommendedPrice = calculatedMinimumPrice * 1.2;
+      
+      setMinimumPrice(calculatedMinimumPrice);
+      
+      // Aktualisiere Preis automatisch
+      setFormData(prev => ({
+        ...prev,
+        price: recommendedPrice.toFixed(2)
+      }));
+      
+      validatePrice(recommendedPrice.toFixed(2));
     }
-  }, [pickupStops.length, deliveryStops.length, needsLoadingHelp, needsUnloadingHelp]);
+  }, [pickupStops.length, deliveryStops.length, needsLoadingHelp, needsUnloadingHelp, routeInfo]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -673,7 +698,55 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
-              <div>
+              
+              {/* Belade-/Entlade-Hilfe - VOR dem Preisfeld */}
+              <div className="md:col-span-2 space-y-3 pt-4 border-t">
+                <h5 className="text-sm font-semibold text-gray-900">Zusätzliche Dienstleistungen</h5>
+                
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="needsLoadingHelp"
+                    checked={needsLoadingHelp}
+                    onChange={(e) => setNeedsLoadingHelp(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="needsLoadingHelp" className="text-sm text-gray-700">
+                    <span className="font-medium">Beladehilfe benötigt</span>
+                    <span className="text-primary-600 font-semibold ml-2">(+€6,00)</span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Der Fahrer hilft beim Beladen des Fahrzeugs am Abholort
+                    </p>
+                  </label>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="needsUnloadingHelp"
+                    checked={needsUnloadingHelp}
+                    onChange={(e) => setNeedsUnloadingHelp(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="needsUnloadingHelp" className="text-sm text-gray-700">
+                    <span className="font-medium">Entladehilfe benötigt</span>
+                    <span className="text-primary-600 font-semibold ml-2">(+€6,00)</span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Der Fahrer hilft beim Entladen des Fahrzeugs am Zustellort
+                    </p>
+                  </label>
+                </div>
+                
+                {loadingHelpFee > 0 && (
+                  <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
+                    <p className="text-sm text-primary-800 font-medium">
+                      Zusätzliche Gebühr für Be-/Entladehilfe: €{loadingHelpFee.toFixed(2)}
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Preis (€) * <span className="text-xs text-gray-600">zzgl. 19% MwSt.</span>
                   <span className="text-xs text-gray-500 ml-2">(Automatisch berechnet, änderbar)</span>
@@ -728,53 +801,6 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                   onChange={handleChange}
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
-              </div>
-              
-              {/* Belade-/Entlade-Hilfe */}
-              <div className="md:col-span-2 space-y-3 pt-4 border-t">
-                <h5 className="text-sm font-semibold text-gray-900">Zusätzliche Dienstleistungen</h5>
-                
-                <div className="flex items-start space-x-3">
-                  <input
-                    type="checkbox"
-                    id="needsLoadingHelp"
-                    checked={needsLoadingHelp}
-                    onChange={(e) => setNeedsLoadingHelp(e.target.checked)}
-                    className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="needsLoadingHelp" className="text-sm text-gray-700">
-                    <span className="font-medium">Beladehilfe benötigt</span>
-                    <span className="text-primary-600 font-semibold ml-2">(+€6,00)</span>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Der Fahrer hilft beim Beladen des Fahrzeugs am Abholort
-                    </p>
-                  </label>
-                </div>
-                
-                <div className="flex items-start space-x-3">
-                  <input
-                    type="checkbox"
-                    id="needsUnloadingHelp"
-                    checked={needsUnloadingHelp}
-                    onChange={(e) => setNeedsUnloadingHelp(e.target.checked)}
-                    className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="needsUnloadingHelp" className="text-sm text-gray-700">
-                    <span className="font-medium">Entladehilfe benötigt</span>
-                    <span className="text-primary-600 font-semibold ml-2">(+€6,00)</span>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Der Fahrer hilft beim Entladen des Fahrzeugs am Zustellort
-                    </p>
-                  </label>
-                </div>
-                
-                {loadingHelpFee > 0 && (
-                  <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
-                    <p className="text-sm text-primary-800 font-medium">
-                      Zusätzliche Gebühr für Be-/Entladehilfe: €{loadingHelpFee.toFixed(2)}
-                    </p>
-                  </div>
-                )}
               </div>
               
               {/* Rechtssichere Zustellung */}
