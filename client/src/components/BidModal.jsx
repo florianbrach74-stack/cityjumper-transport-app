@@ -79,6 +79,28 @@ const BidModal = ({ order, onClose, onSuccess }) => {
             <p className="text-sm text-gray-600">
               <strong>Fahrzeug:</strong> {order.vehicle_type}
             </p>
+            
+            {/* Badges for special services */}
+            {(order.legal_delivery || order.needs_loading_help || order.needs_unloading_help) && (
+              <div className="flex flex-wrap gap-2 mt-3 mb-3">
+                {order.legal_delivery && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                    ⚖️ Rechtssichere Zustellung
+                  </span>
+                )}
+                {order.needs_loading_help && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    📦 Beladehilfe (+€6)
+                  </span>
+                )}
+                {order.needs_unloading_help && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    🚢 Entladehilfe (+€6)
+                  </span>
+                )}
+              </div>
+            )}
+            
             <p className="text-sm text-gray-600">
               <strong>Vorgeschlagener Preis:</strong> <span className="font-semibold text-primary-600">€{suggestedBid.toFixed(2)}</span>
             </p>
