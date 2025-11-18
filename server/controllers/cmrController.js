@@ -56,7 +56,12 @@ const createCMRForOrder = async (orderId) => {
         ? (order.length * order.width * order.height / 1000000).toFixed(2)
         : null,
       
-      special_agreements: order.special_requirements || 'Keine besonderen Vereinbarungen',
+      special_agreements: [
+        order.special_requirements,
+        order.needs_loading_help ? 'Beladehilfe erforderlich (+€6)' : null,
+        order.needs_unloading_help ? 'Entladehilfe erforderlich (+€6)' : null,
+        order.legal_delivery ? '⚠️ RECHTSSICHERE ZUSTELLUNG: Transportgut (z.B. Kündigung) dem Absender zeigen lassen und Inhalt bestätigen! Nur so kann im Rechtsstreit bestätigt werden, was transportiert wurde.' : null
+      ].filter(Boolean).join(' | ') || 'Keine besonderen Vereinbarungen',
       carriage_charges_paid: true,
       carriage_charges_forward: false,
       cash_on_delivery: null,

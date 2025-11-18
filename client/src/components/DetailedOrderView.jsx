@@ -319,6 +319,38 @@ const DetailedOrderView = ({ orderId, onClose }) => {
                     <div className="text-sm mt-1">{order.special_requirements}</div>
                   </div>
                 )}
+                
+                {/* Zusätzliche Dienstleistungen */}
+                {(order.needs_loading_help || order.needs_unloading_help || order.legal_delivery) && (
+                  <div className="mt-3 pt-3 border-t">
+                    <div className="text-gray-600 text-sm font-semibold mb-2">Zusätzliche Dienstleistungen:</div>
+                    {order.needs_loading_help && (
+                      <div className="flex items-center text-sm mt-1 text-primary-700">
+                        <span className="mr-2">✓</span>
+                        <span>Beladehilfe benötigt (+€6,00)</span>
+                      </div>
+                    )}
+                    {order.needs_unloading_help && (
+                      <div className="flex items-center text-sm mt-1 text-primary-700">
+                        <span className="mr-2">✓</span>
+                        <span>Entladehilfe benötigt (+€6,00)</span>
+                      </div>
+                    )}
+                    {order.legal_delivery && (
+                      <div className="mt-2 bg-amber-50 border-l-4 border-amber-500 p-3 rounded">
+                        <div className="flex items-start">
+                          <span className="text-amber-600 font-bold mr-2">⚠️</span>
+                          <div>
+                            <div className="font-semibold text-amber-900 text-sm">Rechtssichere Zustellung</div>
+                            <div className="text-xs text-amber-800 mt-1">
+                              WICHTIG: Dem Kunden das Transportgut zeigen lassen (z.B. Kündigung), um im Rechtsstreit bestätigen zu können, was transportiert wurde. Andernfalls kann nur bestätigt werden, dass ein Brief mit unbekanntem Inhalt zugestellt wurde.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Price Information */}
