@@ -40,6 +40,8 @@ const ContractorDashboard = () => {
   const [selectedOrderForDelivery, setSelectedOrderForDelivery] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState(null);
   const [assignmentMode, setAssignmentMode] = useState('all_access');
+  const [penalties, setPenalties] = useState([]);
+  const [pendingPenaltiesTotal, setPendingPenaltiesTotal] = useState(0);
 
   const fetchOrders = async () => {
     try {
@@ -58,6 +60,18 @@ const ContractorDashboard = () => {
     }
   };
 
+  const fetchPenalties = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = JSON.parse(atob(token.split('.')[1])).id;
+      const response = await api.get(`/penalties/contractor/${userId}`);
+      setPenalties(response.data.penalties);
+      setPendingPenaltiesTotal(response.data.pendingTotal);
+    } catch (error) {
+      console.error('Error fetching penalties:', error);
+    }
+  };
+
   const fetchAssignmentMode = async () => {
     try {
       const response = await api.get('/employee-assignment/settings');
@@ -71,6 +85,7 @@ const ContractorDashboard = () => {
     fetchOrders();
     fetchVerificationStatus();
     fetchAssignmentMode();
+    fetchPenalties();
   }, []);
 
   const fetchVerificationStatus = async () => {
@@ -527,6 +542,44 @@ const ContractorDashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900">Aufträge</h1>
           <p className="mt-2 text-gray-600">Verfügbare Aufträge annehmen und verwalten</p>
         </div>
+
+        {/* Penalties Warning */}
+        {pendingPenaltiesTotal > 0 && (
+          <div className="mb-6 rounded-lg p-4 bg-red-50 border-2 border-red-300">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start">
+                <AlertCircle className="h-6 w-6 text-red-600 mr-3 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-bold text-red-900 text-lg">⚠️ Offene Strafen</h3>
+                  <p className="text-sm text-red-800 mt-1">
+                    Sie haben offene Stornierungsgebühren in Höhe von <span className="font-bold">€{pendingPenaltiesTotal.toFixed(2)}</span>.
+                  </p>
+                  <p className="text-xs text-red-700 mt-2">
+                    Diese werden von Ihren nächsten Auszahlungen abgezogen oder müssen separat beglichen werden.
+                  </p>
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-red-600">
+                €{pendingPenaltiesTotal.toFixed(2)}
+              </div>
+            </div>
+            {penalties.filter(p => p.status === 'pending').length > 0 && (
+              <div className="mt-4 pt-4 border-t border-red-200">
+                <h4 className="text-sm font-semibold text-red-900 mb-2">Details:</h4>
+                <div className="space-y-2">
+                  {penalties.filter(p => p.status === 'pending').map(penalty => (
+                    <div key={penalty.id} className="flex justify-between text-sm">
+                      <span className="text-red-800">
+                        Auftrag #{penalty.order_id} - {penalty.reason}
+                      </span>
+                      <span className="font-semibold text-red-900">€{parseFloat(penalty.penalty_amount).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Verification Banner */}
         {verificationStatus && verificationStatus !== 'approved' && (
