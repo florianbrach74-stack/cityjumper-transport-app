@@ -52,6 +52,7 @@ app.use('/api', require('./routes/debug-verification-docs'));
 app.use('/api', require('./routes/test-cloudinary'));
 app.use('/api', require('./routes/fix-verification-documents-column'));
 app.use('/api', require('./routes/test-update-order'));
+app.use('/api', require('./routes/run-loading-help-migration'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
