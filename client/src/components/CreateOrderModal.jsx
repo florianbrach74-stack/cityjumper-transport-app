@@ -60,6 +60,11 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const [showPartialLoadDialog, setShowPartialLoadDialog] = useState(false);
   const [isPartialLoad, setIsPartialLoad] = useState(false);
   const [withdrawalConsent, setWithdrawalConsent] = useState(false);
+  const [needsLoadingHelp, setNeedsLoadingHelp] = useState(false);
+  const [needsUnloadingHelp, setNeedsUnloadingHelp] = useState(false);
+  const [legalDelivery, setLegalDelivery] = useState(false);
+  const [showLegalDeliveryInfo, setShowLegalDeliveryInfo] = useState(false);
+  const [loadingHelpFee, setLoadingHelpFee] = useState(0);
 
   const vehicleTypes = [
     'Kleintransporter (bis 2 Paletten)',
@@ -78,6 +83,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     const HOURLY_RATE = 22.50;
     const START_FEE = 6.00;
     const EXTRA_STOP_FEE = 6.00;
+    const LOADING_HELP_FEE = 6.00;
     
     const distanceCost = routeInfo.distance * PRICE_PER_KM;
     const durationHours = routeInfo.durationMinutes / 60;
@@ -88,7 +94,11 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     const extraStopsCost = totalExtraStops * EXTRA_STOP_FEE;
     setExtraStopsFee(extraStopsCost);
     
-    const calculatedMinimumPrice = distanceCost + timeCost + START_FEE + extraStopsCost;
+    // Berechne Belade-/Entlade-Hilfe-Gebühr
+    const helpFee = (needsLoadingHelp ? LOADING_HELP_FEE : 0) + (needsUnloadingHelp ? LOADING_HELP_FEE : 0);
+    setLoadingHelpFee(helpFee);
+    
+    const calculatedMinimumPrice = distanceCost + timeCost + START_FEE + extraStopsCost + helpFee;
     
     setMinimumPrice(calculatedMinimumPrice);
     
@@ -182,14 +192,19 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   // Aktualisiere Preis und Extra-Stops-Gebühr wenn Stops sich ändern
   useEffect(() => {
     const EXTRA_STOP_FEE = 6.00;
+    const LOADING_HELP_FEE = 6.00;
     const totalExtraStops = pickupStops.length + deliveryStops.length;
     const calculatedFee = totalExtraStops * EXTRA_STOP_FEE;
     setExtraStopsFee(calculatedFee);
     
+    // Berechne Belade-/Entlade-Hilfe-Gebühr
+    const helpFee = (needsLoadingHelp ? LOADING_HELP_FEE : 0) + (needsUnloadingHelp ? LOADING_HELP_FEE : 0);
+    setLoadingHelpFee(helpFee);
+    
     if (routeInfo && formData.price) {
       validatePrice(formData.price);
     }
-  }, [pickupStops.length, deliveryStops.length]);
+  }, [pickupStops.length, deliveryStops.length, needsLoadingHelp, needsUnloadingHelp]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -231,6 +246,12 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         minimum_price_at_creation: minimumPrice,
         // Widerrufsbelehrung-Zustimmung
         withdrawal_consent_given: user?.role === 'customer' && !user?.company_name ? withdrawalConsent : null,
+        // Belade-/Entlade-Hilfe
+        needs_loading_help: needsLoadingHelp,
+        needs_unloading_help: needsUnloadingHelp,
+        loading_help_fee: loadingHelpFee,
+        // Rechtssichere Zustellung
+        legal_delivery: legalDelivery,
       };
 
       console.log('Sending order data:', orderData);
@@ -673,7 +694,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                 {priceWarning && (
                   <div className="bg-red-50 border border-red-200 rounded p-2 mt-2">
                     <p className="text-xs text-red-700">
-                      📊 Berechnung: {routeInfo?.distance}km × €0,50 + {(routeInfo?.durationMinutes / 60).toFixed(2)}h × €22,50/h + €6 Startgebühr + {pickupStops.length + deliveryStops.length} Extra-Stops × €6 = €{minimumPrice?.toFixed(2)}
+                      📊 Berechnung: {routeInfo?.distance}km × €0,50 + {(routeInfo?.durationMinutes / 60).toFixed(2)}h × €22,50/h + €6 Startgebühr + {pickupStops.length + deliveryStops.length} Extra-Stops × €6{loadingHelpFee > 0 ? ` + €${loadingHelpFee.toFixed(2)} Be-/Entladehilfe` : ''} = €{minimumPrice?.toFixed(2)}
                     </p>
                   </div>
                 )}
@@ -707,6 +728,100 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                   onChange={handleChange}
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
+              </div>
+              
+              {/* Belade-/Entlade-Hilfe */}
+              <div className="md:col-span-2 space-y-3 pt-4 border-t">
+                <h5 className="text-sm font-semibold text-gray-900">Zusätzliche Dienstleistungen</h5>
+                
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="needsLoadingHelp"
+                    checked={needsLoadingHelp}
+                    onChange={(e) => setNeedsLoadingHelp(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="needsLoadingHelp" className="text-sm text-gray-700">
+                    <span className="font-medium">Beladehilfe benötigt</span>
+                    <span className="text-primary-600 font-semibold ml-2">(+€6,00)</span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Der Fahrer hilft beim Beladen des Fahrzeugs am Abholort
+                    </p>
+                  </label>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="needsUnloadingHelp"
+                    checked={needsUnloadingHelp}
+                    onChange={(e) => setNeedsUnloadingHelp(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="needsUnloadingHelp" className="text-sm text-gray-700">
+                    <span className="font-medium">Entladehilfe benötigt</span>
+                    <span className="text-primary-600 font-semibold ml-2">(+€6,00)</span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Der Fahrer hilft beim Entladen des Fahrzeugs am Zustellort
+                    </p>
+                  </label>
+                </div>
+                
+                {loadingHelpFee > 0 && (
+                  <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
+                    <p className="text-sm text-primary-800 font-medium">
+                      Zusätzliche Gebühr für Be-/Entladehilfe: €{loadingHelpFee.toFixed(2)}
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Rechtssichere Zustellung */}
+              <div className="md:col-span-2 pt-4 border-t">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="legalDelivery"
+                    checked={legalDelivery}
+                    onChange={(e) => {
+                      setLegalDelivery(e.target.checked);
+                      if (e.target.checked) {
+                        setShowLegalDeliveryInfo(true);
+                      }
+                    }}
+                    className="mt-1 h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="legalDelivery" className="text-sm text-gray-700">
+                    <span className="font-medium">Rechtssichere Zustellung</span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Für rechtlich relevante Dokumente (z.B. Kündigungen, Mahnungen)
+                    </p>
+                  </label>
+                </div>
+                
+                {showLegalDeliveryInfo && legalDelivery && (
+                  <div className="mt-3 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
+                    <div className="flex">
+                      <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="ml-3">
+                        <h5 className="text-sm font-semibold text-amber-900 mb-2">
+                          Wichtiger Hinweis zur rechtssicheren Zustellung
+                        </h5>
+                        <p className="text-sm text-amber-800 leading-relaxed">
+                          Damit es eine rechtssichere Zustellung wird und der Kurier im Falle eines Rechtsstreits auch bestätigen kann, was er gefahren hat, ist es notwendig, dass Sie dem Fahrer das Transportgut (z.B. die Kündigung) zeigen. Andernfalls hat die Erfahrung gezeigt, dass sonst gerne behauptet wird, dass in dem Umschlag ein weißes Blatt oder ähnliches war. Der Kurier kann, wenn er es nicht gesehen hat, nur bestätigen, dass er einen Brief mit unbekanntem Inhalt zugestellt hat.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowLegalDeliveryInfo(false)}
+                          className="mt-3 text-sm text-amber-700 hover:text-amber-900 font-medium underline"
+                        >
+                          Hinweis ausblenden
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -108,7 +108,11 @@ const sendOrderAssignmentNotification = async (customerEmail, contractorData, or
         <p><strong>Nach:</strong> ${orderData.delivery_city}</p>
         <p><strong>Datum:</strong> ${new Date(orderData.pickup_date).toLocaleDateString('de-DE')}</p>
         <p><strong>Preis:</strong> ${orderData.price} €</p>
+        ${orderData.needs_loading_help ? '<p><strong>✓</strong> Beladehilfe (+€6,00)</p>' : ''}
+        ${orderData.needs_unloading_help ? '<p><strong>✓</strong> Entladehilfe (+€6,00)</p>' : ''}
       </div>
+      
+      ${orderData.legal_delivery ? '<div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;"><h4 style="color: #92400e; margin-top: 0;">⚠️ Wichtiger Hinweis zur rechtssicheren Zustellung</h4><p style="color: #78350f; font-size: 14px; line-height: 1.6;">Damit es eine rechtssichere Zustellung wird und der Kurier im Falle eines Rechtsstreits auch bestätigen kann, was er gefahren hat, ist es notwendig, dass Sie dem Fahrer das Transportgut (z.B. die Kündigung) zeigen. Andernfalls hat die Erfahrung gezeigt, dass sonst gerne behauptet wird, dass in dem Umschlag ein weißes Blatt oder ähnliches war. Der Kurier kann, wenn er es nicht gesehen hat, nur bestätigen, dass er einen Brief mit unbekanntem Inhalt zugestellt hat.</p></div>' : ''}
       
       <p>Das Transportunternehmen wird sich in Kürze mit Ihnen in Verbindung setzen.</p>
       

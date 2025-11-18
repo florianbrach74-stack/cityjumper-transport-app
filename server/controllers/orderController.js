@@ -46,6 +46,12 @@ const createOrder = async (req, res) => {
       withdrawal_consent_given: req.body.withdrawal_consent_given || false,
       withdrawal_consent_timestamp: req.body.withdrawal_consent_given ? new Date() : null,
       withdrawal_consent_ip: req.body.withdrawal_consent_given ? req.ip : null,
+      // Belade-/Entlade-Hilfe
+      needs_loading_help: req.body.needs_loading_help || false,
+      needs_unloading_help: req.body.needs_unloading_help || false,
+      loading_help_fee: req.body.loading_help_fee || 0,
+      // Rechtssichere Zustellung
+      legal_delivery: req.body.legal_delivery || false,
     };
     
     // Wenn Beiladung, setze Deadline auf 7 Tage
