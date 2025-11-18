@@ -13,19 +13,18 @@ function calculateCancellationFee(order, cancelledBy) {
   let driverStatus = 'not_started';
   
   if (cancelledBy === 'customer') {
-    // Customer cancellation rules from AGB
+    // Customer cancellation rules from AGB (12h/2h structure)
     if (hoursUntilPickup > 24) {
-      feePercentage = 0; // Free cancellation
+      feePercentage = 0; // Free cancellation >24h
+    } else if (hoursUntilPickup > 12) {
+      feePercentage = 50; // 50% fee 12-24h before pickup
+    } else if (hoursUntilPickup > 2) {
+      feePercentage = 75; // 75% fee 2-12h before pickup
     } else if (hoursUntilPickup > 0) {
-      feePercentage = 50; // 50% fee within 24 hours
-      
-      // Check if driver is already en route
-      if (order.status === 'accepted' || order.status === 'in_transit') {
-        feePercentage = 75; // 75% fee if driver started
-        driverStatus = 'en_route';
-      }
+      feePercentage = 100; // 100% fee <2h before pickup
+      driverStatus = 'imminent';
     } else {
-      feePercentage = 75; // Past pickup time
+      feePercentage = 100; // 100% fee past pickup time
       driverStatus = 'past_pickup';
     }
   }

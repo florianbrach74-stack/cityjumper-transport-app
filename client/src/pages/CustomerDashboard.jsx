@@ -6,7 +6,8 @@ import UpdatePriceModal from '../components/UpdatePriceModal';
 import CMRViewer from '../components/CMRViewer';
 import ReportsSummary from '../components/ReportsSummary';
 import { formatPrice } from '../utils/formatPrice';
-import { Plus, Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText, TrendingUp, BarChart3 } from 'lucide-react';
+import { Plus, Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText, TrendingUp, BarChart3, XCircle } from 'lucide-react';
+import CancellationModal from '../components/CancellationModal';
 
 const CustomerDashboard = () => {
   const [orders, setOrders] = useState([]);
@@ -15,6 +16,7 @@ const CustomerDashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedOrderForCMR, setSelectedOrderForCMR] = useState(null);
   const [selectedOrderForPriceUpdate, setSelectedOrderForPriceUpdate] = useState(null);
+  const [selectedOrderForCancellation, setSelectedOrderForCancellation] = useState(null);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -244,6 +246,9 @@ const CustomerDashboard = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       CMR
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Aktionen
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -397,6 +402,17 @@ const CustomerDashboard = () => {
                           </button>
                         )}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {order.status !== 'cancelled' && order.status !== 'completed' && !order.cancellation_status && (
+                          <button
+                            onClick={() => setSelectedOrderForCancellation(order)}
+                            className="text-red-600 hover:text-red-900 flex items-center space-x-1"
+                          >
+                            <XCircle className="h-4 w-4" />
+                            <span>Stornieren</span>
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -430,6 +446,18 @@ const CustomerDashboard = () => {
           onClose={() => setSelectedOrderForPriceUpdate(null)}
           onSuccess={() => {
             setSelectedOrderForPriceUpdate(null);
+            fetchOrders();
+          }}
+        />
+      )}
+
+      {/* Cancellation Modal */}
+      {selectedOrderForCancellation && (
+        <CancellationModal
+          order={selectedOrderForCancellation}
+          onClose={() => setSelectedOrderForCancellation(null)}
+          onSuccess={() => {
+            setSelectedOrderForCancellation(null);
             fetchOrders();
           }}
         />
