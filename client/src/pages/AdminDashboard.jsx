@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { DollarSign } from 'lucide-react';
 import api, { bidsAPI, verificationAPI } from '../services/api';
 import AssignOrderModal from '../components/AssignOrderModal';
 import CMRViewer from '../components/CMRViewer';
