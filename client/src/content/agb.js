@@ -28,15 +28,58 @@ export const agbContent = {
         content: `Der Kunde ist verpflichtet, das Transportgut ordnungsgemäß zu verpacken und gefährliche Güter zu kennzeichnen. Falsche Angaben können zur Ablehnung des Auftrags führen.`
       },
       {
-        title: '7. Widerrufsrecht',
+        title: '7. Kundenschutzvereinbarung (für Auftragnehmer)',
+        subsections: [
+          {
+            title: '§ 1 Kundenschutzvereinbarung',
+            content: `(1) Gegenüber dem Auftraggeber ist die Auftragnehmerin während der Dauer ihrer Tätigkeit für den Auftraggeber zum Kundenschutz verpflichtet. Die Auftragnehmerin darf von Kunden des Auftraggebers, die ihr im Rahmen ihrer Tätigkeit bekannt werden, weder unmittelbar noch mittelbar über Dritte, folgende Aufgaben wahrnehmen oder an Dritte weitergeben bzw. weitergeben lassen: Transport- und Speditionsaufträge im regionalen, nationalen und grenzüberschreitenden erlaubnisfreien Güterverkehr.
+
+(2) Kunde ist jeder Auftraggeber oder Empfänger. Unter den Kundenschutz fallen insbesondere alle namentlich in der Anlage 1 genannten Kunden.
+
+(3) Ist unklar, ob die Kunden des Auftraggebers der Auftragnehmerin im Rahmen ihrer Tätigkeit für den Auftraggeber bekannt geworden sind, so muss die Auftragnehmerin nachweisen, dass ihr die Kunden außerhalb ihrer Tätigkeit für den Auftraggeber bekannt geworden sind.
+
+(4) Der Kundenschutz nach § 1 dieser Vereinbarung gilt auch zwei (2) Jahre nach Beendigung der Zusammenarbeit – unabhängig auf welchem Grund die Beendigung beruht – fort.`
+          },
+          {
+            title: '§ 2 Geheimhaltungsverpflichtung; Umgang mit Vertraulichen Informationen',
+            content: `(1) Die Auftragnehmerin wird Unterlagen und Informationen, die sie im Rahmen ihrer Tätigkeit vom Auftraggeber oder vom Kunden selbst erhalten hat, sowie die hierbei erlangten Kenntnisse über den Kunden, seinen Bedarf und seine Eigenart weder für sich noch für Dritte verwenden und/oder verwenden lassen. Weiterhin wird sie die daraus erlangten Kenntnisse nicht zum Erbringen gleicher oder ähnlicher Leistungen verwerten.
+
+(2) Darüber hinaus wird die Auftragnehmerin die ihr erteilten Informationen, erlangte Kenntnisse, jedweden Inhalt von Gesprächen und möglichen Verhandlungen sowie sämtliche zwischen den Parteien offengelegte Informationen (nachfolgend gemeinsam die „Vertraulichen Informationen") gegenüber Dritten - auch nach Beendigung der Zusammenarbeit - streng geheim halten. Sie darf diese nur insoweit ihren Mitarbeitern Beratern und/oder sonstigen Dienstleistern, zugänglich machen, wie dies zur Ausführung der Tätigkeit für den Auftraggeber unbedingt erforderlich ist.`
+          },
+          {
+            title: '§ 3 Subunternehmer',
+            content: `Setzt die Auftragnehmerin zur Erfüllung ihrer Vertragspflichten einen Subunternehmer bzw. weiteren Dienstleister ein, hat sie den Auftraggeber vorab und vor Auftragserteilung an den Subunternehmer schriftlich über die Absicht der Weiterbeauftragung zu informieren. Gleichzeitig ist sie verpflichtet, den Auftraggeber über das Vorhandensein oder das Fehlen einer gleichwertigen Kundenschutz- und Geheimhaltungsvereinbarung zu informieren.`
+          },
+          {
+            title: '§ 4 Vertragsstrafe',
+            content: `Sollte die Auftragnehmerin ihre Pflichten aus dieser Vereinbarung verletzen, ist sie verpflichtet, dem Auftraggeber eine Vertragsstrafe in Höhe von 10.000,00 EUR zu zahlen, es sei denn, sie hat die Pflichtverletzung nicht zu vertreten. Je zwei Wochen einer fortgesetzten Verletzungshandlung gelten als selbständiger Verstoß.`
+          },
+          {
+            title: '§ 5 Rückgabe/Vernichtung von Unterlagen',
+            content: `Die Auftragnehmerin verpflichtet sich, sämtliche zur Durchführung des Vertrags erhaltenen Dokumente, Datenträger, Pläne, Skizzen, Muster und alle sonstigen Arbeitsunterlagen einschließlich eventueller Kopien mit Beendigung der Zusammenarbeit an den Auftraggeber unverzüglich, spätestens aber binnen fünf (5) Werktagen nach Beendigung zurückzugeben.`
+          },
+          {
+            title: '§ 6 Schlussbestimmungen',
+            content: `(1) Diese Vereinbarung ist integraler Bestandteil der zwischen dem Auftraggeber und der Auftragnehmerin geschlossenen Transportverträge.
+
+(2) Änderungen und Ergänzungen dieser Vereinbarung bedürfen der Schriftform.
+
+(3) Diese Vereinbarung unterliegt dem Recht der Bundesrepublik Deutschland unter Ausschluss der Bestimmungen des internationalen Privatrechts.
+
+(4) Für sämtliche Streitigkeiten nach dieser Vereinbarung ist ausschließlich der Gerichtsstand Berlin.`
+          }
+        ]
+      },
+      {
+        title: '8. Widerrufsrecht',
         content: `Verbraucher haben ein 14-tägiges Widerrufsrecht. Details finden Sie in unserer Widerrufsbelehrung.`
       },
       {
-        title: '8. Datenschutz',
+        title: '9. Datenschutz',
         content: `Wir verarbeiten personenbezogene Daten gemäß der Datenschutz-Grundverordnung (DSGVO). Details finden Sie in unserer Datenschutzerklärung.`
       },
       {
-        title: '9. Schlussbestimmungen',
+        title: '10. Schlussbestimmungen',
         content: `Es gilt das Recht der Bundesrepublik Deutschland. Gerichtsstand ist Berlin. Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.`
       }
     ]

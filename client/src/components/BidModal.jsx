@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { bidsAPI } from '../services/api';
-import { X, DollarSign, MessageSquare } from 'lucide-react';
+import { X, DollarSign, MessageSquare, Shield } from 'lucide-react';
 
 const BidModal = ({ order, onClose, onSuccess }) => {
   const [bidAmount, setBidAmount] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [customerProtectionConsent, setCustomerProtectionConsent] = useState(false);
 
   // Safety check
   if (!order) {
@@ -26,6 +27,11 @@ const BidModal = ({ order, onClose, onSuccess }) => {
     const bidValue = parseFloat(bidAmount);
     if (isNaN(bidValue) || bidValue <= 0) {
       setError('Bitte geben Sie einen gültigen Preis ein');
+      return;
+    }
+
+    if (!customerProtectionConsent) {
+      setError('Bitte bestätigen Sie die Kundenschutzvereinbarung');
       return;
     }
 
@@ -124,6 +130,42 @@ const BidModal = ({ order, onClose, onSuccess }) => {
               placeholder="Warum sind Sie der richtige Auftragnehmer für diesen Job?"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
             />
+          </div>
+
+          {/* Customer Protection Agreement */}
+          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded">
+            <div className="flex items-start">
+              <Shield className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="ml-3">
+                <h4 className="text-sm font-semibold text-amber-900 mb-2">
+                  Kundenschutzvereinbarung
+                </h4>
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="customerProtectionConsent"
+                    checked={customerProtectionConsent}
+                    onChange={(e) => setCustomerProtectionConsent(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="customerProtectionConsent" className="text-sm text-amber-800">
+                    Hiermit erkläre ich mich ausdrücklich mit der in den{' '}
+                    <a 
+                      href="/agb" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary-600 hover:text-primary-700 underline font-semibold"
+                    >
+                      AGBs geregelten Kundenschutzvereinbarung
+                    </a>
+                    {' '}einverstanden. Ich verpflichte mich, Kunden des Auftraggebers nicht direkt oder indirekt zu kontaktieren und die Geheimhaltungspflicht einzuhalten.
+                  </label>
+                </div>
+                <p className="text-xs text-amber-700 mt-2 ml-7">
+                  ⚠️ Verstoß gegen die Kundenschutzvereinbarung: Vertragsstrafe von €10.000,00
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Error */}

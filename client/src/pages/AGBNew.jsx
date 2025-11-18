@@ -68,7 +68,21 @@ export default function AGBNew() {
                 {section.title}
               </h2>
               <div className="text-gray-700 space-y-3">
-                {Array.isArray(section.content) ? (
+                {section.subsections ? (
+                  // Render subsections for Kundenschutzvereinbarung
+                  <div className="space-y-6">
+                    {section.subsections.map((subsection, subIndex) => (
+                      <div key={subIndex} className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          {subsection.title}
+                        </h3>
+                        <p className="leading-relaxed whitespace-pre-line">
+                          {subsection.content}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : Array.isArray(section.content) ? (
                   section.content.map((paragraph, pIndex) => (
                     <p key={pIndex} className="leading-relaxed">
                       {paragraph}
