@@ -182,13 +182,9 @@ class Order {
         -- KEINE special_requirements
         -- Beiladung Info
         o.is_partial_load,
-        o.partial_load_deadline,
-        -- Customer Info (nur Name/Firma)
-        c.first_name as customer_first_name, 
-        c.last_name as customer_last_name, 
-        c.company_name as customer_company
+        o.partial_load_deadline
+        -- KEIN Kundenname vor Zuweisung
       FROM transport_orders o
-      LEFT JOIN users c ON o.customer_id = c.id
       WHERE o.status = 'pending'
       ORDER BY o.created_at DESC
     `;
