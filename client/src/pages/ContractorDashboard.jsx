@@ -198,7 +198,14 @@ const ContractorDashboard = () => {
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Auftrag #{order.id}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-900">Auftrag #{order.id}</h3>
+            {order.legal_delivery && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                ⚖️ Rechtssichere Zustellung
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-500">
             Erstellt am {new Date(order.created_at).toLocaleDateString('de-DE')}
           </p>
@@ -259,6 +266,22 @@ const ContractorDashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* Additional Services */}
+        {(order.needs_loading_help || order.needs_unloading_help) && (
+          <div className="flex flex-wrap gap-2 pt-3 border-t">
+            {order.needs_loading_help && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                📦 Beladehilfe (+€6)
+              </span>
+            )}
+            {order.needs_unloading_help && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                📤 Entladehilfe (+€6)
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Date and Vehicle */}
         <div className="grid grid-cols-2 gap-4 pt-3 border-t">
