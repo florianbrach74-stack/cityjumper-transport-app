@@ -210,6 +210,11 @@ export default function ContractorOrdersView() {
                               </span>
                             )}
                           </div>
+                          {order.cancellation_status === 'cancelled_by_customer' && order.cancellation_fee_percentage && (
+                            <div className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
+                              ⚠️ Storniert: {order.cancellation_fee_percentage}% Gebühr
+                            </div>
+                          )}
                           {order.price_updated_at && new Date(order.price_updated_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) && (
                             <div className="inline-flex items-center px-3 py-1 rounded-md text-sm font-bold bg-gradient-to-r from-green-400 to-green-600 text-white shadow-lg animate-pulse border-2 border-green-700" title="Preis wurde kürzlich erhöht">
                               ⬆️ NEUER PREIS! +€{(parseFloat(order.price) - parseFloat(order.price || 0) * 0.85).toFixed(2)}

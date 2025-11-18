@@ -580,6 +580,9 @@ export default function AdminDashboard() {
                           )}
                           <div className="text-xs text-gray-600" title="Auftragnehmer-Preis (85%)">
                             🚚 €{order.contractor_price || (order.price * 0.85).toFixed(2)}
+                            {order.cancellation_status === 'cancelled_by_customer' && order.cancellation_fee_percentage && (
+                              <span className="ml-2 text-amber-700">({order.cancellation_fee_percentage}% Stornogebühr)</span>
+                            )}
                           </div>
                           <div className="text-xs text-green-600 font-medium" title="Plattform-Provision (15%)">
                             💰 €{((order.price || 0) * 0.15).toFixed(2)}

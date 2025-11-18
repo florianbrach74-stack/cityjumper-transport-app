@@ -80,16 +80,21 @@ router.post('/:orderId/cancel-by-customer', authenticateToken, async (req, res) 
     // Calculate cancellation fee
     const feeInfo = calculateCancellationFee(order, 'customer');
     
-    // If driver is en route (75% fee), reduce order price so contractor can complete it
+    // If order has contractor assigned, reduce price and mark as completed
     let newStatus = 'cancelled';
     let newPrice = parseFloat(order.price);
-    let newContractorPrice = parseFloat(order.contractor_price);
+    let newContractorPrice = order.contractor_price ? parseFloat(order.contractor_price) : null;
     
-    if (feeInfo.driverStatus === 'en_route' && order.contractor_id) {
-      // Driver already started - allow completion with reduced price
-      newStatus = order.status; // Keep current status
-      newPrice = feeInfo.cancellationFee; // 75% of original
-      newContractorPrice = newPrice * 0.85; // Contractor gets 85% of reduced price
+    if (order.contractor_id && feeInfo.feePercentage > 0) {
+      // Contractor is assigned and there's a cancellation fee
+      // Set status to completed so contractor gets paid
+      newStatus = 'completed';
+      
+      // Customer pays the cancellation fee (e.g., 75% of 100€ = 75€)
+      newPrice = feeInfo.cancellationFee;
+      
+      // Contractor gets the fee percentage of their original price (e.g., 75% of 85€ = 63.75€)
+      newContractorPrice = (parseFloat(order.contractor_price || order.price * 0.85) * feeInfo.feePercentage) / 100;
     }
     
     // Update order
