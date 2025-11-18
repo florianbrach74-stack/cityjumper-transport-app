@@ -148,9 +148,45 @@ class Order {
 
   static async getAvailableOrders() {
     const query = `
-      SELECT o.*, 
-        c.email as customer_email, c.first_name as customer_first_name, 
-        c.last_name as customer_last_name, c.company_name as customer_company
+      SELECT 
+        o.id,
+        o.customer_id,
+        o.status,
+        o.created_at,
+        o.updated_at,
+        -- Nur Städte, KEINE genauen Adressen
+        o.pickup_city,
+        o.pickup_postal_code,
+        o.pickup_country,
+        o.pickup_date,
+        o.pickup_time_from,
+        o.pickup_time_to,
+        o.delivery_city,
+        o.delivery_postal_code,
+        o.delivery_country,
+        o.delivery_date,
+        o.delivery_time_from,
+        o.delivery_time_to,
+        -- Fahrzeug & Maße (OK)
+        o.vehicle_type,
+        o.weight,
+        o.length,
+        o.width,
+        o.height,
+        o.pallets,
+        -- Preis (OK)
+        o.price,
+        -- KEINE Beschreibung/Transportgut vor Zuweisung
+        -- KEINE genauen Adressen
+        -- KEINE Kontaktdaten
+        -- KEINE special_requirements
+        -- Beiladung Info
+        o.is_partial_load,
+        o.partial_load_deadline,
+        -- Customer Info (nur Name/Firma)
+        c.first_name as customer_first_name, 
+        c.last_name as customer_last_name, 
+        c.company_name as customer_company
       FROM transport_orders o
       LEFT JOIN users c ON o.customer_id = c.id
       WHERE o.status = 'pending'
