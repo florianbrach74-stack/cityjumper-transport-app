@@ -22,9 +22,16 @@ export default function CancellationModal({ order, onClose, onSuccess }) {
         `${import.meta.env.VITE_API_URL}/api/cancellation/${order.id}/cancellation-preview`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setPreview(response.data.preview);
+      console.log('Cancellation preview response:', response.data);
+      if (response.data && response.data.preview) {
+        setPreview(response.data.preview);
+      } else {
+        console.error('Invalid preview data:', response.data);
+        setPreview(null);
+      }
     } catch (error) {
       console.error('Error fetching preview:', error);
+      setPreview(null);
     }
   };
 
@@ -146,7 +153,7 @@ export default function CancellationModal({ order, onClose, onSuccess }) {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-blue-800">Stunden bis Abholung:</span>
-                  <span className="font-semibold">{preview.hoursUntilPickup.toFixed(1)}h</span>
+                  <span className="font-semibold">{preview.hoursUntilPickup ? preview.hoursUntilPickup.toFixed(1) : '0.0'}h</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-blue-800">Fahrer-Status:</span>
