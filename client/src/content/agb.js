@@ -29,18 +29,26 @@ export const agbContent = {
       },
       {
         title: '6a. Stornierung und Stornogebühren',
-        content: `(1) Der Kunde kann einen Auftrag bis zu 24 Stunden vor dem vereinbarten Abholtermin kostenfrei stornieren.
+        subsections: [
+          {
+            title: '7.1 Stornierung durch den Kunden',
+            content: `a) Kostenfrei bis 24 Stunden vor der ersten Abholzeit.
 
-(2) Bei Stornierung weniger als 24 Stunden vor dem vereinbarten Abholtermin fallen folgende Stornogebühren an:
-- Mehr als 12 Stunden vor Abholung: 50% des Auftragswertes
-- Weniger als 12 Stunden vor Abholung: 75% des Auftragswertes
-- Weniger als 2 Stunden vor Abholung oder Nichterscheinen: 100% des Auftragswertes
+b) Innerhalb von 24 Stunden vor der ersten Abholzeit: 50% der vereinbarten Frachtkosten; Wurde der Auftrag bereits gestartet (Fahrer auf dem Weg oder am Abholort): 75% der vereinbarten Frachtkosten; Bereits entstandene Zusatz- oder Drittkosten werden zusätzlich berechnet.
 
-(3) Die Stornierung muss schriftlich per E-Mail oder über die Plattform erfolgen. Maßgeblich ist der Zeitpunkt des Eingangs der Stornierung bei Courierly.
+c) Nach Übergabe der Sendung ist eine Kündigung ausgeschlossen, soweit kein gesetzliches Rücktrittsrecht besteht.`
+          },
+          {
+            title: '7.2 Stornierung durch den Auftragnehmer',
+            content: `a) Bei Fahrzeugausfall, Krankheit, technischer Störung, höherer Gewalt oder anderen wichtigen Gründen kann der Auftragnehmer vom Vertrag zurücktreten. Der Kunde wird unverzüglich informiert und erhält, sofern möglich, ein Ersatzangebot zu gleichen Konditionen. Bereits geleistete Zahlungen werden im Falle der Nichterbringung erstattet.
 
-(4) Bereits bezahlte Beträge werden abzüglich der Stornogebühr innerhalb von 14 Tagen erstattet.
-
-(5) Im Falle höherer Gewalt oder nachweislich unverschuldeter Verhinderung kann von den Stornogebühren abgesehen werden.`
+b) Storniert der Auftragnehmer aus anderen Gründen (z.B. mangelnde Kapazität, wirtschaftliche Gründe), gelten die gleichen Stornierungsgebühren wie für den Kunden: Kostenfrei bis 24 Stunden vor der ersten Abholzeit; Innerhalb von 24 Stunden: 50% der vereinbarten Frachtkosten; Nach Auftragsstart: 75% der vereinbarten Frachtkosten.`
+          },
+          {
+            title: '7.3 Allgemeine Bestimmungen',
+            content: `Die Stornierung muss schriftlich per E-Mail oder über die Plattform erfolgen. Maßgeblich ist der Zeitpunkt des Eingangs der Stornierung bei Courierly. Bereits bezahlte Beträge werden abzüglich der Stornogebühr innerhalb von 14 Tagen erstattet.`
+          }
+        ]
       },
       {
         title: '7. Kundenschutzvereinbarung (für Auftragnehmer)',
