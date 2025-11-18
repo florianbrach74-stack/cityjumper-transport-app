@@ -279,7 +279,7 @@ const ContractorDashboard = () => {
         {(order.needs_loading_help || order.needs_unloading_help || order.legal_delivery) && (
           <div className="flex flex-wrap gap-2 pt-3 border-t">
             {order.legal_delivery && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                 ⚖️ Rechtssichere Zustellung
               </span>
             )}
