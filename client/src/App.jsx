@@ -18,6 +18,7 @@ import AGB from './pages/AGB';
 import AGBNew from './pages/AGBNew';
 import Widerruf from './pages/Widerruf';
 import WiderrufNew from './pages/WiderrufNew';
+import FAQ from './pages/FAQ';
 import EmployeeSettings from './pages/EmployeeSettings';
 import ContractorOrdersWithAssignment from './pages/ContractorOrdersWithAssignment';
 import ForgotPassword from './pages/ForgotPassword';
@@ -57,6 +58,7 @@ function App() {
           <Route path="/agb-old" element={<AGB />} />
           <Route path="/widerruf" element={<Widerruf />} />
           <Route path="/widerruf-new" element={<WiderrufNew />} />
+          <Route path="/faq" element={<FAQ />} />
           <Route path="/cmr/:cmrNumber" element={<CMRSignature />} />
           <Route path="/cmr/:cmrNumber/sender" element={<CMRSignature />} />
           <Route path="/cmr/:cmrNumber/carrier" element={<CMRSignature />} />

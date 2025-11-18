@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FileText, Scale, Mail, Phone, MapPin } from 'lucide-react';
+import { FileText, Scale, Mail, Phone, MapPin, HelpCircle } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -56,6 +56,11 @@ export default function Footer() {
                 <a href="/#pricing" className="hover:text-white transition-colors">
                   Preise
                 </a>
+              </li>
+              <li>
+                <Link to="/faq" className="hover:text-white transition-colors">
+                  FAQ
+                </Link>
               </li>
             </ul>
           </div>
