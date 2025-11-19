@@ -609,6 +609,7 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
     const ordersResult = await pool.query(
       `SELECT o.*, 
               c.email as customer_email,
+              c.billing_email as customer_billing_email,
               c.first_name as customer_first_name,
               c.last_name as customer_last_name,
               c.company_name as customer_company,
@@ -635,6 +636,15 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
     const customerIds = [...new Set(orders.map(o => o.customer_id))];
     if (customerIds.length > 1) {
       return res.status(400).json({ error: 'Alle Aufträge müssen vom selben Kunden sein' });
+    }
+    
+    // Check if any orders are cancelled
+    const cancelledOrders = orders.filter(o => o.status === 'cancelled');
+    if (cancelledOrders.length > 0) {
+      const cancelledIds = cancelledOrders.map(o => `#${o.id}`).join(', ');
+      return res.status(400).json({ 
+        error: `Folgende Aufträge sind storniert und können nicht abgerechnet werden: ${cancelledIds}. Bitte entfernen Sie diese aus der Auswahl.` 
+      });
     }
     
     // Check if any orders are already invoiced
@@ -672,14 +682,19 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
     let invoiceNumber = previewResult.rows[0].invoice_number;
     console.log('👁️ Preview invoice number:', invoiceNumber);
     
+    // Use billing_email if set, otherwise use standard email
+    const invoiceEmail = orders[0].customer_billing_email || orders[0].customer_email;
+    
     console.log('📧 Email check:', {
       shouldSendEmail,
       customerEmail: orders[0].customer_email,
-      willSend: shouldSendEmail && orders[0].customer_email
+      billingEmail: orders[0].customer_billing_email,
+      invoiceEmail: invoiceEmail,
+      willSend: shouldSendEmail && invoiceEmail
     });
 
     // Send email if requested
-    if (shouldSendEmail && orders[0].customer_email) {
+    if (shouldSendEmail && invoiceEmail) {
       console.log('🔄 Starting invoice creation process...');
       
       // Start a database transaction
@@ -955,7 +970,7 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         
         // Send email with PDF attachment
         await sendEmail(
-          orders[0].customer_email,
+          invoiceEmail,
           `Sammelrechnung ${invoiceNumber} von Courierly`,
           `
             <h2>Ihre Sammelrechnung von Courierly</h2>
@@ -977,7 +992,7 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
           }]
         );
         
-        console.log('✅ Email with PDF sent to:', orders[0].customer_email);
+        console.log('✅ Email with PDF sent to:', invoiceEmail);
         
         // Now upload PDF to Cloudinary (non-critical, can fail)
         try {
