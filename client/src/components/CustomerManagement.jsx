@@ -19,6 +19,7 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
       first_name: customer.first_name || '',
       last_name: customer.last_name || '',
       email: customer.email || '',
+      billing_email: customer.billing_email || '',
       phone: customer.phone || '',
       company_name: customer.company_name || '',
       company_address: customer.company_address || '',
@@ -109,6 +110,12 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
                           <Mail className="h-4 w-4 inline mr-1" />
                           {customer.email}
                         </p>
+                        {customer.billing_email && (
+                          <p className="text-sm text-blue-600 mt-1">
+                            <Mail className="h-4 w-4 inline mr-1" />
+                            📧 Rechnung: {customer.billing_email}
+                          </p>
+                        )}
                         {customer.phone && (
                           <p className="text-sm text-gray-600">
                             <Phone className="h-4 w-4 inline mr-1" />
@@ -163,6 +170,32 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
                                 onChange={(e) => setEditFormData({...editFormData, last_name: e.target.value})}
                                 className="w-full px-2 py-1 text-sm border rounded"
                               />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Email (Login)</label>
+                              <input
+                                type="email"
+                                value={editFormData.email}
+                                onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                                className="w-full px-2 py-1 text-sm border rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                📧 Rechnungs-Email (optional)
+                              </label>
+                              <input
+                                type="email"
+                                value={editFormData.billing_email}
+                                onChange={(e) => setEditFormData({...editFormData, billing_email: e.target.value})}
+                                className="w-full px-2 py-1 text-sm border rounded"
+                                placeholder="Wenn abweichend von Login-Email"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Rechnungen gehen an diese Email (falls angegeben)
+                              </p>
                             </div>
                           </div>
                           <div>

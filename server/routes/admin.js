@@ -140,7 +140,7 @@ router.get('/users', adminAuth, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        id, email, role, company_name, first_name, last_name, phone, created_at,
+        id, email, billing_email, role, company_name, first_name, last_name, phone, created_at,
         verification_status, verified_by, verified_at, verification_notes,
         insurance_document_url, business_license_url,
         minimum_wage_declaration_signed, minimum_wage_signed_at,
@@ -435,7 +435,7 @@ router.patch('/users/:id/profile', adminAuth, async (req, res) => {
     const updates = req.body;
     
     const allowedFields = [
-      'first_name', 'last_name', 'email', 'phone',
+      'first_name', 'last_name', 'email', 'phone', 'billing_email',
       'company_name', 'company_address', 'company_postal_code', 
       'company_city', 'company_country', 'tax_id', 'vat_id', 'admin_notes'
     ];
