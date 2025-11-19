@@ -26,6 +26,7 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
       company_city: customer.company_city || '',
       tax_id: customer.tax_id || '',
       vat_id: customer.vat_id || '',
+      admin_notes: customer.admin_notes || '',
     });
   };
 
@@ -222,6 +223,21 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
                               />
                             </div>
                           </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              📝 Admin-Notizen (nur für Sie sichtbar)
+                            </label>
+                            <textarea
+                              value={editFormData.admin_notes}
+                              onChange={(e) => setEditFormData({...editFormData, admin_notes: e.target.value})}
+                              className="w-full px-2 py-1 text-sm border rounded"
+                              rows="3"
+                              placeholder="z.B. Abrechnungsintervall: monatlich, Zahlungsziel: 14 Tage, Besondere Vereinbarungen..."
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Hier können Sie interne Notizen zum Kunden speichern (z.B. Abrechnungsintervalle, Zahlungsbedingungen, etc.)
+                            </p>
+                          </div>
                           <div className="flex space-x-2 pt-2">
                             <button
                               onClick={() => saveEdit(customer.id)}
@@ -238,40 +254,54 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
                           </div>
                         </div>
                       </div>
-                    ) : (customer.company_name || customer.company_address || customer.tax_id || customer.vat_id) ? (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                        <h4 className="text-sm font-medium text-blue-900 mb-2">
-                          📋 {customer.company_name ? 'Firmendaten' : 'Zusätzliche Daten'} (Rechnungsstellung)
-                        </h4>
-                        <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
-                          {customer.company_name && (
-                            <div className="col-span-2">
-                              <span className="text-blue-600">Firma:</span> {customer.company_name}
+                    ) : (
+                      <>
+                        {(customer.company_name || customer.company_address || customer.tax_id || customer.vat_id) && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                            <h4 className="text-sm font-medium text-blue-900 mb-2">
+                              📋 {customer.company_name ? 'Firmendaten' : 'Zusätzliche Daten'} (Rechnungsstellung)
+                            </h4>
+                            <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
+                              {customer.company_name && (
+                                <div className="col-span-2">
+                                  <span className="text-blue-600">Firma:</span> {customer.company_name}
+                                </div>
+                              )}
+                              {customer.company_address && (
+                                <div>
+                                  <span className="text-blue-600">Adresse:</span> {customer.company_address}
+                                </div>
+                              )}
+                              {customer.company_postal_code && (
+                                <div>
+                                  <span className="text-blue-600">PLZ/Ort:</span> {customer.company_postal_code} {customer.company_city}
+                                </div>
+                              )}
+                              {customer.tax_id && (
+                                <div>
+                                  <span className="text-blue-600">Steuer-Nr:</span> {customer.tax_id}
+                                </div>
+                              )}
+                              {customer.vat_id && (
+                                <div>
+                                  <span className="text-blue-600">USt-IdNr:</span> {customer.vat_id}
+                                </div>
+                              )}
                             </div>
-                          )}
-                          {customer.company_address && (
-                            <div>
-                              <span className="text-blue-600">Adresse:</span> {customer.company_address}
-                            </div>
-                          )}
-                          {customer.company_postal_code && (
-                            <div>
-                              <span className="text-blue-600">PLZ/Ort:</span> {customer.company_postal_code} {customer.company_city}
-                            </div>
-                          )}
-                          {customer.tax_id && (
-                            <div>
-                              <span className="text-blue-600">Steuer-Nr:</span> {customer.tax_id}
-                            </div>
-                          )}
-                          {customer.vat_id && (
-                            <div>
-                              <span className="text-blue-600">USt-IdNr:</span> {customer.vat_id}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ) : null}
+                          </div>
+                        )}
+                        {customer.admin_notes && (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+                            <h4 className="text-sm font-medium text-yellow-900 mb-2">
+                              📝 Admin-Notizen (nur für Sie sichtbar)
+                            </h4>
+                            <p className="text-sm text-yellow-800 whitespace-pre-wrap">
+                              {customer.admin_notes}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    )}
 
                     {/* Actions */}
                     <div className="flex space-x-2">

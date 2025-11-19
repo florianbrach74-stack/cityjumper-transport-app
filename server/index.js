@@ -60,8 +60,10 @@ app.use('/api', require('./routes/penalties'));
 app.use('/api', require('./routes/add-order-monitoring-columns'));
 app.use('/api', require('./routes/create-price-history-table'));
 app.use('/api', require('./routes/add-time-window-columns'));
+app.use('/api', require('./routes/add-customer-notes-column'));
 app.use('/api', require('./routes/trigger-monitoring'));
 app.use('/api', require('./routes/debug-monitoring'));
+app.use('/api', require('./routes/customer-notes'));
 app.use('/api/orders', require('./routes/order-price-adjustment'));
 
 // Serve static files (CMR PDFs)
