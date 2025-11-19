@@ -268,23 +268,17 @@ class OrderMonitoringService {
         `
       });
       
-      // Auftrag archivieren
-      const updateResult = await pool.query(`
-        UPDATE transport_orders
-        SET 
-          expired_and_archived = TRUE,
-          expiration_notification_sent_at = NOW(),
-          archived_at = NOW(),
-          archive_reason = 'Zeitfenster abgelaufen - nicht vermittelt',
-          status = 'cancelled'
+      // Auftrag aus Datenbank LÖSCHEN (spart Speicher, verschwindet aus verfügbaren Aufträgen)
+      const deleteResult = await pool.query(`
+        DELETE FROM transport_orders
         WHERE id = $1
-        RETURNING id, expired_and_archived, status
+        RETURNING id
       `, [order.id]);
       
-      if (updateResult.rowCount === 0) {
-        console.error(`❌ [Ablauf] Failed to update order #${order.id} - order not found`);
+      if (deleteResult.rowCount === 0) {
+        console.error(`❌ [Ablauf] Failed to delete order #${order.id} - order not found`);
       } else {
-        console.log(`✅ [Ablauf] Order #${order.id} archived (status: ${updateResult.rows[0].status}) and notification sent`);
+        console.log(`✅ [Ablauf] Order #${order.id} DELETED from database and notification sent`);
       }
       
     } catch (error) {

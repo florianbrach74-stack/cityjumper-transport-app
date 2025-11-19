@@ -6,15 +6,11 @@ router.post('/fix-duplicate-emails', async (req, res) => {
   try {
     console.log('🔧 Fixing duplicate email issue for orders #31 and #32...');
 
-    // Mark orders as notified to stop duplicate emails
-    // Don't change status - just mark as notified
+    // Delete orders from database to stop duplicate emails and remove from available orders
     const result = await pool.query(`
-      UPDATE transport_orders
-      SET 
-        expired_and_archived = TRUE,
-        expiration_notification_sent_at = NOW()
+      DELETE FROM transport_orders
       WHERE id IN (31, 32)
-      RETURNING id, status, expired_and_archived, expiration_notification_sent_at
+      RETURNING id
     `);
 
     console.log('✅ Orders updated:', result.rows);
