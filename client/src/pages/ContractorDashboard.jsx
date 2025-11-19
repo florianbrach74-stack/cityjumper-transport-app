@@ -301,18 +301,40 @@ const ContractorDashboard = () => {
           <div className="flex items-center space-x-2">
             <Calendar className="h-4 w-4 text-gray-400" />
             <div className="text-sm">
-              <div className="text-gray-500">Abholdatum</div>
+              <div className="text-gray-500">Abholung</div>
               <div className="font-medium text-gray-900">
                 {new Date(order.pickup_date).toLocaleDateString('de-DE')}
-                {order.pickup_time && ` ${order.pickup_time}`}
               </div>
+              {(order.pickup_time_from || order.pickup_time_to) && (
+                <div className="text-xs text-gray-600 mt-0.5">
+                  {order.pickup_time_from || '00:00'} - {order.pickup_time_to || 'flexibel'}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <Calendar className="h-4 w-4 text-gray-400" />
+            <div className="text-sm">
+              <div className="text-gray-500">Zustellung</div>
+              <div className="font-medium text-gray-900">
+                {order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('de-DE') : 'Gleicher Tag'}
+              </div>
+              {(order.delivery_time_from || order.delivery_time_to) && (
+                <div className="text-xs text-gray-600 mt-0.5">
+                  {order.delivery_time_from || '00:00'} - {order.delivery_time_to || 'flexibel'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Vehicle Type */}
+        <div className="pt-3 border-t">
+          <div className="flex items-center space-x-2">
             <Truck className="h-4 w-4 text-gray-400" />
             <div className="text-sm">
-              <div className="text-gray-500">Fahrzeug</div>
-              <div className="font-medium text-gray-900">{order.vehicle_type}</div>
+              <span className="text-gray-500">Fahrzeug:</span>
+              <span className="font-medium text-gray-900 ml-2">{order.vehicle_type}</span>
             </div>
           </div>
         </div>

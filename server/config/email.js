@@ -63,8 +63,11 @@ const emailTemplates = {
           <h3 style="margin-top: 0;">Auftragsdetails:</h3>
           <p><strong>Auftragsnummer:</strong> #${order.id}</p>
           <p><strong>Abholung:</strong> ${order.pickup_city}, ${order.pickup_postal_code}</p>
+          <p><strong>Abholdatum:</strong> ${new Date(order.pickup_date).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' })}</p>
+          <p><strong>Abholzeit:</strong> ${order.pickup_time_from || '00:00'} - ${order.pickup_time_to || 'flexibel'} Uhr</p>
           <p><strong>Zustellung:</strong> ${order.delivery_city}, ${order.delivery_postal_code}</p>
-          <p><strong>Abholdatum:</strong> ${order.pickup_date}</p>
+          <p><strong>Zustelldatum:</strong> ${order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' }) : 'Gleicher Tag'}</p>
+          <p><strong>Zustellzeit:</strong> ${order.delivery_time_from || '00:00'} - ${order.delivery_time_to || 'flexibel'} Uhr</p>
           <p><strong>Fahrzeugtyp:</strong> ${order.vehicle_type}</p>
           ${order.price ? `<p><strong>Preis:</strong> €${order.price}</p>` : ''}
         </div>
@@ -98,8 +101,11 @@ const emailTemplates = {
           <p><strong>Auftragsnummer:</strong> #${order.id}</p>
           <p><strong>Auftragnehmer:</strong> ${contractorName}</p>
           <p><strong>Abholung:</strong> ${order.pickup_city}, ${order.pickup_postal_code}</p>
+          <p><strong>Abholdatum:</strong> ${new Date(order.pickup_date).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' })}</p>
+          <p><strong>Abholzeit:</strong> ${order.pickup_time_from || '00:00'} - ${order.pickup_time_to || 'flexibel'} Uhr</p>
           <p><strong>Zustellung:</strong> ${order.delivery_city}, ${order.delivery_postal_code}</p>
-          <p><strong>Abholdatum:</strong> ${order.pickup_date}</p>
+          <p><strong>Zustelldatum:</strong> ${order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' }) : 'Gleicher Tag'}</p>
+          <p><strong>Zustellzeit:</strong> ${order.delivery_time_from || '00:00'} - ${order.delivery_time_to || 'flexibel'} Uhr</p>
         </div>
         
         <p>Der Auftragnehmer wird sich bei Bedarf mit Ihnen in Verbindung setzen.</p>

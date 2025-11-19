@@ -80,7 +80,8 @@ class OrderMonitoringService {
       const pickupDateTime = `${order.pickup_date} ${order.pickup_time_from}`;
       
       // Email senden
-      await emailService.sendEmail({
+      console.log(`📧 Sending pickup window notification to: ${order.customer_email}`);
+      const emailResult = await emailService.sendEmail({
         to: order.customer_email,
         subject: `⏰ Ihr Auftrag #${order.id} - Noch nicht vermittelt`,
         html: `
@@ -194,7 +195,8 @@ class OrderMonitoringService {
       const endTime = order.pickup_time_to || order.pickup_time_from;
       
       // Email senden
-      await emailService.sendEmail({
+      console.log(`📧 Sending expiration notification to: ${order.customer_email}`);
+      const emailResult = await emailService.sendEmail({
         to: order.customer_email,
         subject: `❌ Ihr Auftrag #${order.id} konnte nicht vermittelt werden`,
         html: `
