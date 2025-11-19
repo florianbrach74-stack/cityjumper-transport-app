@@ -14,7 +14,7 @@ router.post('/fix-duplicate-emails', async (req, res) => {
         expiration_notification_sent_at = NOW(),
         archived_at = NOW(),
         archive_reason = 'Zeitfenster abgelaufen - nicht vermittelt (manuell behoben)',
-        status = 'expired'
+        status = 'cancelled'
       WHERE id IN (31, 32)
       AND status = 'pending'
       RETURNING id, status, expired_and_archived, expiration_notification_sent_at

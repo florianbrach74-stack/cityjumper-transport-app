@@ -276,7 +276,7 @@ class OrderMonitoringService {
           expiration_notification_sent_at = NOW(),
           archived_at = NOW(),
           archive_reason = 'Zeitfenster abgelaufen - nicht vermittelt',
-          status = 'expired'
+          status = 'cancelled'
         WHERE id = $1
         RETURNING id, expired_and_archived, status
       `, [order.id]);
