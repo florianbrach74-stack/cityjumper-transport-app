@@ -132,19 +132,27 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     const { name, value } = e.target;
     
     // Auto-fill "Bis" Zeit mit +30min wenn "Von" geändert wird
-    if (name === 'pickup_time_from' && value && !formData.pickup_time_to) {
+    if (name === 'pickup_time_from' && value) {
       const suggestedTo = addMinutesToTime(value, 30);
+      // Aktualisiere "Bis" wenn:
+      // 1. "Bis" ist leer ODER
+      // 2. "Bis" ist vor "Von" (ungültig)
+      const shouldUpdateTo = !formData.pickup_time_to || formData.pickup_time_to <= value;
       setFormData((prev) => ({
         ...prev,
         [name]: value,
-        pickup_time_to: suggestedTo,
+        pickup_time_to: shouldUpdateTo ? suggestedTo : prev.pickup_time_to,
       }));
-    } else if (name === 'delivery_time_from' && value && !formData.delivery_time_to) {
+    } else if (name === 'delivery_time_from' && value) {
       const suggestedTo = addMinutesToTime(value, 30);
+      // Aktualisiere "Bis" wenn:
+      // 1. "Bis" ist leer ODER
+      // 2. "Bis" ist vor "Von" (ungültig)
+      const shouldUpdateTo = !formData.delivery_time_to || formData.delivery_time_to <= value;
       setFormData((prev) => ({
         ...prev,
         [name]: value,
-        delivery_time_to: suggestedTo,
+        delivery_time_to: shouldUpdateTo ? suggestedTo : prev.delivery_time_to,
       }));
     } else {
       setFormData((prev) => ({
