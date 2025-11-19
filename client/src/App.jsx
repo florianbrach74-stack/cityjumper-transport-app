@@ -11,6 +11,7 @@ import ContractorDashboard from './pages/ContractorDashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminPenalties from './pages/AdminPenalties';
+import OrderPriceAdjustment from './pages/OrderPriceAdjustment';
 import ContractorOrdersView from './pages/ContractorOrdersView';
 import CMRSignature from './pages/CMRSignature';
 import VerificationPage from './pages/VerificationPage';
@@ -117,6 +118,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminPenalties />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/orders/:id/edit-price"
+            element={
+              <ProtectedRoute>
+                <OrderPriceAdjustment />
               </ProtectedRoute>
             }
           />

@@ -57,6 +57,9 @@ app.use('/api', require('./routes/fix-order-25'));
 app.use('/api', require('./routes/fix-order-27'));
 app.use('/api', require('./routes/create-penalties-table'));
 app.use('/api', require('./routes/penalties'));
+app.use('/api', require('./routes/add-order-monitoring-columns'));
+app.use('/api', require('./routes/create-price-history-table'));
+app.use('/api/orders', require('./routes/order-price-adjustment'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
@@ -90,6 +93,15 @@ app.listen(PORT, async () => {
     await autoMigrate();
   } catch (error) {
     console.log('⚠️  Auto-migration skipped (database may not be ready yet)');
+  }
+  
+  // Start order monitoring service (Cron-Job)
+  try {
+    const orderMonitoringService = require('./services/orderMonitoringService');
+    orderMonitoringService.startMonitoring();
+    console.log('✅ Order Monitoring Service started');
+  } catch (error) {
+    console.error('❌ Failed to start Order Monitoring Service:', error);
   }
 });
 
