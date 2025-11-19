@@ -10,7 +10,8 @@ class Order {
       pickup_country,
       pickup_company,
       pickup_date,
-      pickup_time,
+      pickup_time_from,
+      pickup_time_to,
       pickup_contact_name,
       pickup_contact_phone,
       delivery_address,
@@ -19,7 +20,8 @@ class Order {
       delivery_country,
       delivery_company,
       delivery_date,
-      delivery_time,
+      delivery_time_from,
+      delivery_time_to,
       delivery_contact_name,
       delivery_contact_phone,
       vehicle_type,
@@ -39,26 +41,26 @@ class Order {
     const query = `
       INSERT INTO transport_orders (
         customer_id, pickup_address, pickup_city, pickup_postal_code, pickup_country, pickup_company,
-        pickup_date, pickup_time, pickup_contact_name, pickup_contact_phone,
+        pickup_date, pickup_time_from, pickup_time_to, pickup_contact_name, pickup_contact_phone,
         delivery_address, delivery_city, delivery_postal_code, delivery_country, delivery_company,
-        delivery_date, delivery_time, delivery_contact_name, delivery_contact_phone,
+        delivery_date, delivery_time_from, delivery_time_to, delivery_contact_name, delivery_contact_phone,
         vehicle_type, weight, length, width, height, pallets, description,
         special_requirements, price, contractor_price, distance_km, duration_minutes, route_geometry,
         needs_loading_help, needs_unloading_help, loading_help_fee, legal_delivery,
         status
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-        $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32,
-        $33, $34, $35, $36,
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+        $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33,
+        $34, $35, $36, $37, $38,
         'pending'
       ) RETURNING *
     `;
 
     const values = [
       customer_id, pickup_address, pickup_city, pickup_postal_code, pickup_country || 'Deutschland', pickup_company || null,
-      pickup_date, pickup_time, pickup_contact_name, pickup_contact_phone,
+      pickup_date, pickup_time_from || null, pickup_time_to || null, pickup_contact_name, pickup_contact_phone,
       delivery_address, delivery_city, delivery_postal_code, delivery_country || 'Deutschland', delivery_company || null,
-      delivery_date, delivery_time, delivery_contact_name, delivery_contact_phone,
+      delivery_date, delivery_time_from || null, delivery_time_to || null, delivery_contact_name, delivery_contact_phone,
       vehicle_type, weight, length, width, height, pallets, description,
       special_requirements, price, contractorPrice, orderData.distance_km, orderData.duration_minutes, orderData.route_geometry || null,
       orderData.needs_loading_help || false,
