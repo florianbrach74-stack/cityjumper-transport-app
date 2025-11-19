@@ -145,7 +145,7 @@ router.get('/users', adminAuth, async (req, res) => {
         insurance_document_url, business_license_url,
         minimum_wage_declaration_signed, minimum_wage_signed_at,
         company_address, company_postal_code, company_city, company_country,
-        tax_id, vat_id, account_status
+        tax_id, vat_id, account_status, admin_notes
       FROM users
       ORDER BY created_at DESC
     `);
@@ -437,7 +437,7 @@ router.patch('/users/:id/profile', adminAuth, async (req, res) => {
     const allowedFields = [
       'first_name', 'last_name', 'email', 'phone',
       'company_name', 'company_address', 'company_postal_code', 
-      'company_city', 'company_country', 'tax_id', 'vat_id'
+      'company_city', 'company_country', 'tax_id', 'vat_id', 'admin_notes'
     ];
     
     const updateFields = [];
