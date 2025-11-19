@@ -17,13 +17,18 @@ class OrderMonitoringService {
     try {
       console.log('🔍 [Order Monitoring] Starting check for unassigned orders...');
       
+      // Use current time in Europe/Berlin timezone
       const now = new Date();
+      const berlinTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
+      
+      console.log(`Current time (UTC): ${now.toISOString()}`);
+      console.log(`Current time (Berlin): ${berlinTime.toISOString()}`);
       
       // 1. Prüfe Aufträge bei Zeitfenster-Start (noch nicht benachrichtigt)
-      await this.checkPickupWindowStart(now);
+      await this.checkPickupWindowStart(berlinTime);
       
       // 2. Prüfe abgelaufene Aufträge (Zeitfenster-Ende + 1h)
-      await this.checkExpiredOrders(now);
+      await this.checkExpiredOrders(berlinTime);
       
       console.log('✅ [Order Monitoring] Check completed');
       
