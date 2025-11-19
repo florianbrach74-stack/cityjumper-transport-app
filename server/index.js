@@ -62,6 +62,7 @@ app.use('/api', require('./routes/create-price-history-table'));
 app.use('/api', require('./routes/add-time-window-columns'));
 app.use('/api', require('./routes/add-customer-notes-column'));
 app.use('/api', require('./routes/add-billing-email-column'));
+app.use('/api', require('./routes/fix-duplicate-emails'));
 app.use('/api', require('./routes/trigger-monitoring'));
 app.use('/api', require('./routes/debug-monitoring'));
 app.use('/api', require('./routes/customer-notes'));
