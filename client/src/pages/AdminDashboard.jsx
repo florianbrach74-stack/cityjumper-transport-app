@@ -1263,6 +1263,7 @@ export default function AdminDashboard() {
       {cancellingOrder && (
         <CancellationModal
           order={cancellingOrder}
+          userRole="admin"
           onClose={() => setCancellingOrder(null)}
           onSuccess={() => {
             setCancellingOrder(null);

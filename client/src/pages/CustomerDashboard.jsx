@@ -455,6 +455,7 @@ const CustomerDashboard = () => {
       {selectedOrderForCancellation && (
         <CancellationModal
           order={selectedOrderForCancellation}
+          userRole="customer"
           onClose={() => setSelectedOrderForCancellation(null)}
           onSuccess={() => {
             setSelectedOrderForCancellation(null);

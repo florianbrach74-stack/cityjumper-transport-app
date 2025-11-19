@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { X, AlertTriangle, DollarSign, User, FileText } from 'lucide-react';
 import axios from 'axios';
 
-export default function CancellationModal({ order, onClose, onSuccess }) {
+export default function CancellationModal({ order, onClose, onSuccess, userRole = 'customer' }) {
+  // Security: Only admins can cancel on behalf of contractor
   const [cancelledBy, setCancelledBy] = useState('customer');
   const [reason, setReason] = useState('');
   const [priceIncrease, setPriceIncrease] = useState('');
@@ -10,6 +11,9 @@ export default function CancellationModal({ order, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [contractorPreview, setContractorPreview] = useState(null);
+  
+  // Check if user is admin
+  const isAdmin = userRole === 'admin';
 
   useEffect(() => {
     fetchCancellationPreview();
@@ -111,40 +115,52 @@ export default function CancellationModal({ order, onClose, onSuccess }) {
             </div>
           </div>
 
-          {/* Cancelled By Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Storniert durch
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => setCancelledBy('customer')}
-                className={`p-4 border-2 rounded-lg text-left transition-all ${
-                  cancelledBy === 'customer'
-                    ? 'border-primary-600 bg-primary-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <User className="h-5 w-5 mb-2 text-primary-600" />
-                <div className="font-semibold">Kunde</div>
-                <div className="text-xs text-gray-600">Gebühren nach AGB</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setCancelledBy('contractor')}
-                className={`p-4 border-2 rounded-lg text-left transition-all ${
-                  cancelledBy === 'contractor'
-                    ? 'border-red-600 bg-red-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <AlertTriangle className="h-5 w-5 mb-2 text-red-600" />
-                <div className="font-semibold">Auftragnehmer</div>
-                <div className="text-xs text-gray-600">Strafe + Kompensation</div>
-              </button>
+          {/* Cancelled By Selection - Only show for admins */}
+          {isAdmin && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Storniert durch
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setCancelledBy('customer')}
+                  className={`p-4 border-2 rounded-lg text-left transition-all ${
+                    cancelledBy === 'customer'
+                      ? 'border-primary-600 bg-primary-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <User className="h-5 w-5 mb-2 text-primary-600" />
+                  <div className="font-semibold">Kunde</div>
+                  <div className="text-xs text-gray-600">Gebühren nach AGB</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCancelledBy('contractor')}
+                  className={`p-4 border-2 rounded-lg text-left transition-all ${
+                    cancelledBy === 'contractor'
+                      ? 'border-red-600 bg-red-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <AlertTriangle className="h-5 w-5 mb-2 text-red-600" />
+                  <div className="font-semibold">Auftragnehmer</div>
+                  <div className="text-xs text-gray-600">Strafe + Kompensation</div>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+          
+          {/* Info for non-admin users */}
+          {!isAdmin && (
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+              <p className="text-sm text-blue-900">
+                <strong>ℹ️ Kundenstornierung</strong><br />
+                Sie stornieren diesen Auftrag als Kunde. Es gelten die Stornogebühren gemäß AGB.
+              </p>
+            </div>
+          )}
 
           {/* Customer Cancellation */}
           {cancelledBy === 'customer' && preview && (
