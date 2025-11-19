@@ -123,8 +123,8 @@ class OrderMonitoringService {
             
             <p style="color: #6b7280; font-size: 12px;">
               Bei Fragen erreichen Sie uns unter:<br>
-              📧 support@courierly.de<br>
-              📞 +49 123 456789
+              📧 info@courierly.de<br>
+              📞 01724216672
             </p>
           </div>
         `
@@ -248,8 +248,8 @@ class OrderMonitoringService {
             
             <p style="color: #6b7280; font-size: 12px;">
               Bei Fragen oder Feedback erreichen Sie uns unter:<br>
-              📧 support@courierly.de<br>
-              📞 +49 123 456789
+              📧 info@courierly.de<br>
+              📞 01724216672
             </p>
             
             <p style="color: #6b7280; font-size: 12px;">
