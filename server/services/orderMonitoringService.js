@@ -131,18 +131,25 @@ class OrderMonitoringService {
       });
       
       // Markiere als benachrichtigt
-      await pool.query(`
+      const updateResult = await pool.query(`
         UPDATE transport_orders
         SET 
           pickup_window_start_notified = TRUE,
           pickup_window_start_notification_sent_at = NOW()
         WHERE id = $1
+        RETURNING id, pickup_window_start_notified
       `, [order.id]);
       
-      console.log(`✅ [Zeitfenster-Start] Notification sent for order #${order.id}`);
+      if (updateResult.rowCount === 0) {
+        console.error(`❌ [Zeitfenster-Start] Failed to update order #${order.id} - order not found`);
+      } else {
+        console.log(`✅ [Zeitfenster-Start] Notification sent and order #${order.id} marked as notified`);
+      }
       
     } catch (error) {
       console.error(`❌ [Zeitfenster-Start] Error sending notification for order #${order.id}:`, error);
+      // Re-throw to prevent silent failures
+      throw error;
     }
   }
   
@@ -168,6 +175,7 @@ class OrderMonitoringService {
         WHERE o.status = 'pending'
         AND o.contractor_id IS NULL
         AND o.expired_and_archived = FALSE
+        AND o.expiration_notification_sent_at IS NULL
         AND o.pickup_date IS NOT NULL
         AND (
           CASE 
@@ -261,7 +269,7 @@ class OrderMonitoringService {
       });
       
       // Auftrag archivieren
-      await pool.query(`
+      const updateResult = await pool.query(`
         UPDATE transport_orders
         SET 
           expired_and_archived = TRUE,
@@ -270,12 +278,19 @@ class OrderMonitoringService {
           archive_reason = 'Zeitfenster abgelaufen - nicht vermittelt',
           status = 'expired'
         WHERE id = $1
+        RETURNING id, expired_and_archived, status
       `, [order.id]);
       
-      console.log(`✅ [Ablauf] Order #${order.id} archived and notification sent`);
+      if (updateResult.rowCount === 0) {
+        console.error(`❌ [Ablauf] Failed to update order #${order.id} - order not found`);
+      } else {
+        console.log(`✅ [Ablauf] Order #${order.id} archived (status: ${updateResult.rows[0].status}) and notification sent`);
+      }
       
     } catch (error) {
       console.error(`❌ [Ablauf] Error archiving order #${order.id}:`, error);
+      // Re-throw to prevent silent failures
+      throw error;
     }
   }
   
