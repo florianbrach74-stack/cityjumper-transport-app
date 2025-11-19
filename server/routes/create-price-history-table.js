@@ -21,22 +21,9 @@ router.post('/create-price-history-table', async (req, res) => {
 
     console.log('✅ order_price_history table created');
 
-    // Add 'expired' status to transport_orders if not exists
-    await pool.query(`
-      DO $$ 
-      BEGIN
-        -- This will add 'expired' as a valid status
-        -- PostgreSQL doesn't have ALTER TYPE ADD VALUE IF NOT EXISTS
-        -- So we just try to add it and ignore if it already exists
-        BEGIN
-          ALTER TYPE order_status ADD VALUE IF NOT EXISTS 'expired';
-        EXCEPTION
-          WHEN duplicate_object THEN null;
-        END;
-      END $$;
-    `);
-
-    console.log('✅ Added "expired" status to order_status enum');
+    // Note: 'expired' status will be handled as a string in the status column
+    // No ENUM type exists, so we just use VARCHAR
+    console.log('✅ Status column uses VARCHAR, no ENUM modification needed');
 
     // Check table structure
     const tableCheck = await pool.query(`
