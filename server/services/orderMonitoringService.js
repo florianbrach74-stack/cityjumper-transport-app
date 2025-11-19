@@ -56,7 +56,7 @@ class OrderMonitoringService {
         AND o.pickup_window_start_notified = FALSE
         AND o.pickup_date IS NOT NULL
         AND o.pickup_time_from IS NOT NULL
-        AND (o.pickup_date || ' ' || o.pickup_time_from)::timestamp <= $1
+        AND (o.pickup_date + o.pickup_time_from) <= $1
       `;
       
       const result = await pool.query(query, [now]);
@@ -167,9 +167,9 @@ class OrderMonitoringService {
         AND (
           CASE 
             WHEN o.pickup_time_to IS NOT NULL THEN
-              (o.pickup_date || ' ' || o.pickup_time_to)::timestamp + interval '1 hour'
+              (o.pickup_date + o.pickup_time_to) + interval '1 hour'
             ELSE
-              (o.pickup_date || ' ' || o.pickup_time_from)::timestamp + interval '1 hour'
+              (o.pickup_date + o.pickup_time_from) + interval '1 hour'
           END
         ) <= $1
       `;
