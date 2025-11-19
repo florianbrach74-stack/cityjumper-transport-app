@@ -119,12 +119,39 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     }
   };
 
+  // Hilfsfunktion: Addiere Minuten zu einer Zeit (HH:MM)
+  const addMinutesToTime = (timeString, minutes) => {
+    if (!timeString) return '';
+    const [hours, mins] = timeString.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, mins + minutes, 0, 0);
+    return date.toTimeString().slice(0, 5);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    
+    // Auto-fill "Bis" Zeit mit +30min wenn "Von" geändert wird
+    if (name === 'pickup_time_from' && value && !formData.pickup_time_to) {
+      const suggestedTo = addMinutesToTime(value, 30);
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        pickup_time_to: suggestedTo,
+      }));
+    } else if (name === 'delivery_time_from' && value && !formData.delivery_time_to) {
+      const suggestedTo = addMinutesToTime(value, 30);
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        delivery_time_to: suggestedTo,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
     
     // Validiere Preis bei Änderung
     if (name === 'price') {
@@ -380,7 +407,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Zeitfenster Von</label>
+                <label className="block text-sm font-medium text-gray-700">Abholzeit Von</label>
                 <input
                   type="time"
                   name="pickup_time_from"
@@ -389,9 +416,10 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                   placeholder="z.B. 11:00"
                 />
+                <p className="text-xs text-gray-500 mt-1">Automatisch +30min Zeitfenster</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Zeitfenster Bis (optional)</label>
+                <label className="block text-sm font-medium text-gray-700">Abholzeit Bis</label>
                 <input
                   type="time"
                   name="pickup_time_to"
@@ -400,7 +428,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                   placeholder="z.B. 13:00"
                 />
-                <p className="text-xs text-gray-500 mt-1">Leer lassen für feste Zeit</p>
+                <p className="text-xs text-gray-500 mt-1">Wird automatisch vorgeschlagen (+30min)</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Firma (optional)</label>
@@ -493,7 +521,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Zeitfenster Von</label>
+                  <label className="block text-sm font-medium text-gray-700">Zustellzeit Von</label>
                   <input
                     type="time"
                     name="delivery_time_from"
@@ -502,9 +530,10 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                     className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                     placeholder="z.B. 14:00"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Automatisch +30min Zeitfenster</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Zeitfenster Bis (optional)</label>
+                  <label className="block text-sm font-medium text-gray-700">Zustellzeit Bis</label>
                   <input
                     type="time"
                     name="delivery_time_to"
@@ -513,6 +542,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                     className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                     placeholder="z.B. 16:00"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Wird automatisch vorgeschlagen (+30min)</p>
                 </div>
               </div>
               <div>
