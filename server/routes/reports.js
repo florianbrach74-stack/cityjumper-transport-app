@@ -259,7 +259,7 @@ router.post('/fix-invoice-orders', authenticateToken, authorizeRole('admin'), as
 });
 
 // Update payment status
-router.patch('/invoice/:invoiceNumber/payment-status', authenticateToken, authorizeRole('admin'), async (req, res) => {
+router.patch('/invoice/:invoiceNumber/payment-status', authenticateToken, async (req, res) => {
   try {
     const { invoiceNumber } = req.params;
     const { payment_status, paymentStatus } = req.body;
