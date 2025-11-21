@@ -13,7 +13,7 @@ router.get('/available-roles', authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     const result = await pool.query(
-      'SELECT roles, current_role, role FROM users WHERE id = $1',
+      'SELECT roles, "current_role", role FROM users WHERE id = $1',
       [userId]
     );
 
@@ -73,7 +73,7 @@ router.post('/switch-role', authenticateToken, async (req, res) => {
 
     // Update current_role
     await pool.query(
-      'UPDATE users SET current_role = $1 WHERE id = $2',
+      'UPDATE users SET "current_role" = $1 WHERE id = $2',
       [targetRole, userId]
     );
 
