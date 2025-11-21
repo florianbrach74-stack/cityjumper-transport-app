@@ -6,11 +6,14 @@ import UpdatePriceModal from '../components/UpdatePriceModal';
 import CMRViewer from '../components/CMRViewer';
 import ReportsSummary from '../components/ReportsSummary';
 import RoleSwitcher from '../components/RoleSwitcher';
+import CompactStats from '../components/CompactStats';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { formatPrice } from '../utils/formatPrice';
 import { Plus, Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText, TrendingUp, BarChart3, XCircle } from 'lucide-react';
 import CancellationModal from '../components/CancellationModal';
 
 const CustomerDashboard = () => {
+  const isMobile = useIsMobile();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('active');
@@ -109,44 +112,58 @@ const CustomerDashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Gesamt</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+        {isMobile ? (
+          <div className="mb-6">
+            <CompactStats 
+              columns={4}
+              stats={[
+                { icon: Package, value: stats.total, label: 'Gesamt', iconColor: 'text-gray-600' },
+                { icon: Clock, value: stats.pending, label: 'Ausstehend', iconColor: 'text-yellow-600', valueColor: 'text-yellow-600' },
+                { icon: Truck, value: stats.accepted, label: 'Aktiv', iconColor: 'text-blue-600', valueColor: 'text-blue-600' },
+                { icon: CheckCircle, value: stats.completed, label: 'Fertig', iconColor: 'text-green-600', valueColor: 'text-green-600' }
+              ]}
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Gesamt</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                </div>
+                <Package className="h-10 w-10 text-gray-400" />
               </div>
-              <Package className="h-10 w-10 text-gray-400" />
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Ausstehend</p>
+                  <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+                </div>
+                <Clock className="h-10 w-10 text-yellow-400" />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Aktiv</p>
+                  <p className="text-2xl font-bold text-blue-600">{stats.accepted}</p>
+                </div>
+                <Truck className="h-10 w-10 text-blue-400" />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Abgeschlossen</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+                </div>
+                <CheckCircle className="h-10 w-10 text-green-400" />
+              </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Ausstehend</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-              </div>
-              <Clock className="h-10 w-10 text-yellow-400" />
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Aktiv</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.accepted}</p>
-              </div>
-              <Truck className="h-10 w-10 text-blue-400" />
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Abgeschlossen</p>
-                <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-              </div>
-              <CheckCircle className="h-10 w-10 text-green-400" />
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Create Order Button */}
         <div className="mb-6">
