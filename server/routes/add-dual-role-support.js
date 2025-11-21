@@ -15,7 +15,7 @@ router.post('/add-dual-role-support', async (req, res) => {
     // Add current_role column (active role)
     await pool.query(`
       ALTER TABLE users 
-      ADD COLUMN IF NOT EXISTS current_role VARCHAR(50)
+      ADD COLUMN IF NOT EXISTS "current_role" VARCHAR(50)
     `);
 
     // Update existing users: Set roles array from role column
@@ -28,8 +28,8 @@ router.post('/add-dual-role-support', async (req, res) => {
     // Update current_role to match role
     await pool.query(`
       UPDATE users 
-      SET current_role = role
-      WHERE current_role IS NULL
+      SET "current_role" = role
+      WHERE "current_role" IS NULL
     `);
 
     // Give all contractors the customer role as well
