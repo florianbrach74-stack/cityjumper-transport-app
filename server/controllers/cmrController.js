@@ -36,11 +36,11 @@ const createCMRForOrder = async (orderId) => {
       consignee_postal_code: order.delivery_postal_code,
       consignee_country: order.delivery_country || 'Deutschland',
       
-      // Carrier (contractor)
+      // Carrier (contractor) - Feld 16: Transportunternehmer mit vollständiger Adresse
       carrier_name: contractor.company_name || `${contractor.first_name} ${contractor.last_name}`,
-      carrier_address: contractor.address || '',
-      carrier_city: contractor.city || '',
-      carrier_postal_code: contractor.postal_code || '',
+      carrier_address: contractor.company_address || '',
+      carrier_city: contractor.company_city || '',
+      carrier_postal_code: contractor.company_postal_code || '',
       
       // Shipment details
       place_of_loading: `${order.pickup_city}, ${order.pickup_country || 'Deutschland'}`,
