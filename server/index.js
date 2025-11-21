@@ -64,11 +64,13 @@ app.use('/api', require('./routes/add-customer-notes-column'));
 app.use('/api', require('./routes/add-billing-email-column'));
 app.use('/api', require('./routes/fix-duplicate-emails'));
 app.use('/api', require('./routes/add-invoice-tracking-columns'));
+app.use('/api', require('./routes/create-email-templates-table'));
 app.use('/api', require('./routes/trigger-monitoring'));
 app.use('/api', require('./routes/debug-monitoring'));
 app.use('/api', require('./routes/customer-notes'));
 app.use('/api/orders', require('./routes/order-price-adjustment'));
 app.use('/api/invoices', require('./routes/invoice-history'));
+app.use('/api/email-templates', require('./routes/email-templates'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
@@ -111,6 +113,15 @@ app.listen(PORT, async () => {
     console.log('✅ Order Monitoring Service started');
   } catch (error) {
     console.error('❌ Failed to start Order Monitoring Service:', error);
+  }
+  
+  // Start invoice reminder service (Cron-Job)
+  try {
+    const invoiceReminderService = require('./services/invoiceReminderService');
+    invoiceReminderService.startReminderService();
+    console.log('✅ Invoice Reminder Service started');
+  } catch (error) {
+    console.error('❌ Failed to start Invoice Reminder Service:', error);
   }
 });
 
