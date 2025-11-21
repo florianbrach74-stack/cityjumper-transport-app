@@ -73,6 +73,7 @@ app.use('/api/orders', require('./routes/order-price-adjustment'));
 app.use('/api/invoices', require('./routes/invoice-history'));
 app.use('/api/email-templates', require('./routes/email-templates'));
 app.use('/api/system', require('./routes/system-monitoring'));
+app.use('/api/backups', require('./routes/database-backups'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
@@ -124,6 +125,15 @@ app.listen(PORT, async () => {
     console.log('✅ Invoice Reminder Service started');
   } catch (error) {
     console.error('❌ Failed to start Invoice Reminder Service:', error);
+  }
+  
+  // Start database backup service (Cron-Job)
+  try {
+    const databaseBackupService = require('./services/databaseBackupService');
+    databaseBackupService.startBackupService();
+    console.log('✅ Database Backup Service started');
+  } catch (error) {
+    console.error('❌ Failed to start Database Backup Service:', error);
   }
 });
 
