@@ -214,8 +214,11 @@ export default function ReportsSummary({ userRole }) {
       // URL-encode the invoice number to handle special characters like dashes
       const encodedInvoiceNumber = encodeURIComponent(invoiceNumber);
       await axios.patch(
-        `${import.meta.env.VITE_API_URL}/invoices/${encodedInvoiceNumber}/payment-status`,
-        { payment_status: newStatus },
+        `${import.meta.env.VITE_API_URL}/reports/invoice/${encodedInvoiceNumber}/payment-status`,
+        { 
+          payment_status: newStatus,
+          paymentStatus: newStatus // Support both parameter names
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
