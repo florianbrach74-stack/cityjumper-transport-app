@@ -11,7 +11,11 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
   const [editFormData, setEditFormData] = useState({});
   const [selectedCustomerForOrders, setSelectedCustomerForOrders] = useState(null);
 
-  const customers = users.filter(u => u.role === 'customer');
+  // Include both regular customers and contractors who can act as customers
+  const customers = users.filter(u => 
+    u.role === 'customer' || 
+    (u.roles && u.roles.includes('customer'))
+  );
 
   const startEdit = (customer) => {
     setEditingCustomer(customer.id);
@@ -104,6 +108,11 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
                               <User className="h-5 w-5 mr-2 text-gray-600" />
                               {customer.first_name} {customer.last_name}
                             </>
+                          )}
+                          {customer.role === 'contractor' && (
+                            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                              Auch Auftragnehmer
+                            </span>
                           )}
                         </h3>
                         <p className="text-sm text-gray-600 mt-1">
