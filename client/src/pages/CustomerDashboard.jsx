@@ -5,6 +5,7 @@ import CreateOrderModal from '../components/CreateOrderModal';
 import UpdatePriceModal from '../components/UpdatePriceModal';
 import CMRViewer from '../components/CMRViewer';
 import ReportsSummary from '../components/ReportsSummary';
+import RoleSwitcher from '../components/RoleSwitcher';
 import { formatPrice } from '../utils/formatPrice';
 import { Plus, Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText, TrendingUp, BarChart3, XCircle } from 'lucide-react';
 import CancellationModal from '../components/CancellationModal';
@@ -100,6 +101,11 @@ const CustomerDashboard = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Meine Aufträge</h1>
           <p className="mt-2 text-gray-600">Verwalten Sie Ihre Transportaufträge</p>
+        </div>
+
+        {/* Role Switcher */}
+        <div className="mb-6">
+          <RoleSwitcher />
         </div>
 
         {/* Stats */}
