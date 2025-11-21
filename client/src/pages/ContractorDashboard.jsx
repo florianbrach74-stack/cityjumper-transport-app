@@ -9,6 +9,9 @@ import EmployeeManagement from '../components/EmployeeManagement';
 import NotificationSettings from '../components/NotificationSettings';
 import ReportsSummary from '../components/ReportsSummary';
 import AssignEmployeeDropdown from '../components/AssignEmployeeDropdown';
+import MobileBottomNav from '../components/MobileBottomNav';
+import MobileMenuModal from '../components/MobileMenuModal';
+import MobileOrderCard from '../components/MobileOrderCard';
 import { formatPrice } from '../utils/formatPrice';
 import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell, BarChart3 } from 'lucide-react';
 
@@ -42,6 +45,8 @@ const ContractorDashboard = () => {
   const [assignmentMode, setAssignmentMode] = useState('all_access');
   const [penalties, setPenalties] = useState([]);
   const [pendingPenaltiesTotal, setPendingPenaltiesTotal] = useState(0);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -86,6 +91,14 @@ const ContractorDashboard = () => {
     fetchVerificationStatus();
     fetchAssignmentMode();
     fetchPenalties();
+    
+    // Mobile detection
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const fetchVerificationStatus = async () => {
@@ -556,7 +569,7 @@ const ContractorDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 pb-20 md:pb-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Aufträge</h1>
@@ -652,9 +665,9 @@ const ContractorDashboard = () => {
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-8">
+        {/* Tabs - Desktop Only */}
+        <div className="border-b border-gray-200 mb-6 hidden md:block">
+          <nav className="-mb-px flex space-x-8 overflow-x-auto">
             <button
               onClick={() => setActiveTab('available')}
               className={`${
@@ -881,6 +894,34 @@ const ContractorDashboard = () => {
           mode="delivery"
           onClose={() => setSelectedOrderForDelivery(null)}
           onComplete={handleDeliveryComplete}
+        />
+      )}
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <MobileBottomNav
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          counts={{
+            available: availableOrders.length,
+            active: myOrders.filter(o => o.status !== 'delivered' && o.status !== 'completed').length,
+            bids: myBids.length
+          }}
+          onMenuClick={() => setShowMobileMenu(true)}
+        />
+      )}
+
+      {/* Mobile Menu Modal */}
+      {isMobile && (
+        <MobileMenuModal
+          isOpen={showMobileMenu}
+          onClose={() => setShowMobileMenu(false)}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          counts={{
+            completed: myOrders.filter(o => o.status === 'delivered' || o.status === 'completed' || o.status === 'pending_approval' || o.cancellation_status).length
+          }}
+          pendingPenaltiesTotal={pendingPenaltiesTotal}
         />
       )}
     </div>
