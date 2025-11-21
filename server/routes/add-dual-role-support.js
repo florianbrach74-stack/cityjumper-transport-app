@@ -9,7 +9,7 @@ router.post('/add-dual-role-support', async (req, res) => {
     // Add roles array column (for multiple roles)
     await pool.query(`
       ALTER TABLE users 
-      ADD COLUMN IF NOT EXISTS roles TEXT[] DEFAULT ARRAY[role]::TEXT[]
+      ADD COLUMN IF NOT EXISTS roles TEXT[]
     `);
 
     // Add current_role column (active role)
