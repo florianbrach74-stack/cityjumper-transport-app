@@ -566,18 +566,33 @@ export default function ReportsSummary({ userRole }) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {order.invoice_number ? (
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                checked={order.payment_status === 'paid'}
-                                onChange={(e) => handlePaymentStatusChange(order.invoice_number, e.target.checked ? 'paid' : 'unpaid')}
-                                className="h-5 w-5 text-green-600 rounded focus:ring-green-500 cursor-pointer"
-                              />
-                              <span className={`text-xs font-semibold ${
-                                order.payment_status === 'paid' ? 'text-green-600' : 'text-gray-500'
-                              }`}>
-                                {order.payment_status === 'paid' ? 'Bezahlt' : 'Offen'}
-                              </span>
+                            <div className="flex flex-col space-y-1">
+                              <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={order.payment_status === 'paid'}
+                                  onChange={(e) => handlePaymentStatusChange(order.invoice_number, e.target.checked ? 'paid' : 'unpaid')}
+                                  className="h-4 w-4 text-green-600 rounded focus:ring-green-500 cursor-pointer"
+                                />
+                                <span className={`text-xs font-semibold ${
+                                  order.payment_status === 'paid' ? 'text-green-600' : 'text-gray-500'
+                                }`}>
+                                  Bezahlt
+                                </span>
+                              </label>
+                              <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={order.payment_status === 'overdue'}
+                                  onChange={(e) => handlePaymentStatusChange(order.invoice_number, e.target.checked ? 'overdue' : 'unpaid')}
+                                  className="h-4 w-4 text-red-600 rounded focus:ring-red-500 cursor-pointer"
+                                />
+                                <span className={`text-xs font-semibold ${
+                                  order.payment_status === 'overdue' ? 'text-red-600' : 'text-gray-500'
+                                }`}>
+                                  Überfällig
+                                </span>
+                              </label>
                             </div>
                           ) : (
                             <span className="text-xs text-gray-400">-</span>
