@@ -123,7 +123,7 @@ const EmailTemplatesManager = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Email-Templates</h2>
             <p className="mt-1 text-sm text-gray-600">
@@ -131,6 +131,23 @@ const EmailTemplatesManager = () => {
             </p>
           </div>
           <Mail className="h-8 w-8 text-blue-600" />
+        </div>
+        
+        {/* Explanation */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <AlertCircle className="h-5 w-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-green-900">
+              <p className="font-semibold mb-2">So funktionieren Email-Templates:</p>
+              <ul className="space-y-1 text-green-800">
+                <li>• <strong>Aktueller Text:</strong> Die Templates enthalten bereits den Standard-Text, der versendet wird</li>
+                <li>• <strong>Anpassen:</strong> Klicken Sie auf "Bearbeiten", ändern Sie den Text nach Ihren Wünschen und speichern Sie</li>
+                <li>• <strong>Variablen:</strong> Nutzen Sie die verfügbaren Variablen (z.B. {'{'}{'{'} customer_name {'}'}{'}'}), diese werden automatisch mit echten Daten gefüllt</li>
+                <li>• <strong>Beispiel:</strong> "Hallo {'{'}{'{'} customer_name {'}'}{'}'}" wird zu "Hallo Max Müller"</li>
+                <li>• <strong>Test:</strong> Senden Sie eine Test-Email an sich selbst, um das Ergebnis zu sehen</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 

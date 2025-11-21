@@ -74,7 +74,7 @@ const SystemMonitoring = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">System-Monitoring</h2>
             <p className="mt-1 text-sm text-gray-600">
@@ -89,6 +89,22 @@ const SystemMonitoring = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Aktualisieren
           </button>
+        </div>
+        
+        {/* Explanation */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <AlertCircle className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-900">
+              <p className="font-semibold mb-2">Was zeigt Ihnen das Monitoring?</p>
+              <ul className="space-y-1 text-blue-800">
+                <li>• <strong>System Health:</strong> Server-Status, Speicher & CPU-Auslastung</li>
+                <li>• <strong>Database:</strong> Datenbankgröße, Verbindungen & Performance</li>
+                <li>• <strong>Application Stats:</strong> Benutzer, Aufträge, Rechnungen & Umsatz</li>
+                <li>• <strong>Zweck:</strong> Überwachen Sie die System-Performance und erkennen Sie Probleme frühzeitig</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, ChevronDown } from 'lucide-react';
 import api, { bidsAPI, verificationAPI } from '../services/api';
 import AssignOrderModal from '../components/AssignOrderModal';
 import CMRViewer from '../components/CMRViewer';
@@ -42,6 +42,8 @@ export default function AdminDashboard() {
   const [cancellingOrder, setCancellingOrder] = useState(null);
   const [selectedOrdersForInvoice, setSelectedOrdersForInvoice] = useState([]);
   const [showBulkInvoiceModal, setShowBulkInvoiceModal] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const moreMenuRef = useRef(null);
 
   // Save activeTab to localStorage whenever it changes
   useEffect(() => {
@@ -61,7 +63,18 @@ export default function AdminDashboard() {
       loadData();
     }, 60000);
 
-    return () => clearInterval(refreshInterval);
+    // Click outside handler for dropdown
+    const handleClickOutside = (event) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      clearInterval(refreshInterval);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [navigate]);
 
   const loadData = async () => {
@@ -363,17 +376,18 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Tabs */}
+      {/* Tabs - Improved with Dropdown */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-4">
+            {/* Main Tabs */}
             <button
               onClick={() => setActiveTab('orders')}
               className={`${
                 activeTab === 'orders'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-3 border-b-2 font-medium text-sm`}
             >
               Aufträge ({orders.length})
             </button>
@@ -383,7 +397,7 @@ export default function AdminDashboard() {
                 activeTab === 'users'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-3 border-b-2 font-medium text-sm`}
             >
               Benutzer ({users.length})
             </button>
@@ -393,7 +407,7 @@ export default function AdminDashboard() {
                 activeTab === 'customers'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-3 border-b-2 font-medium text-sm`}
             >
               Kunden ({users.filter(u => u.role === 'customer').length})
             </button>
@@ -403,54 +417,9 @@ export default function AdminDashboard() {
                 activeTab === 'contractors'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-3 border-b-2 font-medium text-sm`}
             >
               Auftragnehmer ({users.filter(u => u.role === 'contractor').length})
-            </button>
-            <button
-              onClick={() => setActiveTab('approvals')}
-              className={`${
-                activeTab === 'approvals'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-1`}
-            >
-              <span>⏱️ Freigaben</span>
-              {pendingApprovalOrders.length > 0 && (
-                <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-orange-600 rounded-full">
-                  {pendingApprovalOrders.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('pricing')}
-              className={`${
-                activeTab === 'pricing'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-            >
-              💰 Preiskalkulation
-            </button>
-            <button
-              onClick={() => setActiveTab('reports')}
-              className={`${
-                activeTab === 'reports'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-            >
-              📊 Abrechnungen
-            </button>
-            <button
-              onClick={() => setActiveTab('verifications')}
-              className={`${
-                activeTab === 'verifications'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-            >
-              Ausstehende Verifizierungen ({users.filter(u => u.role === 'contractor' && u.verification_status === 'pending').length})
             </button>
             <button
               onClick={() => setActiveTab('invoices')}
@@ -458,30 +427,85 @@ export default function AdminDashboard() {
                 activeTab === 'invoices'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-3 border-b-2 font-medium text-sm`}
             >
               📄 Rechnungen
             </button>
-            <button
-              onClick={() => setActiveTab('email-templates')}
-              className={`${
-                activeTab === 'email-templates'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-            >
-              ✉️ Email-Templates
-            </button>
-            <button
-              onClick={() => setActiveTab('monitoring')}
-              className={`${
-                activeTab === 'monitoring'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-            >
-              📊 Monitoring
-            </button>
+            
+            {/* More Dropdown */}
+            <div className="relative" ref={moreMenuRef}>
+              <button
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                className={`${
+                  ['approvals', 'pricing', 'reports', 'verifications', 'email-templates', 'monitoring'].includes(activeTab)
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-3 border-b-2 font-medium text-sm flex items-center space-x-1`}
+              >
+                <span>Mehr</span>
+                <ChevronDown className="h-4 w-4" />
+                {pendingApprovalOrders.length > 0 && (
+                  <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-orange-600 rounded-full">
+                    {pendingApprovalOrders.length}
+                  </span>
+                )}
+              </button>
+              
+              {/* Dropdown Menu */}
+              {showMoreMenu && (
+                <div className="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                  <div className="py-2">
+                    <button
+                      onClick={() => { setActiveTab('approvals'); setShowMoreMenu(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between"
+                    >
+                      <span>⏱️ Freigaben</span>
+                      {pendingApprovalOrders.length > 0 && (
+                        <span className="bg-orange-600 text-white text-xs rounded-full px-2 py-1">
+                          {pendingApprovalOrders.length}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => { setActiveTab('pricing'); setShowMoreMenu(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      💰 Preiskalkulation
+                    </button>
+                    <button
+                      onClick={() => { setActiveTab('reports'); setShowMoreMenu(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      📊 Abrechnungen
+                    </button>
+                    <button
+                      onClick={() => { setActiveTab('verifications'); setShowMoreMenu(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between"
+                    >
+                      <span>Verifizierungen</span>
+                      {users.filter(u => u.role === 'contractor' && u.verification_status === 'pending').length > 0 && (
+                        <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-1">
+                          {users.filter(u => u.role === 'contractor' && u.verification_status === 'pending').length}
+                        </span>
+                      )}
+                    </button>
+                    <div className="border-t border-gray-200 my-2"></div>
+                    <button
+                      onClick={() => { setActiveTab('email-templates'); setShowMoreMenu(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      ✉️ Email-Templates
+                    </button>
+                    <button
+                      onClick={() => { setActiveTab('monitoring'); setShowMoreMenu(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      📊 System-Monitoring
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </nav>
         </div>
       </div>
