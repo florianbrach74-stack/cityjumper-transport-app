@@ -262,22 +262,23 @@ router.post('/fix-invoice-orders', authenticateToken, authorizeRole('admin'), as
 router.patch('/invoice/:invoiceNumber/payment-status', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
     const { invoiceNumber } = req.params;
-    const { paymentStatus } = req.body;
+    const { payment_status, paymentStatus } = req.body;
+    const status = payment_status || paymentStatus; // Support both parameter names
     
-    if (!['unpaid', 'paid', 'overdue'].includes(paymentStatus)) {
+    if (!['unpaid', 'paid', 'overdue'].includes(status)) {
       return res.status(400).json({ error: 'Invalid payment status' });
     }
     
     // Update invoice
     await pool.query(
       `UPDATE sent_invoices SET payment_status = $1, paid_at = $2 WHERE invoice_number = $3`,
-      [paymentStatus, paymentStatus === 'paid' ? new Date() : null, invoiceNumber]
+      [status, status === 'paid' ? new Date() : null, invoiceNumber]
     );
     
     // Update all orders with this invoice number
     await pool.query(
       `UPDATE transport_orders SET payment_status = $1 WHERE invoice_number = $2`,
-      [paymentStatus, invoiceNumber]
+      [status, invoiceNumber]
     );
     
     res.json({ success: true, message: 'Payment status updated' });
