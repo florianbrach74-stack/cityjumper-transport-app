@@ -563,13 +563,15 @@ const confirmPickup = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Carrier name: Always the company/contractor name
+    // Carrier name (Feld 16): Always the company/contractor name
     const carrierName = contractor.company_name || `${contractor.first_name} ${contractor.last_name}`;
     
-    // Carrier signed by: Employee name if employee, otherwise contractor name
+    // Carrier signed by (Feld 23): ALWAYS the human name of the person executing
+    // - If employee: Employee's name
+    // - If contractor himself: Contractor's personal name (NOT company name)
     const carrierSignedBy = userRole === 'employee' 
-      ? `${user.first_name} ${user.last_name}`
-      : carrierName;
+      ? `${user.first_name} ${user.last_name}`  // Employee name
+      : `${contractor.first_name} ${contractor.last_name}`;  // Contractor's personal name
     
     console.log('💾 Updating CMR with signatures...');
     console.log('   Carrier company:', carrierName);
