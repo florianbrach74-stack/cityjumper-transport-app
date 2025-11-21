@@ -13,6 +13,9 @@ import ReportsSummary from '../components/ReportsSummary';
 import ContractorDocumentsModal from '../components/ContractorDocumentsModal';
 import CancellationModal from '../components/CancellationModal';
 import BulkInvoiceModal from '../components/BulkInvoiceModal';
+import InvoiceHistory from './InvoiceHistory';
+import EmailTemplatesManager from '../components/EmailTemplatesManager';
+import SystemMonitoring from '../components/SystemMonitoring';
 import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
@@ -448,6 +451,36 @@ export default function AdminDashboard() {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               Ausstehende Verifizierungen ({users.filter(u => u.role === 'contractor' && u.verification_status === 'pending').length})
+            </button>
+            <button
+              onClick={() => setActiveTab('invoices')}
+              className={`${
+                activeTab === 'invoices'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              📄 Rechnungen
+            </button>
+            <button
+              onClick={() => setActiveTab('email-templates')}
+              className={`${
+                activeTab === 'email-templates'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              ✉️ Email-Templates
+            </button>
+            <button
+              onClick={() => setActiveTab('monitoring')}
+              className={`${
+                activeTab === 'monitoring'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              📊 Monitoring
             </button>
           </nav>
         </div>
@@ -1095,6 +1128,21 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Invoice History Tab */}
+        {activeTab === 'invoices' && (
+          <InvoiceHistory />
+        )}
+
+        {/* Email Templates Tab */}
+        {activeTab === 'email-templates' && (
+          <EmailTemplatesManager />
+        )}
+
+        {/* System Monitoring Tab */}
+        {activeTab === 'monitoring' && (
+          <SystemMonitoring />
         )}
 
       </div>
