@@ -211,8 +211,10 @@ export default function ReportsSummary({ userRole }) {
   const handlePaymentStatusChange = async (invoiceNumber, newStatus) => {
     try {
       const token = localStorage.getItem('token');
+      // URL-encode the invoice number to handle special characters like dashes
+      const encodedInvoiceNumber = encodeURIComponent(invoiceNumber);
       await axios.patch(
-        `${import.meta.env.VITE_API_URL}/invoices/${invoiceNumber}/payment-status`,
+        `${import.meta.env.VITE_API_URL}/invoices/${encodedInvoiceNumber}/payment-status`,
         { payment_status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
