@@ -85,9 +85,9 @@ const Navbar = () => {
               <LogOut className="h-4 w-4" />
               <span>{t('nav.logout')}</span>
             </button>
-            {/* Version Indicator - v2.1 Mobile-Optimized */}
-            <div className="ml-4 px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
-              🚀 v2.1
+            {/* Version Indicator - v2.2 Payment Fix */}
+            <div className="ml-4 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">
+              ✅ v2.2
             </div>
           </div>
         </div>
