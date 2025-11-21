@@ -768,18 +768,9 @@ const ContractorDashboard = () => {
                 </p>
               </div>
             ) : (
-              <div className={isMobile ? "space-y-3" : "grid grid-cols-1 lg:grid-cols-2 gap-6"}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {availableOrders.map((order) => (
-                  isMobile ? (
-                    <CompactOrderCard 
-                      key={order.id} 
-                      order={order}
-                      onDetails={(o) => setSelectedOrderForBid(o)}
-                      onAccept={(o) => handleAcceptOrder(o)}
-                    />
-                  ) : (
-                    <OrderCard key={order.id} order={order} showAcceptButton={true} />
-                  )
+                  <OrderCard key={order.id} order={order} showAcceptButton={true} />
                 ))}
               </div>
             )}
