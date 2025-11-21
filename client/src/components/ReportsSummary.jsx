@@ -209,21 +209,40 @@ export default function ReportsSummary({ userRole }) {
   const formatPrice = (price) => `€${parseFloat(price || 0).toFixed(2)}`;
 
   const handlePaymentStatusChange = async (invoiceNumber, newStatus) => {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📤 FRONTEND: Payment Status Change Request');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🔹 Invoice Number:', invoiceNumber);
+    console.log('🔹 New Status:', newStatus);
+    console.log('🔹 Timestamp:', new Date().toISOString());
+    
     try {
       // URL-encode the invoice number to handle special characters like dashes
       const encodedInvoiceNumber = encodeURIComponent(invoiceNumber);
-      await api.patch(
-        `/reports/invoice/${encodedInvoiceNumber}/payment-status`,
-        { 
-          payment_status: newStatus,
-          paymentStatus: newStatus // Support both parameter names
-        }
-      );
+      const url = `/reports/invoice/${encodedInvoiceNumber}/payment-status`;
+      const data = { 
+        payment_status: newStatus,
+        paymentStatus: newStatus // Support both parameter names
+      };
+      
+      console.log('📡 API Call:');
+      console.log('   URL:', url);
+      console.log('   Data:', JSON.stringify(data, null, 2));
+      
+      const response = await api.patch(url, data);
+      
+      console.log('✅ SUCCESS Response:', response.data);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
       
       // Refresh orders
       fetchSummary();
     } catch (error) {
-      console.error('Error updating payment status:', error);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.error('❌ ERROR:', error);
+      console.error('❌ Response:', error.response?.data);
+      console.error('❌ Status:', error.response?.status);
+      console.error('❌ Full Error:', error);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
       alert(error.response?.data?.error || 'Fehler beim Aktualisieren des Zahlungsstatus');
     }
   };

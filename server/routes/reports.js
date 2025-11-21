@@ -260,30 +260,53 @@ router.post('/fix-invoice-orders', authenticateToken, authorizeRole('admin'), as
 
 // Update payment status
 router.patch('/invoice/:invoiceNumber/payment-status', authenticateToken, async (req, res) => {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📍 PAYMENT STATUS UPDATE REQUEST');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🔹 Invoice Number:', req.params.invoiceNumber);
+  console.log('🔹 Request Body:', JSON.stringify(req.body, null, 2));
+  console.log('🔹 User:', req.user?.email, '(ID:', req.user?.id, ')');
+  console.log('🔹 Timestamp:', new Date().toISOString());
+  
   try {
     const { invoiceNumber } = req.params;
     const { payment_status, paymentStatus } = req.body;
     const status = payment_status || paymentStatus; // Support both parameter names
     
+    console.log('✅ Extracted status:', status);
+    
     if (!['unpaid', 'paid', 'overdue'].includes(status)) {
+      console.log('❌ Invalid status:', status);
       return res.status(400).json({ error: 'Invalid payment status' });
     }
     
+    console.log('📝 Updating sent_invoices table...');
     // Update invoice
-    await pool.query(
-      `UPDATE sent_invoices SET payment_status = $1, paid_at = $2 WHERE invoice_number = $3`,
+    const invoiceResult = await pool.query(
+      `UPDATE sent_invoices SET payment_status = $1, paid_at = $2 WHERE invoice_number = $3 RETURNING *`,
       [status, status === 'paid' ? new Date() : null, invoiceNumber]
     );
+    console.log('✅ Invoice updated:', invoiceResult.rowCount, 'rows');
     
+    console.log('📝 Updating transport_orders table...');
     // Update all orders with this invoice number
-    await pool.query(
-      `UPDATE transport_orders SET payment_status = $1 WHERE invoice_number = $2`,
+    const ordersResult = await pool.query(
+      `UPDATE transport_orders SET payment_status = $1 WHERE invoice_number = $2 RETURNING id`,
       [status, invoiceNumber]
     );
+    console.log('✅ Orders updated:', ordersResult.rowCount, 'rows');
+    console.log('✅ Order IDs:', ordersResult.rows.map(r => r.id).join(', '));
     
-    res.json({ success: true, message: 'Payment status updated' });
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('✅ SUCCESS - Payment status updated to:', status);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    
+    res.json({ success: true, message: 'Payment status updated', status, invoiceNumber });
   } catch (error) {
-    console.error('Error updating payment status:', error);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.error('❌ ERROR updating payment status:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     res.status(500).json({ error: error.message });
   }
 });
