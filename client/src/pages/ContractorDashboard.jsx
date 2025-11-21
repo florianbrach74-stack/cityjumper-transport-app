@@ -13,8 +13,6 @@ import MobileBottomNav from '../components/MobileBottomNav';
 import MobileMenuModal from '../components/MobileMenuModal';
 import MobileOrderCard from '../components/MobileOrderCard';
 import RoleSwitcher from '../components/RoleSwitcher';
-import CompactOrderCard from '../components/CompactOrderCard';
-import { useIsMobile } from '../hooks/useIsMobile';
 import { formatPrice } from '../utils/formatPrice';
 import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell, BarChart3 } from 'lucide-react';
 
@@ -35,7 +33,6 @@ const verificationAPI = {
 
 const ContractorDashboard = () => {
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const [availableOrders, setAvailableOrders] = useState([]);
   const [myOrders, setMyOrders] = useState([]);
   const [myBids, setMyBids] = useState([]);

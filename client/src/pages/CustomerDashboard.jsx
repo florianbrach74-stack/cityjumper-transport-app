@@ -112,20 +112,7 @@ const CustomerDashboard = () => {
         </div>
 
         {/* Stats */}
-        {isMobile ? (
-          <div className="mb-6">
-            <CompactStats 
-              columns={4}
-              stats={[
-                { icon: Package, value: stats.total, label: 'Gesamt', iconColor: 'text-gray-600' },
-                { icon: Clock, value: stats.pending, label: 'Ausstehend', iconColor: 'text-yellow-600', valueColor: 'text-yellow-600' },
-                { icon: Truck, value: stats.accepted, label: 'Aktiv', iconColor: 'text-blue-600', valueColor: 'text-blue-600' },
-                { icon: CheckCircle, value: stats.completed, label: 'Fertig', iconColor: 'text-green-600', valueColor: 'text-green-600' }
-              ]}
-            />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -163,7 +150,6 @@ const CustomerDashboard = () => {
               </div>
             </div>
           </div>
-        )}
 
         {/* Create Order Button */}
         <div className="mb-6">
