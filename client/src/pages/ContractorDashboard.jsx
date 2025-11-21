@@ -47,6 +47,7 @@ const ContractorDashboard = () => {
   const [penalties, setPenalties] = useState([]);
   const [pendingPenaltiesTotal, setPendingPenaltiesTotal] = useState(0);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const fetchOrders = async () => {
     try {
