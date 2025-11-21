@@ -6,14 +6,11 @@ import UpdatePriceModal from '../components/UpdatePriceModal';
 import CMRViewer from '../components/CMRViewer';
 import ReportsSummary from '../components/ReportsSummary';
 import RoleSwitcher from '../components/RoleSwitcher';
-import CompactStats from '../components/CompactStats';
-import { useIsMobile } from '../hooks/useIsMobile';
 import { formatPrice } from '../utils/formatPrice';
 import { Plus, Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText, TrendingUp, BarChart3, XCircle } from 'lucide-react';
 import CancellationModal from '../components/CancellationModal';
 
 const CustomerDashboard = () => {
-  const isMobile = useIsMobile();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('active');

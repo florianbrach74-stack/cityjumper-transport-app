@@ -2,12 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import CMRViewer from '../components/CMRViewer';
 import CMRSignature from '../components/CMRSignature';
-import DriverQuickActions from '../components/DriverQuickActions';
-import { useIsMobile } from '../hooks/useIsMobile';
 import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, FileText, UserCheck } from 'lucide-react';
 
 const EmployeeDashboardNew = () => {
-  const isMobile = useIsMobile();
   const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [assignmentMode, setAssignmentMode] = useState('all_access');
