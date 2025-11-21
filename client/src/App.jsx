@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -46,6 +46,17 @@ const DashboardRouter = () => {
 };
 
 function App() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <LanguageProvider>
       <AuthProvider>
@@ -132,8 +143,8 @@ function App() {
           <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        {/* ChatBot - visible on all pages */}
-        <ChatBot />
+        {/* ChatBot - only on desktop and when not logged in */}
+        {!isMobile && <ChatBot />}
         </Router>
       </AuthProvider>
     </LanguageProvider>
