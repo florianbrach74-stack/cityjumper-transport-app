@@ -12,6 +12,7 @@ import AssignEmployeeDropdown from '../components/AssignEmployeeDropdown';
 import MobileBottomNav from '../components/MobileBottomNav';
 import MobileMenuModal from '../components/MobileMenuModal';
 import MobileOrderCard from '../components/MobileOrderCard';
+import RoleSwitcher from '../components/RoleSwitcher';
 import { formatPrice } from '../utils/formatPrice';
 import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell, BarChart3 } from 'lucide-react';
 
@@ -574,6 +575,11 @@ const ContractorDashboard = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Aufträge</h1>
           <p className="mt-2 text-gray-600">Verfügbare Aufträge annehmen und verwalten</p>
+        </div>
+
+        {/* Role Switcher */}
+        <div className="mb-6">
+          <RoleSwitcher />
         </div>
 
         {/* Penalties Warning */}

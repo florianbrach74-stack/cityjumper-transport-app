@@ -66,6 +66,8 @@ app.use('/api', require('./routes/fix-duplicate-emails'));
 app.use('/api', require('./routes/add-invoice-tracking-columns'));
 app.use('/api', require('./routes/create-email-templates-table'));
 app.use('/api', require('./routes/fix-email-templates-body'));
+app.use('/api', require('./routes/add-dual-role-support'));
+app.use('/api/user', require('./routes/role-switch'));
 app.use('/api', require('./routes/add-performance-indexes'));
 app.use('/api', require('./routes/trigger-monitoring'));
 app.use('/api', require('./routes/debug-monitoring'));
