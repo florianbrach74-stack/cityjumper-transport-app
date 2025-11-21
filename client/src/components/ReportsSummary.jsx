@@ -212,8 +212,8 @@ export default function ReportsSummary({ userRole }) {
     try {
       const token = localStorage.getItem('token');
       await axios.patch(
-        `${import.meta.env.VITE_API_URL}/reports/invoice/${invoiceNumber}/payment-status`,
-        { paymentStatus: newStatus },
+        `${import.meta.env.VITE_API_URL}/invoices/${invoiceNumber}/payment-status`,
+        { payment_status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
