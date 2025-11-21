@@ -38,13 +38,9 @@ export default function ReportsSummary({ userRole }) {
       const { startDate, endDate } = getDateRange();
       const token = localStorage.getItem('token');
       
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/reports/summary`,
-        {
-          params: { startDate, endDate },
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      const response = await api.get('/reports/summary', {
+        params: { startDate, endDate }
+      });
 
       setSummary(response.data.summary);
       setOrders(response.data.orders);
@@ -95,11 +91,7 @@ export default function ReportsSummary({ userRole }) {
   const previewSingleInvoice = async (orderId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/reports/bulk-invoice`,
-        { orderIds: [orderId] },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post('/reports/bulk-invoice', { orderIds: [orderId] });
       setInvoicePreview(response.data.invoice);
     } catch (error) {
       console.error('Error generating invoice preview:', error);
@@ -110,14 +102,10 @@ export default function ReportsSummary({ userRole }) {
   const sendInvoice = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/reports/bulk-invoice`,
-        { 
-          orderIds: [invoicePreview.orders[0].id],
-          sendEmail: true
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post('/reports/bulk-invoice', { 
+        orderIds: [invoicePreview.orders[0].id],
+        sendEmail: true
+      });
       
       if (response.data.emailSent) {
         alert('Rechnung wurde erfolgreich per Email an den Kunden gesendet!');
@@ -139,11 +127,7 @@ export default function ReportsSummary({ userRole }) {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/reports/bulk-invoice`,
-        { orderIds: selectedOrders },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post('/reports/bulk-invoice', { orderIds: selectedOrders });
       setInvoicePreview(response.data.invoice);
     } catch (error) {
       console.error('Error generating bulk invoice preview:', error);
@@ -154,14 +138,10 @@ export default function ReportsSummary({ userRole }) {
   const sendBulkInvoice = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/reports/bulk-invoice`,
-        { 
-          orderIds: selectedOrders,
-          sendEmail: true
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post('/reports/bulk-invoice', { 
+        orderIds: selectedOrders,
+        sendEmail: true
+      });
       
       if (response.data.emailSent) {
         alert(`Sammelrechnung für ${invoicePreview.orders.length} Aufträge wurde erfolgreich per Email an den Kunden gesendet!`);
