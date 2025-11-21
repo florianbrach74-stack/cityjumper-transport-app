@@ -65,12 +65,14 @@ app.use('/api', require('./routes/add-billing-email-column'));
 app.use('/api', require('./routes/fix-duplicate-emails'));
 app.use('/api', require('./routes/add-invoice-tracking-columns'));
 app.use('/api', require('./routes/create-email-templates-table'));
+app.use('/api', require('./routes/add-performance-indexes'));
 app.use('/api', require('./routes/trigger-monitoring'));
 app.use('/api', require('./routes/debug-monitoring'));
 app.use('/api', require('./routes/customer-notes'));
 app.use('/api/orders', require('./routes/order-price-adjustment'));
 app.use('/api/invoices', require('./routes/invoice-history'));
 app.use('/api/email-templates', require('./routes/email-templates'));
+app.use('/api/system', require('./routes/system-monitoring'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');
