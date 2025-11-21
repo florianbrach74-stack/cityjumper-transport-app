@@ -258,9 +258,12 @@ router.get('/stats/summary', authenticateToken, async (req, res) => {
 router.patch('/:invoiceNumber/payment-status', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
     const { invoiceNumber } = req.params;
-    const { payment_status, payment_notes } = req.body;
+    const { payment_status, paymentStatus, payment_notes } = req.body;
+    const status = payment_status || paymentStatus; // Support both parameter names
 
-    if (!['unpaid', 'paid', 'overdue'].includes(payment_status)) {
+    console.log('📍 Payment status update:', { invoiceNumber, status, body: req.body });
+
+    if (!status || !['unpaid', 'paid', 'overdue'].includes(status)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid payment status'
@@ -276,8 +279,8 @@ router.patch('/:invoiceNumber/payment-status', authenticateToken, authorizeRole(
        WHERE invoice_number = $4
        RETURNING *`,
       [
-        payment_status,
-        payment_status === 'paid' ? new Date() : null,
+        status,
+        status === 'paid' ? new Date() : null,
         payment_notes || null,
         invoiceNumber
       ]
@@ -295,8 +298,10 @@ router.patch('/:invoiceNumber/payment-status', authenticateToken, authorizeRole(
       `UPDATE transport_orders 
        SET payment_status = $1
        WHERE invoice_number = $2`,
-      [payment_status, invoiceNumber]
+      [status, invoiceNumber]
     );
+
+    console.log('✅ Payment status updated successfully:', { invoiceNumber, status });
 
     res.json({
       success: true,
