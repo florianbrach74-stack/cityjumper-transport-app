@@ -27,11 +27,8 @@ const CustomerDashboard = () => {
 
   const fetchOrders = async () => {
     try {
-      console.log('🔍 Fetching orders...');
       const response = await ordersAPI.getOrders();
-      console.log('✅ Orders response:', response);
       const ordersData = response.data.orders;
-      console.log('📦 Orders data:', ordersData);
       setOrders(ordersData);
 
       // Calculate stats (exclude cancelled orders)
@@ -43,10 +40,7 @@ const CustomerDashboard = () => {
         completed: activeOrders.filter((o) => o.status === 'completed' || o.status === 'pending_approval').length,
       });
     } catch (error) {
-      console.error('❌ Error fetching orders:', error);
-      console.error('❌ Error response:', error.response?.data);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error message:', error.message);
+      console.error('❌ Error fetching orders:', error.response?.data?.error || error.message);
     } finally {
       setLoading(false);
     }

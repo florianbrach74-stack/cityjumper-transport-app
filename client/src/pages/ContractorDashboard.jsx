@@ -74,7 +74,12 @@ const ContractorDashboard = () => {
       setPenalties(response.data.penalties);
       setPendingPenaltiesTotal(response.data.pendingTotal);
     } catch (error) {
-      console.error('Error fetching penalties:', error);
+      // Silently handle 404 - penalties feature might not be available
+      if (error.response?.status !== 404) {
+        console.error('Error fetching penalties:', error);
+      }
+      setPenalties([]);
+      setPendingPenaltiesTotal(0);
     }
   };
 
