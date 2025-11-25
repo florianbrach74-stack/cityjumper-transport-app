@@ -1,2 +1,0 @@
-# Force Railway to rebuild completely
-REBUILD_TIMESTAMP=$(date +%s)

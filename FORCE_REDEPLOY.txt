@@ -1,2 +1,0 @@
-FORCE REDEPLOY - $(date)
-Timestamp: $(date +%s)
