@@ -49,7 +49,18 @@ async function autoMigrate() {
     const loadingHelpResult = await pool.query(checkLoadingHelp);
     const loadingHelpMigrated = loadingHelpResult.rows.length >= 4;
     
-    if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated && loadingHelpMigrated) {
+    // Check if email_templates table exists
+    const checkEmailTemplates = `
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'email_templates';
+    `;
+    
+    const emailTemplatesResult = await pool.query(checkEmailTemplates);
+    const emailTemplatesMigrated = emailTemplatesResult.rows.length > 0;
+    
+    if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated && loadingHelpMigrated && emailTemplatesMigrated) {
       console.log('✓ All migrations already applied, skipping...');
       return;
     }
@@ -128,6 +139,14 @@ async function autoMigrate() {
       console.log('  ✓ Legal delivery column added');
     }
     
+    // Add email templates
+    if (!emailTemplatesMigrated) {
+      console.log('🔧 Adding email templates...');
+      const emailTemplatesMigration = require('./20251125_add_email_templates');
+      await emailTemplatesMigration.up();
+      console.log('  ✓ Email templates added');
+    }
+    
     console.log('✅ Migration completed successfully!');
     console.log('📦 New features are now available:');
     console.log('  ✓ Multi-stop orders (multiple pickups/deliveries)');
@@ -138,6 +157,7 @@ async function autoMigrate() {
     console.log('  ✓ Employee assignment mode (all_access / manual_assignment)');
     console.log('  ✓ Loading/Unloading help (+€6 each)');
     console.log('  ✓ Legal delivery with content verification');
+    console.log('  ✓ Email templates (12 customizable templates)');
     
   } catch (error) {
     console.error('⚠️  Migration error (may be safe to ignore if already applied):', error.message);
