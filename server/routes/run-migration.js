@@ -260,4 +260,105 @@ router.get('/debug/check-assignment/:orderId', async (req, res) => {
   }
 });
 
+// Add email templates - NO AUTH for emergency
+router.post('/add-email-templates', async (req, res) => {
+  try {
+    console.log('📧 Adding email templates...');
+    
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      // Create table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS email_templates (
+          id SERIAL PRIMARY KEY,
+          template_key VARCHAR(100) UNIQUE NOT NULL,
+          name VARCHAR(200) NOT NULL,
+          category VARCHAR(50) NOT NULL,
+          subject TEXT NOT NULL,
+          html_content TEXT NOT NULL,
+          variables TEXT[],
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      
+      const templates = [
+        ['verification_request_admin', 'Verifizierungsanfrage (Admin)', 'verification', '🔔 Neue Verifizierungsanfrage', 
+         '<div style="font-family: Arial, sans-serif;"><h2>Neue Verifizierung</h2><p>Firma: {{company_name}}</p></div>',
+         ['company_name', 'email', 'phone']],
+        
+        ['verification_approved', 'Verifizierung genehmigt', 'verification', '✅ Verifizierung erfolgreich',
+         '<div style="font-family: Arial, sans-serif;"><h2>✅ Verifizierung genehmigt!</h2></div>',
+         []],
+        
+        ['verification_rejected', 'Verifizierung abgelehnt', 'verification', '❌ Verifizierung abgelehnt',
+         '<div style="font-family: Arial, sans-serif;"><h2>Verifizierung abgelehnt</h2><p>Grund: {{reason}}</p></div>',
+         ['reason']],
+        
+        ['order_new_contractor', 'Neuer Auftrag (Auftragnehmer)', 'orders', 'Neuer Transportauftrag',
+         '<div style="font-family: Arial, sans-serif;"><h2>🚚 Neuer Auftrag!</h2><p>Auftrag #{{order_id}}</p></div>',
+         ['order_id', 'pickup_city', 'delivery_city']],
+        
+        ['order_assigned_customer', 'Auftrag angenommen (Kunde)', 'orders', 'Auftrag angenommen',
+         '<div style="font-family: Arial, sans-serif;"><h2>✅ Auftrag angenommen!</h2></div>',
+         ['order_id', 'contractor_name']],
+        
+        ['bid_new_customer', 'Neues Angebot (Kunde)', 'bids', 'Neues Angebot',
+         '<div style="font-family: Arial, sans-serif;"><h2>💼 Neues Angebot!</h2><p>€{{bid_price}}</p></div>',
+         ['order_id', 'contractor_name', 'bid_price']],
+        
+        ['bid_accepted_contractor', 'Angebot angenommen', 'bids', '✅ Angebot angenommen!',
+         '<div style="font-family: Arial, sans-serif;"><h2>✅ Glückwunsch!</h2></div>',
+         ['order_id']],
+        
+        ['invoice_sent', 'Rechnung versendet', 'invoices', 'Rechnung {{invoice_number}}',
+         '<div style="font-family: Arial, sans-serif;"><h2>Ihre Rechnung</h2></div>',
+         ['invoice_number', 'total_amount']],
+        
+        ['password_reset_request', 'Passwort zurücksetzen', 'account', 'Passwort zurücksetzen',
+         '<div style="font-family: Arial, sans-serif;"><h2>Passwort zurücksetzen</h2><a href="{{reset_url}}">Link</a></div>',
+         ['reset_url']],
+        
+        ['admin_notification', 'Admin-Benachrichtigung', 'admin', '[Admin] {{subject}}',
+         '<div style="font-family: Arial, sans-serif;"><h2>{{subject}}</h2><p>{{message}}</p></div>',
+         ['subject', 'message']]
+      ];
+      
+      let added = 0;
+      for (const [key, name, category, subject, html, vars] of templates) {
+        await client.query(`
+          INSERT INTO email_templates (template_key, name, category, subject, html_content, variables)
+          VALUES ($1, $2, $3, $4, $5, $6)
+          ON CONFLICT (template_key) DO NOTHING
+        `, [key, name, category, subject, html, vars]);
+        added++;
+      }
+      
+      await client.query('COMMIT');
+      
+      const count = await client.query('SELECT COUNT(*) FROM email_templates');
+      
+      res.json({
+        success: true,
+        message: 'Email templates added',
+        added: added,
+        total: count.rows[0].count
+      });
+      
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+    
+  } catch (error) {
+    console.error('❌ Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
