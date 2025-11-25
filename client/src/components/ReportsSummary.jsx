@@ -38,10 +38,14 @@ export default function ReportsSummary({ userRole }) {
       const { startDate, endDate } = getDateRange();
       const token = localStorage.getItem('token');
       
+      console.log('🔍 Fetching reports summary...', { startDate, endDate, userRole });
+      
       const response = await api.get('/reports/summary', {
         params: { startDate, endDate }
       });
 
+      console.log('✅ Reports response:', response.data);
+      
       setSummary(response.data.summary);
       setOrders(response.data.orders);
       
@@ -58,8 +62,11 @@ export default function ReportsSummary({ userRole }) {
         setCustomers(uniqueCustomers);
       }
     } catch (error) {
-      console.error('Error fetching summary:', error);
-      alert('Fehler beim Laden der Zusammenfassung');
+      console.error('❌ Error fetching summary:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error message:', error.message);
+      alert(`Fehler beim Laden der Zusammenfassung: ${error.response?.data?.error || error.message}`);
     } finally {
       setLoading(false);
     }

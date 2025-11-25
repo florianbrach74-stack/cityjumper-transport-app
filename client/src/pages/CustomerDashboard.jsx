@@ -27,19 +27,26 @@ const CustomerDashboard = () => {
 
   const fetchOrders = async () => {
     try {
+      console.log('🔍 Fetching orders...');
       const response = await ordersAPI.getOrders();
+      console.log('✅ Orders response:', response);
       const ordersData = response.data.orders;
+      console.log('📦 Orders data:', ordersData);
       setOrders(ordersData);
 
-      // Calculate stats
+      // Calculate stats (exclude cancelled orders)
+      const activeOrders = ordersData.filter((o) => o.status !== 'cancelled');
       setStats({
-        total: ordersData.length,
-        pending: ordersData.filter((o) => o.status === 'pending').length,
-        accepted: ordersData.filter((o) => o.status === 'accepted' || o.status === 'in_transit').length,
-        completed: ordersData.filter((o) => o.status === 'completed' || o.status === 'pending_approval').length,
+        total: activeOrders.length,
+        pending: activeOrders.filter((o) => o.status === 'pending').length,
+        accepted: activeOrders.filter((o) => o.status === 'accepted' || o.status === 'in_transit').length,
+        completed: activeOrders.filter((o) => o.status === 'completed' || o.status === 'pending_approval').length,
       });
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('❌ Error fetching orders:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error message:', error.message);
     } finally {
       setLoading(false);
     }
@@ -171,7 +178,7 @@ const CustomerDashboard = () => {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
             >
               <Truck className="h-5 w-5" />
-              <span>Aktive Aufträge ({orders.filter(o => o.status !== 'completed' && o.status !== 'pending_approval').length})</span>
+              <span>Aktive Aufträge ({orders.filter(o => o.status !== 'completed' && o.status !== 'pending_approval' && o.status !== 'cancelled').length})</span>
             </button>
             <button
               onClick={() => setActiveTab('completed')}
@@ -206,7 +213,7 @@ const CustomerDashboard = () => {
         {/* Orders List */}
         {activeTab !== 'reports' && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval') : (o.status === 'completed' || o.status === 'pending_approval')).length === 0 ? (
+          {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'pending_approval')).length === 0 ? (
             <div className="text-center py-12">
               <Package className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">Keine Aufträge</h3>
@@ -258,7 +265,7 @@ const CustomerDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval') : (o.status === 'completed' || o.status === 'pending_approval')).map((order) => (
+                  {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'pending_approval')).map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">

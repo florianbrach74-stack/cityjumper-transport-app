@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Use production backend URL or fallback to local proxy
+// Use production backend URL
 const API_URL = 'https://cityjumper-api-production-01e4.up.railway.app/api'; 
 
 const api = axios.create({
