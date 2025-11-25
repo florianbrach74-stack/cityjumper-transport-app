@@ -329,11 +329,14 @@ router.post('/add-email-templates', async (req, res) => {
       
       let added = 0;
       for (const [key, name, category, subject, html, vars] of templates) {
+        // Convert array to PostgreSQL array format
+        const varsArray = vars.length === 0 ? '{}' : '{' + vars.join(',') + '}';
+        
         await client.query(`
           INSERT INTO email_templates (template_key, name, category, subject, html_content, variables)
-          VALUES ($1, $2, $3, $4, $5, $6)
+          VALUES ($1, $2, $3, $4, $5, $6::text[])
           ON CONFLICT (template_key) DO NOTHING
-        `, [key, name, category, subject, html, vars]);
+        `, [key, name, category, subject, html, varsArray]);
         added++;
       }
       

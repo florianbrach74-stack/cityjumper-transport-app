@@ -74,11 +74,16 @@ exports.up = async () => {
     ];
     
     for (const [key, name, category, subject, html, vars] of templates) {
+      // Convert array to PostgreSQL array format
+      const varsArray = Array.isArray(vars) 
+        ? (vars.length === 0 ? '{}' : '{' + vars.join(',') + '}')
+        : vars; // Already a string
+      
       await client.query(`
         INSERT INTO email_templates (template_key, name, category, subject, html_content, variables)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6::text[])
         ON CONFLICT (template_key) DO NOTHING
-      `, [key, name, category, subject, html, vars]);
+      `, [key, name, category, subject, html, varsArray]);
     }
     
     const count = await client.query('SELECT COUNT(*) FROM email_templates');
