@@ -3,8 +3,16 @@ const { Client } = require('pg');
 
 const DATABASE_URL = 'postgresql://postgres:RYPHEqJnZKmOSqHHxGFfNIxqUXMXbxLW@junction.proxy.rlwy.net:56406/railway';
 
+// SSL config for Railway
+const config = {
+  connectionString: DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+};
+
 async function executeSql() {
-  const client = new Client({ connectionString: DATABASE_URL });
+  const client = new Client(config);
   
   try {
     await client.connect();

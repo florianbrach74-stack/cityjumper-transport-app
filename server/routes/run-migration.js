@@ -294,17 +294,10 @@ router.post('/add-email-templates', async (req, res) => {
       
       if (columnCheck.rows[0]?.data_type === 'jsonb') {
         console.log('Converting variables column from JSONB to TEXT[]...');
-        // Drop default first
-        await client.query(`ALTER TABLE email_templates ALTER COLUMN variables DROP DEFAULT`);
-        // Then convert
-        await client.query(`
-          ALTER TABLE email_templates 
-          ALTER COLUMN variables TYPE TEXT[] 
-          USING CASE 
-            WHEN variables IS NULL THEN '{}'::text[]
-            ELSE ARRAY(SELECT jsonb_array_elements_text(variables))
-          END
-        `);
+        // Drop column and recreate as TEXT[]
+        await client.query(`ALTER TABLE email_templates DROP COLUMN variables`);
+        await client.query(`ALTER TABLE email_templates ADD COLUMN variables TEXT[]`);
+        console.log('   ✅ Column recreated as TEXT[]');
       }
       
       const templates = [
