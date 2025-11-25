@@ -343,16 +343,30 @@ router.post('/add-email-templates', async (req, res) => {
       ];
       
       let added = 0;
+      let skipped = 0;
       for (const [key, name, category, subject, html, vars] of templates) {
-        // Convert array to PostgreSQL array format
-        const varsArray = vars.length === 0 ? '{}' : '{' + vars.join(',') + '}';
-        
-        await client.query(`
-          INSERT INTO email_templates (template_key, name, category, subject, html_content, variables)
-          VALUES ($1, $2, $3, $4, $5, $6::text[])
-          ON CONFLICT (template_key) DO NOTHING
-        `, [key, name, category, subject, html, varsArray]);
-        added++;
+        try {
+          // Convert array to PostgreSQL array format
+          const varsArray = vars.length === 0 ? '{}' : '{' + vars.join(',') + '}';
+          
+          const result = await client.query(`
+            INSERT INTO email_templates (template_key, name, category, subject, html_content, variables)
+            VALUES ($1, $2, $3, $4, $5, $6::text[])
+            ON CONFLICT (template_key) DO NOTHING
+            RETURNING id
+          `, [key, name, category, subject, html, varsArray]);
+          
+          if (result.rowCount > 0) {
+            console.log(`   ✅ Added: ${name}`);
+            added++;
+          } else {
+            console.log(`   ⏭️  Skipped (exists): ${name}`);
+            skipped++;
+          }
+        } catch (err) {
+          console.log(`   ❌ Error: ${name} - ${err.message}`);
+          skipped++;
+        }
       }
       
       await client.query('COMMIT');
@@ -363,6 +377,7 @@ router.post('/add-email-templates', async (req, res) => {
         success: true,
         message: 'Email templates added',
         added: added,
+        skipped: skipped,
         total: count.rows[0].count
       });
       
