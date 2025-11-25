@@ -51,6 +51,12 @@ router.get('/health', authenticateToken, authorizeRole('admin'), async (req, res
  * Get database statistics
  */
 router.get('/database', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📍 SYSTEM DATABASE REQUEST');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🔹 User:', req.user?.email, '(ID:', req.user?.id, ')');
+  console.log('🔹 Timestamp:', new Date().toISOString());
+  
   try {
     // Get database size
     const sizeResult = await pool.query(`
@@ -95,6 +101,12 @@ router.get('/database', authenticateToken, authorizeRole('admin'), async (req, r
       LIMIT 20
     `);
 
+    console.log('✅ Database stats fetched successfully');
+    console.log('   Size:', sizeResult.rows[0].size);
+    console.log('   Tables:', tablesResult.rows.length);
+    console.log('   Connections:', connectionsResult.rows[0].total_connections);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    
     res.json({
       success: true,
       database: {
@@ -105,7 +117,11 @@ router.get('/database', authenticateToken, authorizeRole('admin'), async (req, r
       }
     });
   } catch (error) {
-    console.error('Error fetching database stats:', error);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.error('❌ ERROR fetching database stats:', error);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error stack:', error.stack);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     res.status(500).json({
       success: false,
       error: error.message
@@ -118,6 +134,12 @@ router.get('/database', authenticateToken, authorizeRole('admin'), async (req, r
  * Get application statistics
  */
 router.get('/stats', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📍 SYSTEM STATS REQUEST');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🔹 User:', req.user?.email, '(ID:', req.user?.id, ')');
+  console.log('🔹 Timestamp:', new Date().toISOString());
+  
   try {
     // Users stats
     const usersStats = await pool.query(`
@@ -186,6 +208,12 @@ router.get('/stats', authenticateToken, authorizeRole('admin'), async (req, res)
       FROM contractor_penalties
     `);
 
+    console.log('✅ Application stats fetched successfully');
+    console.log('   Users:', usersStats.rows[0].total_users);
+    console.log('   Orders:', ordersStats.rows[0].total_orders);
+    console.log('   Invoices:', invoicesStats.rows[0].total_invoices);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    
     res.json({
       success: true,
       stats: {
@@ -197,7 +225,11 @@ router.get('/stats', authenticateToken, authorizeRole('admin'), async (req, res)
       }
     });
   } catch (error) {
-    console.error('Error fetching application stats:', error);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.error('❌ ERROR fetching application stats:', error);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error stack:', error.stack);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     res.status(500).json({
       success: false,
       error: error.message
