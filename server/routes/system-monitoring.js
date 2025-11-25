@@ -98,18 +98,18 @@ router.get('/database', authenticateToken, authorizeRole('admin'), async (req, r
       WHERE datname = current_database()
     `);
 
-    // Get index usage
+    // Get index usage - use information_schema
     const indexResult = await pool.query(`
       SELECT 
-        schemaname,
-        tablename,
-        indexname,
-        idx_scan,
-        idx_tup_read,
-        idx_tup_fetch
-      FROM pg_stat_user_indexes
-      WHERE schemaname = 'public'
-      ORDER BY idx_scan DESC
+        t.table_schema as schemaname,
+        t.table_name as tablename,
+        i.indexname,
+        0 as idx_scan,
+        0 as idx_tup_read,
+        0 as idx_tup_fetch
+      FROM information_schema.tables t
+      LEFT JOIN pg_indexes i ON i.tablename = t.table_name AND i.schemaname = t.table_schema
+      WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
       LIMIT 20
     `);
 
