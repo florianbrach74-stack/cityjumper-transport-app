@@ -103,7 +103,7 @@ app.listen(PORT, async () => {
   console.log('🚀 Server running on port', PORT);
   console.log('📍 API available at http://localhost:' + PORT + '/api');
   console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
-  console.log('🔄 Build: v2.3 - Email Templates & System Monitoring');
+  console.log('🔄 Build: v2.4 - FORCE REDEPLOY - Email Templates & Monitoring Fix');
   
   // Run auto-migration
   try {

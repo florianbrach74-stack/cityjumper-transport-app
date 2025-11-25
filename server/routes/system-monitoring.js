@@ -63,18 +63,30 @@ router.get('/database', authenticateToken, authorizeRole('admin'), async (req, r
       SELECT pg_size_pretty(pg_database_size(current_database())) as size
     `);
 
-    // Get table sizes - use information_schema with correct column names
-    const tablesResult = await pool.query(`
-      SELECT 
-        table_schema as schemaname,
-        table_name as tablename,
-        pg_size_pretty(pg_total_relation_size('"' || table_schema || '"."' || table_name || '"')) AS size
-      FROM information_schema.tables
-      WHERE table_schema = 'public' 
-        AND table_type = 'BASE TABLE'
-      ORDER BY pg_total_relation_size('"' || table_schema || '"."' || table_name || '"') DESC
-      LIMIT 20
-    `);
+    // Get table sizes - hardcoded list to avoid pg_tables issues
+    const tableNames = [
+      'transport_orders', 'users', 'sent_invoices', 'order_bids', 
+      'penalties', 'email_templates', 'notifications', 'system_logs'
+    ];
+    
+    const tableSizes = [];
+    for (const tableName of tableNames) {
+      try {
+        const result = await pool.query(`
+          SELECT 
+            'public' as schemaname,
+            $1 as tablename,
+            pg_size_pretty(pg_total_relation_size('public.' || $1)) AS size
+        `, [tableName]);
+        if (result.rows[0]) {
+          tableSizes.push(result.rows[0]);
+        }
+      } catch (e) {
+        // Table doesn't exist, skip
+      }
+    }
+    
+    const tablesResult = { rows: tableSizes };
 
     // Get connection stats
     const connectionsResult = await pool.query(`

@@ -49,16 +49,20 @@ async function autoMigrate() {
     const loadingHelpResult = await pool.query(checkLoadingHelp);
     const loadingHelpMigrated = loadingHelpResult.rows.length >= 4;
     
-    // Check if email_templates table exists
-    const checkEmailTemplates = `
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      AND table_name = 'email_templates';
-    `;
-    
-    const emailTemplatesResult = await pool.query(checkEmailTemplates);
-    const emailTemplatesMigrated = emailTemplatesResult.rows.length > 0;
+    // Check if email_templates has new templates (check for specific key)
+    let emailTemplatesMigrated = false;
+    try {
+      const checkEmailTemplates = `
+        SELECT COUNT(*) as count
+        FROM email_templates 
+        WHERE template_key = 'verification_request_admin';
+      `;
+      const emailTemplatesResult = await pool.query(checkEmailTemplates);
+      emailTemplatesMigrated = emailTemplatesResult.rows[0].count > 0;
+    } catch (e) {
+      // Table doesn't exist yet
+      emailTemplatesMigrated = false;
+    }
     
     if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated && loadingHelpMigrated && emailTemplatesMigrated) {
       console.log('✓ All migrations already applied, skipping...');
