@@ -16,15 +16,32 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('🔑 Token added to request:', config.url);
+  } else {
+    console.warn('⚠️ No token found in localStorage for request:', config.url);
   }
   return config;
+}, (error) => {
+  console.error('❌ Request interceptor error:', error);
+  return Promise.reject(error);
 });
 
-// Handle 401 errors
+// Handle 401 and 403 errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ Response received:', response.config.url, response.status);
+    return response;
+  },
   (error) => {
-    if (error.response?.status === 401) {
+    console.error('❌ Response error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.warn('🔒 Authentication error - redirecting to login');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
