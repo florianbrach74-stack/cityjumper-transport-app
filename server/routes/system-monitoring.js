@@ -52,7 +52,7 @@ router.get('/health', authenticateToken, authorizeRole('admin'), async (req, res
  */
 router.get('/database', authenticateToken, authorizeRole('admin'), async (req, res) => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📍 SYSTEM DATABASE REQUEST');
+  console.log('📍 SYSTEM DATABASE REQUEST [v2.6]');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('🔹 User:', req.user?.email, '(ID:', req.user?.id, ')');
   console.log('🔹 Timestamp:', new Date().toISOString());
