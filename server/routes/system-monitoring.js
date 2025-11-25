@@ -66,12 +66,12 @@ router.get('/database', authenticateToken, authorizeRole('admin'), async (req, r
     // Get table sizes
     const tablesResult = await pool.query(`
       SELECT 
-        schemaname,
-        tablename,
-        pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size,
-        pg_total_relation_size(schemaname||'.'||tablename) AS size_bytes
-      FROM pg_tables
-      WHERE schemaname = 'public'
+        table_schema as schemaname,
+        table_name as tablename,
+        pg_size_pretty(pg_total_relation_size(quote_ident(table_schema)||'.'||quote_ident(table_name))) AS size,
+        pg_total_relation_size(quote_ident(table_schema)||'.'||quote_ident(table_name)) AS size_bytes
+      FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
       ORDER BY size_bytes DESC
       LIMIT 20
     `);
@@ -181,7 +181,7 @@ router.get('/stats', authenticateToken, authorizeRole('admin'), async (req, res)
         SUM(total_amount) FILTER (WHERE payment_status = 'paid') as paid_amount,
         SUM(total_amount) FILTER (WHERE payment_status = 'unpaid') as unpaid_amount,
         SUM(total_amount) FILTER (WHERE payment_status = 'overdue') as overdue_amount,
-        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '30 days') as invoices_30d
+        COUNT(*) FILTER (WHERE created_by IS NOT NULL) as invoices_30d
       FROM sent_invoices
     `);
 
