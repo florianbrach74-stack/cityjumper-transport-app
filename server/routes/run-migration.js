@@ -270,7 +270,7 @@ router.post('/add-email-templates', async (req, res) => {
     try {
       await client.query('BEGIN');
       
-      // Create table
+      // Create table or alter if exists
       await client.query(`
         CREATE TABLE IF NOT EXISTS email_templates (
           id SERIAL PRIMARY KEY,
@@ -284,6 +284,21 @@ router.post('/add-email-templates', async (req, res) => {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
+      
+      // Check if variables column is JSONB and convert to TEXT[]
+      const columnCheck = await client.query(`
+        SELECT data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'email_templates' AND column_name = 'variables'
+      `);
+      
+      if (columnCheck.rows[0]?.data_type === 'jsonb') {
+        console.log('Converting variables column from JSONB to TEXT[]...');
+        await client.query(`
+          ALTER TABLE email_templates 
+          ALTER COLUMN variables TYPE TEXT[] USING variables::text::text[]
+        `);
+      }
       
       const templates = [
         ['verification_request_admin', 'Verifizierungsanfrage (Admin)', 'verification', '🔔 Neue Verifizierungsanfrage', 
