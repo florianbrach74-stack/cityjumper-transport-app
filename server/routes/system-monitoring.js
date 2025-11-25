@@ -63,16 +63,15 @@ router.get('/database', authenticateToken, authorizeRole('admin'), async (req, r
       SELECT pg_size_pretty(pg_database_size(current_database())) as size
     `);
 
-    // Get table sizes
+    // Get table sizes - simplified query
     const tablesResult = await pool.query(`
       SELECT 
-        table_schema as schemaname,
-        table_name as tablename,
-        pg_size_pretty(pg_total_relation_size(quote_ident(table_schema)||'.'||quote_ident(table_name))) AS size,
-        pg_total_relation_size(quote_ident(table_schema)||'.'||quote_ident(table_name)) AS size_bytes
-      FROM information_schema.tables
-      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-      ORDER BY size_bytes DESC
+        'public' as schemaname,
+        tablename,
+        pg_size_pretty(pg_total_relation_size('public.'||tablename)) AS size
+      FROM pg_tables
+      WHERE schemaname = 'public'
+      ORDER BY pg_total_relation_size('public.'||tablename) DESC
       LIMIT 20
     `);
 
@@ -185,16 +184,22 @@ router.get('/stats', authenticateToken, authorizeRole('admin'), async (req, res)
       FROM sent_invoices
     `);
 
-    // Bids stats
-    const bidsStats = await pool.query(`
-      SELECT 
-        COUNT(*) as total_bids,
-        COUNT(*) FILTER (WHERE status = 'pending') as pending_bids,
-        COUNT(*) FILTER (WHERE status = 'accepted') as accepted_bids,
-        COUNT(*) FILTER (WHERE status = 'rejected') as rejected_bids,
-        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '30 days') as bids_30d
-      FROM bids
-    `);
+    // Bids stats - handle if table doesn't exist
+    let bidsStats;
+    try {
+      bidsStats = await pool.query(`
+        SELECT 
+          COUNT(*) as total_bids,
+          COUNT(*) FILTER (WHERE status = 'pending') as pending_bids,
+          COUNT(*) FILTER (WHERE status = 'accepted') as accepted_bids,
+          COUNT(*) FILTER (WHERE status = 'rejected') as rejected_bids,
+          COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '30 days') as bids_30d
+        FROM order_bids
+      `);
+    } catch (e) {
+      console.log('⚠️  Bids table not found, using defaults');
+      bidsStats = { rows: [{ total_bids: 0, pending_bids: 0, accepted_bids: 0, rejected_bids: 0, bids_30d: 0 }] };
+    }
 
     // Penalties stats
     const penaltiesStats = await pool.query(`
