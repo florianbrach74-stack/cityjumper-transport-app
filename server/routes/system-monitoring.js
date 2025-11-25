@@ -63,15 +63,16 @@ router.get('/database', authenticateToken, authorizeRole('admin'), async (req, r
       SELECT pg_size_pretty(pg_database_size(current_database())) as size
     `);
 
-    // Get table sizes - simplified query
+    // Get table sizes - use information_schema with correct column names
     const tablesResult = await pool.query(`
       SELECT 
-        'public' as schemaname,
-        tablename,
-        pg_size_pretty(pg_total_relation_size('public.'||tablename)) AS size
-      FROM pg_tables
-      WHERE schemaname = 'public'
-      ORDER BY pg_total_relation_size('public.'||tablename) DESC
+        table_schema as schemaname,
+        table_name as tablename,
+        pg_size_pretty(pg_total_relation_size('"' || table_schema || '"."' || table_name || '"')) AS size
+      FROM information_schema.tables
+      WHERE table_schema = 'public' 
+        AND table_type = 'BASE TABLE'
+      ORDER BY pg_total_relation_size('"' || table_schema || '"."' || table_name || '"') DESC
       LIMIT 20
     `);
 
