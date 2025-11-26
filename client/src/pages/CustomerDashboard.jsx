@@ -183,7 +183,11 @@ const CustomerDashboard = () => {
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
             >
               <CheckCircle className="h-5 w-5" />
-              <span>Abgeschlossene Aufträge ({orders.filter(o => o.status === 'completed' || o.status === 'pending_approval').length})</span>
+              <span>Abgeschlossene Aufträge ({orders.filter(o => 
+                o.status === 'completed' || 
+                o.status === 'pending_approval' ||
+                o.cancellation_status === 'cancelled_by_customer'
+              ).length})</span>
             </button>
             <button
               onClick={() => setActiveTab('reports')}
@@ -207,7 +211,7 @@ const CustomerDashboard = () => {
         {/* Orders List */}
         {activeTab !== 'reports' && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'pending_approval')).length === 0 ? (
+          {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'pending_approval' || o.cancellation_status === 'cancelled_by_customer')).length === 0 ? (
             <div className="text-center py-12">
               <Package className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">Keine Aufträge</h3>
@@ -259,7 +263,7 @@ const CustomerDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'pending_approval')).map((order) => (
+                  {orders.filter(o => activeTab === 'active' ? (o.status !== 'completed' && o.status !== 'pending_approval' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'pending_approval' || o.cancellation_status === 'cancelled_by_customer')).map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
@@ -382,6 +386,46 @@ const CustomerDashboard = () => {
                                   (Erste 30 Min. kostenlos, danach €3 pro 5 Min.)
                                 </p>
                               </div>
+                            </div>
+                          )}
+                          
+                          {/* Stornierungsgebühr */}
+                          {order.cancellation_status === 'cancelled_by_customer' && order.cancellation_fee && parseFloat(order.cancellation_fee) > 0 && (
+                            <div className="text-xs bg-red-50 border border-red-200 rounded p-2 mt-2">
+                              <div className="font-semibold text-red-900">
+                                🚫 Stornierungsgebühr
+                              </div>
+                              <div className="text-red-700 font-bold mt-1">
+                                €{parseFloat(order.cancellation_fee).toFixed(2)}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                Storniert am: {new Date(order.cancelled_at).toLocaleDateString('de-DE')}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Retourengebühr */}
+                          {order.return_status && order.return_status !== 'none' && order.return_fee && parseFloat(order.return_fee) > 0 && (
+                            <div className="text-xs bg-orange-50 border border-orange-200 rounded p-2 mt-2">
+                              <div className="font-semibold text-orange-900">
+                                🔄 Retourengebühr
+                              </div>
+                              <div className="text-orange-700 font-bold mt-1">
+                                +€{parseFloat(order.return_fee).toFixed(2)}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                Grund: {order.return_reason}
+                              </div>
+                              {order.return_status === 'completed' && (
+                                <div className="text-xs text-green-600 mt-1">
+                                  ✓ Retoure abgeschlossen
+                                </div>
+                              )}
+                              {order.return_status === 'pending' && (
+                                <div className="text-xs text-orange-600 mt-1">
+                                  ⏳ Retoure läuft
+                                </div>
+                              )}
                             </div>
                           )}
                           

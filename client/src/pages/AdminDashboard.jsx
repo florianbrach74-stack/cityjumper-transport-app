@@ -16,6 +16,7 @@ import BulkInvoiceModal from '../components/BulkInvoiceModal';
 import InvoiceHistory from './InvoiceHistory';
 import EmailTemplatesManager from '../components/EmailTemplatesManager';
 import SystemMonitoring from '../components/SystemMonitoring';
+import InitiateReturnModal from '../components/InitiateReturnModal';
 import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
@@ -43,6 +44,7 @@ export default function AdminDashboard() {
   const [selectedOrdersForInvoice, setSelectedOrdersForInvoice] = useState([]);
   const [showBulkInvoiceModal, setShowBulkInvoiceModal] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [selectedOrderForReturn, setSelectedOrderForReturn] = useState(null);
   const moreMenuRef = useRef(null);
 
   // Save activeTab to localStorage whenever it changes
@@ -690,6 +692,22 @@ export default function AdminDashboard() {
                           >
                             🧾 Rechnung erstellen
                           </button>
+                          {(order.status === 'delivered' || order.status === 'in_transit') && 
+                           (!order.return_status || order.return_status === 'none') && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const response = await api.get(`/admin/orders/${order.id}/details`);
+                                  setSelectedOrderForReturn(response.data.order);
+                                } catch (error) {
+                                  alert('Fehler beim Laden der Auftragsdaten');
+                                }
+                              }}
+                              className="text-orange-600 hover:text-orange-900 font-medium text-left"
+                            >
+                              🔄 Retoure starten
+                            </button>
+                          )}
                           {order.status !== 'cancelled' && !order.cancellation_status && (
                             <button
                               onClick={async () => {
@@ -1341,6 +1359,18 @@ export default function AdminDashboard() {
             setCancellingOrder(null);
             loadData();
             alert('Auftrag erfolgreich storniert!');
+          }}
+        />
+      )}
+
+      {/* Initiate Return Modal */}
+      {selectedOrderForReturn && (
+        <InitiateReturnModal
+          order={selectedOrderForReturn}
+          onClose={() => setSelectedOrderForReturn(null)}
+          onSuccess={() => {
+            setSelectedOrderForReturn(null);
+            loadData();
           }}
         />
       )}

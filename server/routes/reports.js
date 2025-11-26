@@ -85,13 +85,15 @@ router.get('/summary', authenticateToken, async (req, res) => {
       pendingOrders: orders.filter(o => o.status === 'pending').length,
       inProgressOrders: orders.filter(o => ['accepted', 'in_transit', 'picked_up'].includes(o.status)).length,
       cancelledOrders: orders.filter(o => o.cancellation_status).length,
+      returnOrders: orders.filter(o => o.return_status && o.return_status !== 'none').length,
       totalRevenue: 0,
       totalContractorPayout: 0,
       totalPlatformCommission: 0,
       totalWaitingTimeFees: 0,
       totalCancellationFees: 0,
       totalContractorPenalties: 0,
-      totalCustomerCompensations: 0
+      totalCustomerCompensations: 0,
+      totalReturnFees: 0
     };
 
     orders.forEach(order => {
@@ -102,6 +104,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
       const cancellationFee = parseFloat(order.cancellation_fee) || 0;
       const contractorPenalty = parseFloat(order.contractor_penalty) || 0;
       const customerCompensation = parseFloat(order.customer_compensation) || 0;
+      const returnFee = parseFloat(order.return_fee) || 0;
       
       // Calculate commission: difference between customer price and contractor price
       const commission = customerPrice - contractorPrice;
@@ -125,6 +128,13 @@ router.get('/summary', authenticateToken, async (req, res) => {
           summary.totalWaitingTimeFees += waitingTimeFee;
         }
         
+        // Add return fees (like waiting time)
+        if (returnFee > 0) {
+          summary.totalReturnFees += returnFee;
+          summary.totalRevenue += returnFee;
+          summary.totalContractorPayout += returnFee; // Contractor gets return fee
+        }
+        
         // Add cancellation fees and penalties
         if (order.cancellation_status === 'cancelled_by_customer') {
           summary.totalCancellationFees += cancellationFee;
@@ -136,6 +146,12 @@ router.get('/summary', authenticateToken, async (req, res) => {
         }
       } else if (userRole === 'customer') {
         summary.totalRevenue += customerPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
+        
+        // Customer sees return fees they paid
+        if (returnFee > 0) {
+          summary.totalReturnFees += returnFee;
+          summary.totalRevenue += returnFee;
+        }
         
         // Customer sees cancellation fees they paid
         if (order.cancellation_status === 'cancelled_by_customer') {
@@ -151,6 +167,12 @@ router.get('/summary', authenticateToken, async (req, res) => {
         summary.totalRevenue += contractorPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
         if (order.waiting_time_approved) {
           summary.totalWaitingTimeFees += waitingTimeFee;
+        }
+        
+        // Contractor sees return fees they received
+        if (returnFee > 0 && order.contractor_id === userId) {
+          summary.totalReturnFees += returnFee;
+          summary.totalRevenue += returnFee;
         }
         
         // Contractor sees cancellation fees they received (from customer cancellation)

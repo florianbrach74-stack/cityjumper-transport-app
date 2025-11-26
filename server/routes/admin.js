@@ -837,4 +837,125 @@ router.delete('/orders/:id/additional-stop/:stopId', adminAuth, async (req, res)
   }
 });
 
+// ==================== RETOUREN-SYSTEM ====================
+
+// Retoure starten
+router.post('/orders/:id/initiate-return', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { returnFee, reason, notes } = req.body;
+    const adminId = req.user.id;
+    
+    // Auftrag abrufen
+    const orderResult = await pool.query(
+      'SELECT * FROM transport_orders WHERE id = $1',
+      [id]
+    );
+    
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Auftrag nicht gefunden' });
+    }
+    
+    const order = orderResult.rows[0];
+    
+    // Validierung: returnFee <= Auftragswert
+    const maxReturnFee = parseFloat(order.customer_price || order.price);
+    if (parseFloat(returnFee) > maxReturnFee) {
+      return res.status(400).json({ 
+        error: `Retourengebühr darf nicht höher als der Auftragswert sein (max. €${maxReturnFee.toFixed(2)})` 
+      });
+    }
+    
+    // Retoure starten
+    const result = await pool.query(
+      `UPDATE transport_orders 
+       SET return_status = 'pending',
+           return_fee = $1,
+           return_reason = $2,
+           return_notes = $3,
+           return_initiated_at = NOW(),
+           return_initiated_by = $4,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $5
+       RETURNING *`,
+      [returnFee, reason, notes, adminId, id]
+    );
+    
+    // TODO: Email an Kunde und Fahrer senden
+    // await sendReturnNotification(order, returnFee, reason);
+    
+    console.log(`🔄 Retoure gestartet für Auftrag #${id} - Gebühr: €${returnFee}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Retoure erfolgreich gestartet',
+      order: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error initiating return:', error);
+    res.status(500).json({ error: 'Fehler beim Starten der Retoure' });
+  }
+});
+
+// Retoure abschließen
+router.post('/orders/:id/complete-return', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Retoure abschließen
+    const result = await pool.query(
+      `UPDATE transport_orders 
+       SET return_status = 'completed',
+           return_completed_at = NOW(),
+           status = 'completed',
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+       RETURNING *`,
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Auftrag nicht gefunden' });
+    }
+    
+    console.log(`✅ Retoure abgeschlossen für Auftrag #${id}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Retoure erfolgreich abgeschlossen',
+      order: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error completing return:', error);
+    res.status(500).json({ error: 'Fehler beim Abschließen der Retoure' });
+  }
+});
+
+// Retouren-Status abrufen
+router.get('/orders/:id/return-status', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(
+      `SELECT return_status, return_fee, return_reason, return_notes,
+              return_initiated_at, return_completed_at,
+              u.first_name as initiated_by_first_name,
+              u.last_name as initiated_by_last_name
+       FROM transport_orders o
+       LEFT JOIN users u ON o.return_initiated_by = u.id
+       WHERE o.id = $1`,
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Auftrag nicht gefunden' });
+    }
+    
+    res.json({ returnInfo: result.rows[0] });
+  } catch (error) {
+    console.error('Error fetching return status:', error);
+    res.status(500).json({ error: 'Fehler beim Abrufen des Retouren-Status' });
+  }
+});
+
 module.exports = router;
