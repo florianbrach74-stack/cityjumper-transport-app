@@ -74,7 +74,17 @@ class User {
       RETURNING id, email, role, company_name, first_name, last_name, phone, address, city, postal_code, created_at
     `;
     
-    const values = [first_name, last_name, email, phone, company_name, address, city, postal_code, userId];
+    const values = [
+      first_name || null, 
+      last_name || null, 
+      email || null, 
+      phone || null, 
+      company_name || null, 
+      address || null, 
+      city || null, 
+      postal_code || null, 
+      userId
+    ];
     const result = await pool.query(query, values);
     return result.rows[0];
   }

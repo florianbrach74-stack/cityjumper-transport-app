@@ -22,6 +22,34 @@ const createOrder = async (req, res) => {
       return res.status(403).json({ error: 'Only customers can create orders' });
     }
 
+    // VALIDATION 1: Pickup date must be in the future
+    const pickupDate = new Date(req.body.pickup_date);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Reset to start of day for comparison
+    
+    if (pickupDate < now) {
+      return res.status(400).json({ 
+        error: 'Das Abholdatum muss in der Zukunft liegen' 
+      });
+    }
+
+    // VALIDATION 2: Time window must be at least 30 minutes
+    if (req.body.pickup_time_from && req.body.pickup_time_to) {
+      const timeFrom = req.body.pickup_time_from.split(':');
+      const timeTo = req.body.pickup_time_to.split(':');
+      
+      const minutesFrom = parseInt(timeFrom[0]) * 60 + parseInt(timeFrom[1]);
+      const minutesTo = parseInt(timeTo[0]) * 60 + parseInt(timeTo[1]);
+      
+      const diffMinutes = minutesTo - minutesFrom;
+      
+      if (diffMinutes < 30) {
+        return res.status(400).json({ 
+          error: 'Das Zeitfenster muss mindestens 30 Minuten betragen' 
+        });
+      }
+    }
+
     const orderData = {
       ...req.body,
       customer_id: req.user.id,
