@@ -32,6 +32,7 @@ app.use('/api/employees', require('./routes/employees'));
 app.use('/api/contractors', require('./routes/contractors'));
 app.use('/api/pricing', require('./routes/pricing'));
 app.use('/api/reports', require('./routes/reports'));
+app.use('/api/cleanup', require('./routes/cleanup'));
 
 // Invoice routes disabled - Railway persistent cache issue
 // The invoiceController.js file exists on GitHub but Railway refuses to load it
@@ -127,6 +128,15 @@ app.listen(PORT, async () => {
     const invoiceReminderService = require('./services/invoiceReminderService');
     invoiceReminderService.startReminderService();
     console.log('✅ Invoice Reminder Service started');
+  } catch (error) {
+    console.error('❌ Failed to start Invoice Reminder Service:', error);
+  }
+  
+  // Start order cleanup service (Cron-Job)
+  try {
+    const orderCleanupService = require('./services/orderCleanupService');
+    orderCleanupService.startOrderCleanupService();
+    console.log('✅ Order Cleanup Service started');
   } catch (error) {
     console.error('❌ Failed to start Invoice Reminder Service:', error);
   }
