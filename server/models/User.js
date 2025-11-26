@@ -64,14 +64,43 @@ class User {
   }
 
   static async updateProfile(userId, data) {
-    const { first_name, last_name, email, phone, company_name, address, city, postal_code } = data;
+    const { 
+      first_name, 
+      last_name, 
+      email, 
+      phone, 
+      company_name,
+      company_address,
+      company_city,
+      company_postal_code,
+      address, 
+      city, 
+      postal_code,
+      tax_id,
+      vat_id,
+      is_business
+    } = data;
     
     const query = `
       UPDATE users
-      SET first_name = $1, last_name = $2, email = $3, phone = $4, 
-          company_name = $5, address = $6, city = $7, postal_code = $8
-      WHERE id = $9
-      RETURNING id, email, role, company_name, first_name, last_name, phone, address, city, postal_code, created_at
+      SET first_name = $1, 
+          last_name = $2, 
+          email = $3, 
+          phone = $4, 
+          company_name = $5, 
+          company_address = $6, 
+          company_city = $7, 
+          company_postal_code = $8,
+          address = $9, 
+          city = $10, 
+          postal_code = $11,
+          tax_id = $12,
+          vat_id = $13,
+          is_business = $14
+      WHERE id = $15
+      RETURNING id, email, role, company_name, company_address, company_city, company_postal_code,
+                first_name, last_name, phone, address, city, postal_code, 
+                tax_id, vat_id, is_business, created_at
     `;
     
     const values = [
@@ -79,10 +108,16 @@ class User {
       last_name || null, 
       email || null, 
       phone || null, 
-      company_name || null, 
+      company_name || null,
+      company_address || null,
+      company_city || null,
+      company_postal_code || null,
       address || null, 
       city || null, 
-      postal_code || null, 
+      postal_code || null,
+      tax_id || null,
+      vat_id || null,
+      is_business || false,
       userId
     ];
     const result = await pool.query(query, values);

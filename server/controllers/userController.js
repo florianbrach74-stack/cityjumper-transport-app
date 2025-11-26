@@ -5,7 +5,22 @@ const User = require('../models/User');
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { first_name, last_name, email, phone, company_name, address, city, postal_code } = req.body;
+    const { 
+      first_name, 
+      last_name, 
+      email, 
+      phone, 
+      company_name,
+      company_address,
+      company_city, 
+      company_postal_code,
+      address, 
+      city, 
+      postal_code,
+      tax_id,
+      vat_id,
+      is_business
+    } = req.body;
 
     // Check if email is already taken by another user
     if (email) {
@@ -21,9 +36,15 @@ const updateProfile = async (req, res) => {
       email,
       phone,
       company_name,
+      company_address,
+      company_city,
+      company_postal_code,
       address,
       city,
       postal_code,
+      tax_id,
+      vat_id,
+      is_business
     });
 
     res.json({
