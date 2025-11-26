@@ -689,6 +689,7 @@ const confirmDelivery = async (req, res) => {
     console.log('📦 Delivery confirmation started for order:', orderId);
     console.log('User ID:', userId, 'Role:', userRole);
     console.log('Delivery waiting time:', deliveryWaitingMinutes, 'minutes');
+    console.log('📸 Delivery photo received:', deliveryPhoto ? `YES (${deliveryPhoto.length} chars)` : 'NO');
 
     // Verify order belongs to this contractor OR employee
     const order = await Order.findById(orderId);
