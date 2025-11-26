@@ -312,13 +312,17 @@ class OrderMonitoringService {
   startMonitoring() {
     console.log('🚀 [Order Monitoring] Service started - checking every 5 minutes');
     
-    // Sofort einmal ausführen
-    this.checkUnassignedOrders();
-    
-    // Dann alle 5 Minuten
-    setInterval(() => {
+    // NICHT sofort ausführen - warte 1 Minute nach Server-Start
+    setTimeout(() => {
       this.checkUnassignedOrders();
-    }, 5 * 60 * 1000); // 5 Minuten
+      
+      // Dann alle 5 Minuten
+      setInterval(() => {
+        this.checkUnassignedOrders();
+      }, 5 * 60 * 1000); // 5 Minuten
+    }, 60 * 1000); // 1 Minute Verzögerung
+    
+    console.log('⏰ First check will run in 1 minute');
   }
 }
 

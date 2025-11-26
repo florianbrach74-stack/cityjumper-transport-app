@@ -8,8 +8,8 @@ class InvoiceReminderService {
   startReminderService() {
     console.log('🔔 [Invoice Reminder] Service started - checking daily at 9:00 AM');
     
-    // Sofort einmal ausführen (für Testing)
-    this.checkOverdueInvoices();
+    // NICHT sofort ausführen - wartet bis zum ersten geplanten Zeitpunkt
+    // this.checkOverdueInvoices();
     
     // Dann täglich um 9:00 Uhr
     const now = new Date();
@@ -64,8 +64,10 @@ class InvoiceReminderService {
    * Markiert Rechnungen als überfällig
    */
   async markOverdueInvoices(today) {
+    let client;
     try {
-      const result = await pool.query(
+      client = await pool.connect();
+      const result = await client.query(
         `UPDATE sent_invoices
          SET payment_status = 'overdue'
          WHERE payment_status = 'unpaid'
@@ -79,7 +81,7 @@ class InvoiceReminderService {
         
         // Auch die verknüpften Aufträge aktualisieren
         for (const invoice of result.rows) {
-          await pool.query(
+          await client.query(
             `UPDATE transport_orders
              SET payment_status = 'overdue'
              WHERE invoice_number = $1`,
@@ -88,7 +90,9 @@ class InvoiceReminderService {
         }
       }
     } catch (error) {
-      console.error('❌ [Overdue] Error marking invoices:', error);
+      console.error('❌ [Overdue] Error marking invoices:', error.message);
+    } finally {
+      if (client) client.release();
     }
   }
 
