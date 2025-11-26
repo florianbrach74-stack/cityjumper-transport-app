@@ -220,14 +220,19 @@ class OrderMonitoringService {
   
   /**
    * Archiviert abgelaufenen Auftrag und sendet Email
+   * WICHTIG: Email MUSS erfolgreich sein, bevor Auftrag gelöscht wird!
    */
   async archiveExpiredOrder(order) {
+    let emailSent = false;
+    
     try {
       const endTime = order.pickup_time_to || order.pickup_time_from;
       
-      // Email senden
-      console.log(`📧 Sending expiration notification to: ${order.customer_email}`);
-      const emailResult = await emailService.sendEmail({
+      // 1. ERST Email senden (KRITISCH!)
+      console.log(`📧 [Ablauf] Sending expiration notification to: ${order.customer_email} for order #${order.id}`);
+      
+      try {
+        const emailResult = await emailService.sendEmail({
         to: order.customer_email,
         subject: `❌ Ihr Auftrag #${order.id} konnte nicht vermittelt werden`,
         html: `
@@ -284,25 +289,39 @@ class OrderMonitoringService {
             </p>
           </div>
         `
-      });
+        });
+        
+        emailSent = true;
+        console.log(`✅ [Ablauf] Email successfully sent to ${order.customer_email}`);
+        
+      } catch (emailError) {
+        console.error(`❌ [Ablauf] CRITICAL: Email send failed for order #${order.id}:`, emailError.message);
+        console.error(`❌ [Ablauf] Order #${order.id} will NOT be deleted - will retry next check`);
+        // WICHTIG: Werfe Fehler, damit Auftrag NICHT gelöscht wird
+        throw new Error(`Email send failed: ${emailError.message}`);
+      }
       
-      // Auftrag aus Datenbank LÖSCHEN (spart Speicher, verschwindet aus verfügbaren Aufträgen)
-      const deleteResult = await pool.query(`
-        DELETE FROM transport_orders
-        WHERE id = $1
-        RETURNING id
-      `, [order.id]);
-      
-      if (deleteResult.rowCount === 0) {
-        console.error(`❌ [Ablauf] Failed to delete order #${order.id} - order not found`);
-      } else {
-        console.log(`✅ [Ablauf] Order #${order.id} DELETED from database and notification sent`);
+      // 2. NUR wenn Email erfolgreich: Auftrag löschen
+      if (emailSent) {
+        console.log(`🗑️ [Ablauf] Email sent successfully, now deleting order #${order.id}...`);
+        
+        const deleteResult = await pool.query(`
+          DELETE FROM transport_orders
+          WHERE id = $1
+          RETURNING id
+        `, [order.id]);
+        
+        if (deleteResult.rowCount === 0) {
+          console.error(`❌ [Ablauf] Failed to delete order #${order.id} - order not found`);
+        } else {
+          console.log(`✅ [Ablauf] Order #${order.id} DELETED from database after successful email notification`);
+        }
       }
       
     } catch (error) {
-      console.error(`❌ [Ablauf] Error archiving order #${order.id}:`, error);
-      // Re-throw to prevent silent failures
-      throw error;
+      console.error(`❌ [Ablauf] Error archiving order #${order.id}:`, error.message);
+      // NICHT re-throwen - sonst stoppt der ganze Service
+      // Auftrag bleibt in DB und wird beim nächsten Check nochmal versucht
     }
   }
   
