@@ -123,8 +123,9 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const addMinutesToTime = (timeString, minutes) => {
     if (!timeString) return '';
     const [hours, mins] = timeString.split(':').map(Number);
+    const minutesToAdd = Number(minutes); // Stelle sicher dass es eine Zahl ist
     const date = new Date();
-    date.setHours(hours, mins + minutes, 0, 0);
+    date.setHours(hours, mins + minutesToAdd, 0, 0);
     return date.toTimeString().slice(0, 5);
   };
 
