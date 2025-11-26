@@ -480,6 +480,46 @@ const ContractorDashboard = () => {
                   ⬆️ NEUER PREIS! Kunde hat Preis erhöht
                 </div>
               )}
+              
+              {/* Retouren-Info */}
+              {order.return_status && order.return_status !== 'none' && order.return_fee && parseFloat(order.return_fee) > 0 && (
+                <div className="mt-3 bg-orange-50 border-2 border-orange-300 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-bold text-orange-900 flex items-center">
+                      🔄 RETOURE
+                      {order.return_status === 'pending' && <span className="ml-2 text-orange-600">⏳ Läuft</span>}
+                      {order.return_status === 'completed' && <span className="ml-2 text-green-600">✓ Abgeschlossen</span>}
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-700 mb-2">
+                    <strong>Grund:</strong> {order.return_reason}
+                  </div>
+                  <div className="text-sm text-gray-700 mb-2">
+                    <strong>Anweisung:</strong> Transportgut zum Absender zurückbringen
+                  </div>
+                  <div className="bg-white rounded p-2 border border-orange-200">
+                    <div className="text-xs text-gray-600">Zusätzliche Vergütung:</div>
+                    <div className="text-lg font-bold text-green-600">
+                      +{formatPrice(parseFloat(order.return_fee))}
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-orange-200">
+                    <div className="text-xs text-gray-600">Gesamtverdienst:</div>
+                    <div className="text-xl font-bold text-green-700">
+                      {formatPrice(
+                        parseFloat(order.contractor_price || order.price * 0.85) + 
+                        (order.waiting_time_approved ? parseFloat(order.waiting_time_fee || 0) : 0) +
+                        parseFloat(order.return_fee || 0)
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      = Auftrag ({formatPrice(order.contractor_price || order.price * 0.85)})
+                      {order.waiting_time_approved && order.waiting_time_fee > 0 && ` + Wartezeit (${formatPrice(order.waiting_time_fee)})`}
+                      {` + Retoure (${formatPrice(order.return_fee)})`}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
