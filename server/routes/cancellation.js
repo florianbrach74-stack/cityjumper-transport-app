@@ -175,12 +175,7 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
   
   try {
     const { orderId } = req.params;
-    const { 
-      reason, 
-      cancellationType, // 'paid' or 'free' (force majeure)
-      newPrice, // Manual price for new contractor
-      notes 
-    } = req.body;
+    const { reason, notes } = req.body;
     const userId = req.user.id;
     
     await client.query('BEGIN');
@@ -204,34 +199,54 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
       return res.status(400).json({ error: 'Auftrag bereits storniert' });
     }
     
-    let penaltyAmount = 0;
-    let finalPrice = parseFloat(order.price);
-    
-    // Determine penalty based on cancellation type
-    if (cancellationType === 'free') {
-      // Force majeure - no penalty, price stays same
-      penaltyAmount = 0;
-      finalPrice = parseFloat(order.price);
-    } else {
-      // Paid cancellation - calculate penalty
-      const feeInfo = calculateCancellationFee(order, 'contractor');
-      penaltyAmount = feeInfo.cancellationFee;
-      
-      // Admin sets new price manually (can be higher or same)
-      finalPrice = newPrice ? parseFloat(newPrice) : parseFloat(order.price);
+    if (!order.contractor_id) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Kein Auftragnehmer zugewiesen' });
     }
     
-    // Create penalty record if paid cancellation
-    if (cancellationType === 'paid' && penaltyAmount > 0) {
+    // Berechne Stunden bis Abholung
+    const feeInfo = calculateCancellationFee(order, 'contractor');
+    const hoursUntilPickup = feeInfo.hoursUntilPickup;
+    
+    // Berechne was Auftragnehmer bekommen hätte (85% vom Kundenpreis)
+    const originalPrice = parseFloat(order.price);
+    const contractorPayout = originalPrice * 0.85;
+    
+    // Berechne Penalty basierend auf Stunden (gleiche Staffelung wie Kunde, §7.2b AGB)
+    let penaltyPercentage = 0;
+    if (hoursUntilPickup >= 24) {
+      penaltyPercentage = 0; // Kostenfrei
+    } else if (hoursUntilPickup >= 12) {
+      penaltyPercentage = 0.50; // 50%
+    } else if (hoursUntilPickup >= 2) {
+      penaltyPercentage = 0.75; // 75%
+    } else {
+      penaltyPercentage = 1.00; // 100%
+    }
+    
+    const penaltyAmount = contractorPayout * penaltyPercentage;
+    
+    // Verfügbares Budget für Neuvermittlung = Kundenpreis + Penalty
+    const availableBudget = originalPrice + penaltyAmount;
+    
+    console.log('📊 Auftragnehmer-Stornierung:');
+    console.log('   Kundenpreis:', originalPrice);
+    console.log('   AN hätte bekommen:', contractorPayout);
+    console.log('   Stunden bis Abholung:', hoursUntilPickup.toFixed(2));
+    console.log('   Penalty (', (penaltyPercentage * 100), '%):', penaltyAmount.toFixed(2));
+    console.log('   Verfügbares Budget:', availableBudget.toFixed(2));
+    
+    // Create penalty record
+    if (penaltyAmount > 0) {
       await client.query(
         `INSERT INTO contractor_penalties 
          (contractor_id, order_id, penalty_amount, reason, cancellation_type, status, admin_notes)
-         VALUES ($1, $2, $3, $4, $5, 'pending', $6)`,
-        [order.contractor_id, orderId, penaltyAmount, reason, cancellationType, notes]
+         VALUES ($1, $2, $3, $4, 'paid', 'pending', $5)`,
+        [order.contractor_id, orderId, penaltyAmount, reason, notes]
       );
     }
     
-    // Update order - set to pending with new price
+    // Update order - set to pending with available budget
     await client.query(
       `UPDATE transport_orders 
        SET cancellation_status = 'cancelled_by_contractor',
@@ -239,39 +254,124 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
            cancellation_reason = $1,
            cancellation_timestamp = NOW(),
            contractor_penalty = $2,
-           price = $3,
+           available_budget = $3,
+           hours_before_pickup = $4,
            contractor_price = NULL,
            contractor_id = NULL,
-           cancellation_notes = $4,
+           cancellation_notes = $5,
            status = 'pending'
-       WHERE id = $5`,
-      [reason, penaltyAmount, finalPrice, notes, orderId]
+       WHERE id = $6`,
+      [reason, penaltyAmount, availableBudget, hoursUntilPickup, notes, orderId]
     );
     
     // Create history entry
     await client.query(
       `INSERT INTO cancellation_history 
-       (order_id, cancelled_by, cancellation_reason, contractor_penalty, created_by)
-       VALUES ($1, 'contractor', $2, $3, $4)`,
-      [orderId, reason, penaltyAmount, userId]
+       (order_id, cancelled_by, cancellation_reason, contractor_penalty, hours_before_pickup, created_by)
+       VALUES ($1, 'contractor', $2, $3, $4, $5)`,
+      [orderId, reason, penaltyAmount, hoursUntilPickup, userId]
     );
     
     await client.query('COMMIT');
     
     res.json({
       success: true,
-      message: cancellationType === 'free' 
-        ? 'Auftragnehmer-Stornierung (Höhere Gewalt) verarbeitet. Keine Strafe.'
-        : 'Auftragnehmer-Stornierung verarbeitet. Strafe erfasst.',
-      cancellationType,
+      message: penaltyAmount > 0 
+        ? `Auftragnehmer-Stornierung verarbeitet. Strafe: €${penaltyAmount.toFixed(2)}`
+        : 'Auftragnehmer-Stornierung verarbeitet (kostenfrei >24h).',
       penaltyAmount,
-      finalPrice,
-      originalPrice: parseFloat(order.price)
+      penaltyPercentage: penaltyPercentage * 100,
+      availableBudget,
+      hoursUntilPickup,
+      originalPrice,
+      contractorPayout
     });
     
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Error cancelling order by contractor:', error);
+    res.status(500).json({ error: error.message });
+  } finally {
+    client.release();
+  }
+});
+
+// Adjust contractor price after contractor cancellation
+router.post('/:orderId/adjust-contractor-price', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { orderId } = req.params;
+    const { newContractorPrice } = req.body;
+    
+    if (!newContractorPrice || newContractorPrice <= 0) {
+      return res.status(400).json({ error: 'Ungültiger Preis' });
+    }
+    
+    await client.query('BEGIN');
+    
+    // Get order
+    const orderResult = await client.query(
+      'SELECT * FROM transport_orders WHERE id = $1',
+      [orderId]
+    );
+    
+    if (orderResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Auftrag nicht gefunden' });
+    }
+    
+    const order = orderResult.rows[0];
+    
+    // Check if cancelled by contractor
+    if (order.cancellation_status !== 'cancelled_by_contractor') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Nur nach Auftragnehmer-Stornierung möglich' });
+    }
+    
+    const availableBudget = parseFloat(order.available_budget || 0);
+    const newPrice = parseFloat(newContractorPrice);
+    
+    // Validate price
+    if (newPrice > availableBudget) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ 
+        error: `Preis (€${newPrice}) überschreitet verfügbares Budget (€${availableBudget.toFixed(2)})` 
+      });
+    }
+    
+    // Calculate platform profit
+    const platformProfit = availableBudget - newPrice;
+    
+    console.log('💰 Preis-Anpassung:');
+    console.log('   Verfügbares Budget:', availableBudget.toFixed(2));
+    console.log('   Neuer AN-Preis:', newPrice.toFixed(2));
+    console.log('   Plattform-Gewinn:', platformProfit.toFixed(2));
+    console.log('   Kunde zahlt:', parseFloat(order.price).toFixed(2), '(unverändert)');
+    
+    // Update order
+    await client.query(
+      `UPDATE transport_orders 
+       SET adjusted_contractor_price = $1,
+           platform_profit_from_cancellation = $2
+       WHERE id = $3`,
+      [newPrice, platformProfit, orderId]
+    );
+    
+    await client.query('COMMIT');
+    
+    res.json({
+      success: true,
+      message: `Preis angepasst auf €${newPrice.toFixed(2)}`,
+      newContractorPrice: newPrice,
+      platformProfit,
+      availableBudget,
+      customerPrice: parseFloat(order.price)
+    });
+    
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error adjusting contractor price:', error);
     res.status(500).json({ error: error.message });
   } finally {
     client.release();
