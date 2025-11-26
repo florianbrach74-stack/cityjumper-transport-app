@@ -1043,6 +1043,33 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="flex flex-wrap gap-2 mt-4">
+                        <button
+                          onClick={() => {
+                            const companyName = prompt('Firmenname:', user.company_name || '');
+                            if (companyName === null) return;
+                            const companyAddress = prompt('Firmenadresse:', user.company_address || '');
+                            if (companyAddress === null) return;
+                            const companyPostalCode = prompt('PLZ:', user.company_postal_code || '');
+                            if (companyPostalCode === null) return;
+                            const companyCity = prompt('Stadt:', user.company_city || '');
+                            if (companyCity === null) return;
+                            
+                            api.patch(`/admin/users/${user.id}/profile`, {
+                              company_name: companyName,
+                              company_address: companyAddress,
+                              company_postal_code: companyPostalCode,
+                              company_city: companyCity
+                            }).then(() => {
+                              alert('Firmendaten erfolgreich aktualisiert!');
+                              fetchUsers();
+                            }).catch(err => {
+                              alert('Fehler: ' + (err.response?.data?.error || err.message));
+                            });
+                          }}
+                          className="px-3 py-1.5 bg-teal-600 text-white rounded text-sm hover:bg-teal-700"
+                        >
+                          ✏️ Firmendaten bearbeiten
+                        </button>
                         {user.verification_status !== 'approved' && (
                           <button
                             onClick={() => approveContractor(user.id)}

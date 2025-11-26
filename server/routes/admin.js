@@ -958,4 +958,122 @@ router.get('/orders/:id/return-status', adminAuth, async (req, res) => {
   }
 });
 
+// Update user profile (admin only) - for editing contractor/customer data
+router.patch('/users/:userId/profile', adminAuth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { 
+      first_name, 
+      last_name, 
+      email, 
+      phone, 
+      company_name,
+      company_address,
+      company_city,
+      company_postal_code,
+      address,
+      city,
+      postal_code,
+      tax_id,
+      vat_id,
+      is_business,
+      admin_notes
+    } = req.body;
+    
+    // Build dynamic update query
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+    
+    if (first_name !== undefined) {
+      updates.push(`first_name = $${paramCount++}`);
+      values.push(first_name || null);
+    }
+    if (last_name !== undefined) {
+      updates.push(`last_name = $${paramCount++}`);
+      values.push(last_name || null);
+    }
+    if (email !== undefined) {
+      updates.push(`email = $${paramCount++}`);
+      values.push(email || null);
+    }
+    if (phone !== undefined) {
+      updates.push(`phone = $${paramCount++}`);
+      values.push(phone || null);
+    }
+    if (company_name !== undefined) {
+      updates.push(`company_name = $${paramCount++}`);
+      values.push(company_name || null);
+    }
+    if (company_address !== undefined) {
+      updates.push(`company_address = $${paramCount++}`);
+      values.push(company_address || null);
+    }
+    if (company_city !== undefined) {
+      updates.push(`company_city = $${paramCount++}`);
+      values.push(company_city || null);
+    }
+    if (company_postal_code !== undefined) {
+      updates.push(`company_postal_code = $${paramCount++}`);
+      values.push(company_postal_code || null);
+    }
+    if (address !== undefined) {
+      updates.push(`address = $${paramCount++}`);
+      values.push(address || null);
+    }
+    if (city !== undefined) {
+      updates.push(`city = $${paramCount++}`);
+      values.push(city || null);
+    }
+    if (postal_code !== undefined) {
+      updates.push(`postal_code = $${paramCount++}`);
+      values.push(postal_code || null);
+    }
+    if (tax_id !== undefined) {
+      updates.push(`tax_id = $${paramCount++}`);
+      values.push(tax_id || null);
+    }
+    if (vat_id !== undefined) {
+      updates.push(`vat_id = $${paramCount++}`);
+      values.push(vat_id || null);
+    }
+    if (is_business !== undefined) {
+      updates.push(`is_business = $${paramCount++}`);
+      values.push(is_business || false);
+    }
+    if (admin_notes !== undefined) {
+      updates.push(`admin_notes = $${paramCount++}`);
+      values.push(admin_notes || null);
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+    
+    values.push(userId);
+    const query = `
+      UPDATE users 
+      SET ${updates.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING id, email, role, first_name, last_name, phone, 
+                company_name, company_address, company_city, company_postal_code,
+                address, city, postal_code, tax_id, vat_id, is_business, admin_notes
+    `;
+    
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ 
+      message: 'User profile updated successfully',
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Update user profile error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
