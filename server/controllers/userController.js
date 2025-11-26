@@ -15,8 +15,7 @@ const updateProfile = async (req, res) => {
       company_city, 
       company_postal_code,
       tax_id,
-      vat_id,
-      is_business
+      vat_id
     } = req.body;
 
     // Check if email is already taken by another user
@@ -37,8 +36,7 @@ const updateProfile = async (req, res) => {
       company_city,
       company_postal_code,
       tax_id,
-      vat_id,
-      is_business
+      vat_id
     });
 
     res.json({

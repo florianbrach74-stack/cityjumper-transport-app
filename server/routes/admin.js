@@ -973,7 +973,6 @@ router.patch('/users/:userId/profile', adminAuth, async (req, res) => {
       company_postal_code,
       tax_id,
       vat_id,
-      is_business,
       admin_notes
     } = req.body;
     
@@ -1022,10 +1021,6 @@ router.patch('/users/:userId/profile', adminAuth, async (req, res) => {
       updates.push(`vat_id = $${paramCount++}`);
       values.push(vat_id);
     }
-    if (is_business !== undefined) {
-      updates.push(`is_business = $${paramCount++}`);
-      values.push(is_business || false);
-    }
     if (admin_notes !== undefined && admin_notes !== '') {
       updates.push(`admin_notes = $${paramCount++}`);
       values.push(admin_notes);
@@ -1042,7 +1037,7 @@ router.patch('/users/:userId/profile', adminAuth, async (req, res) => {
       WHERE id = $${paramCount}
       RETURNING id, email, role, first_name, last_name, phone, 
                 company_name, company_address, company_city, company_postal_code,
-                tax_id, vat_id, is_business, admin_notes
+                tax_id, vat_id, admin_notes
     `;
     
     const result = await pool.query(query, values);

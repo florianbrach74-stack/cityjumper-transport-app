@@ -74,8 +74,7 @@ class User {
       company_city,
       company_postal_code,
       tax_id,
-      vat_id,
-      is_business
+      vat_id
     } = data;
     
     const query = `
@@ -89,11 +88,10 @@ class User {
           company_city = $7, 
           company_postal_code = $8,
           tax_id = $9,
-          vat_id = $10,
-          is_business = $11
-      WHERE id = $12
+          vat_id = $10
+      WHERE id = $11
       RETURNING id, email, role, company_name, company_address, company_city, company_postal_code,
-                first_name, last_name, phone, tax_id, vat_id, is_business, created_at
+                first_name, last_name, phone, tax_id, vat_id, created_at
     `;
     
     const values = [
@@ -107,7 +105,6 @@ class User {
       company_postal_code || null,
       tax_id || null,
       vat_id || null,
-      is_business || false,
       userId
     ];
     const result = await pool.query(query, values);
