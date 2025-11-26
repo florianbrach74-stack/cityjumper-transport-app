@@ -971,79 +971,64 @@ router.patch('/users/:userId/profile', adminAuth, async (req, res) => {
       company_address,
       company_city,
       company_postal_code,
-      address,
-      city,
-      postal_code,
       tax_id,
       vat_id,
       is_business,
       admin_notes
     } = req.body;
     
-    // Build dynamic update query
+    // Build dynamic update query - only update fields that are provided
     const updates = [];
     const values = [];
     let paramCount = 1;
     
-    if (first_name !== undefined) {
+    if (first_name !== undefined && first_name !== '') {
       updates.push(`first_name = $${paramCount++}`);
-      values.push(first_name || null);
+      values.push(first_name);
     }
-    if (last_name !== undefined) {
+    if (last_name !== undefined && last_name !== '') {
       updates.push(`last_name = $${paramCount++}`);
-      values.push(last_name || null);
+      values.push(last_name);
     }
-    if (email !== undefined) {
+    if (email !== undefined && email !== '') {
       updates.push(`email = $${paramCount++}`);
-      values.push(email || null);
+      values.push(email);
     }
-    if (phone !== undefined) {
+    if (phone !== undefined && phone !== '') {
       updates.push(`phone = $${paramCount++}`);
-      values.push(phone || null);
+      values.push(phone);
     }
-    if (company_name !== undefined) {
+    if (company_name !== undefined && company_name !== '') {
       updates.push(`company_name = $${paramCount++}`);
-      values.push(company_name || null);
+      values.push(company_name);
     }
-    if (company_address !== undefined) {
+    if (company_address !== undefined && company_address !== '') {
       updates.push(`company_address = $${paramCount++}`);
-      values.push(company_address || null);
+      values.push(company_address);
     }
-    if (company_city !== undefined) {
+    if (company_city !== undefined && company_city !== '') {
       updates.push(`company_city = $${paramCount++}`);
-      values.push(company_city || null);
+      values.push(company_city);
     }
-    if (company_postal_code !== undefined) {
+    if (company_postal_code !== undefined && company_postal_code !== '') {
       updates.push(`company_postal_code = $${paramCount++}`);
-      values.push(company_postal_code || null);
+      values.push(company_postal_code);
     }
-    if (address !== undefined) {
-      updates.push(`address = $${paramCount++}`);
-      values.push(address || null);
-    }
-    if (city !== undefined) {
-      updates.push(`city = $${paramCount++}`);
-      values.push(city || null);
-    }
-    if (postal_code !== undefined) {
-      updates.push(`postal_code = $${paramCount++}`);
-      values.push(postal_code || null);
-    }
-    if (tax_id !== undefined) {
+    if (tax_id !== undefined && tax_id !== '') {
       updates.push(`tax_id = $${paramCount++}`);
-      values.push(tax_id || null);
+      values.push(tax_id);
     }
-    if (vat_id !== undefined) {
+    if (vat_id !== undefined && vat_id !== '') {
       updates.push(`vat_id = $${paramCount++}`);
-      values.push(vat_id || null);
+      values.push(vat_id);
     }
     if (is_business !== undefined) {
       updates.push(`is_business = $${paramCount++}`);
       values.push(is_business || false);
     }
-    if (admin_notes !== undefined) {
+    if (admin_notes !== undefined && admin_notes !== '') {
       updates.push(`admin_notes = $${paramCount++}`);
-      values.push(admin_notes || null);
+      values.push(admin_notes);
     }
     
     if (updates.length === 0) {
@@ -1057,7 +1042,7 @@ router.patch('/users/:userId/profile', adminAuth, async (req, res) => {
       WHERE id = $${paramCount}
       RETURNING id, email, role, first_name, last_name, phone, 
                 company_name, company_address, company_city, company_postal_code,
-                address, city, postal_code, tax_id, vat_id, is_business, admin_notes
+                tax_id, vat_id, is_business, admin_notes
     `;
     
     const result = await pool.query(query, values);

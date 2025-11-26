@@ -47,6 +47,8 @@ export default function AdminDashboard() {
   const [selectedOrderForReturn, setSelectedOrderForReturn] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const moreMenuRef = useRef(null);
+  const [editingContractor, setEditingContractor] = useState(null);
+  const [contractorEditData, setContractorEditData] = useState({});
 
   // Save activeTab to localStorage whenever it changes
   useEffect(() => {
@@ -1045,25 +1047,14 @@ export default function AdminDashboard() {
                       <div className="flex flex-wrap gap-2 mt-4">
                         <button
                           onClick={() => {
-                            const companyName = prompt('Firmenname:', user.company_name || '');
-                            if (companyName === null) return;
-                            const companyAddress = prompt('Firmenadresse:', user.company_address || '');
-                            if (companyAddress === null) return;
-                            const companyPostalCode = prompt('PLZ:', user.company_postal_code || '');
-                            if (companyPostalCode === null) return;
-                            const companyCity = prompt('Stadt:', user.company_city || '');
-                            if (companyCity === null) return;
-                            
-                            api.patch(`/admin/users/${user.id}/profile`, {
-                              company_name: companyName,
-                              company_address: companyAddress,
-                              company_postal_code: companyPostalCode,
-                              company_city: companyCity
-                            }).then(() => {
-                              alert('Firmendaten erfolgreich aktualisiert!');
-                              fetchUsers();
-                            }).catch(err => {
-                              alert('Fehler: ' + (err.response?.data?.error || err.message));
+                            setEditingContractor(user.id);
+                            setContractorEditData({
+                              company_name: user.company_name || '',
+                              company_address: user.company_address || '',
+                              company_postal_code: user.company_postal_code || '',
+                              company_city: user.company_city || '',
+                              tax_id: user.tax_id || '',
+                              vat_id: user.vat_id || ''
                             });
                           }}
                           className="px-3 py-1.5 bg-teal-600 text-white rounded text-sm hover:bg-teal-700"
@@ -1551,6 +1542,133 @@ export default function AdminDashboard() {
             window.open(`${process.env.REACT_APP_API_URL}/invoices/${invoice.id}/pdf`, '_blank');
           }}
         />
+      )}
+
+      {/* Contractor Edit Modal */}
+      {editingContractor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold mb-4">Firmendaten bearbeiten</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Firmenname
+                  </label>
+                  <input
+                    type="text"
+                    value={contractorEditData.company_name}
+                    onChange={(e) => setContractorEditData({ ...contractorEditData, company_name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                    placeholder="z.B. FB Transporte GmbH"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Firmenadresse
+                  </label>
+                  <input
+                    type="text"
+                    value={contractorEditData.company_address}
+                    onChange={(e) => setContractorEditData({ ...contractorEditData, company_address: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                    placeholder="Straße und Hausnummer"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      PLZ
+                    </label>
+                    <input
+                      type="text"
+                      value={contractorEditData.company_postal_code}
+                      onChange={(e) => setContractorEditData({ ...contractorEditData, company_postal_code: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      placeholder="01234"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Stadt
+                    </label>
+                    <input
+                      type="text"
+                      value={contractorEditData.company_city}
+                      onChange={(e) => setContractorEditData({ ...contractorEditData, company_city: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      placeholder="Dresden"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Steuernummer (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={contractorEditData.tax_id}
+                      onChange={(e) => setContractorEditData({ ...contractorEditData, tax_id: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      placeholder="123/456/789"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      USt-IdNr. (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={contractorEditData.vat_id}
+                      onChange={(e) => setContractorEditData({ ...contractorEditData, vat_id: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                      placeholder="DE123456789"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    💡 Tipp: Felder können einzeln oder alle zusammen ausgefüllt werden. Leere Felder werden nicht gespeichert.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setEditingContractor(null);
+                    setContractorEditData({});
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.patch(`/admin/users/${editingContractor}/profile`, contractorEditData);
+                      alert('✅ Firmendaten erfolgreich aktualisiert!');
+                      setEditingContractor(null);
+                      setContractorEditData({});
+                      loadData();
+                    } catch (err) {
+                      alert('❌ Fehler: ' + (err.response?.data?.error || err.message));
+                    }
+                  }}
+                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                >
+                  Speichern
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

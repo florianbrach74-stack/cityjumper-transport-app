@@ -73,9 +73,6 @@ class User {
       company_address,
       company_city,
       company_postal_code,
-      address, 
-      city, 
-      postal_code,
       tax_id,
       vat_id,
       is_business
@@ -91,16 +88,12 @@ class User {
           company_address = $6, 
           company_city = $7, 
           company_postal_code = $8,
-          address = $9, 
-          city = $10, 
-          postal_code = $11,
-          tax_id = $12,
-          vat_id = $13,
-          is_business = $14
-      WHERE id = $15
+          tax_id = $9,
+          vat_id = $10,
+          is_business = $11
+      WHERE id = $12
       RETURNING id, email, role, company_name, company_address, company_city, company_postal_code,
-                first_name, last_name, phone, address, city, postal_code, 
-                tax_id, vat_id, is_business, created_at
+                first_name, last_name, phone, tax_id, vat_id, is_business, created_at
     `;
     
     const values = [
@@ -112,9 +105,6 @@ class User {
       company_address || null,
       company_city || null,
       company_postal_code || null,
-      address || null, 
-      city || null, 
-      postal_code || null,
       tax_id || null,
       vat_id || null,
       is_business || false,

@@ -14,9 +14,6 @@ const updateProfile = async (req, res) => {
       company_address,
       company_city, 
       company_postal_code,
-      address, 
-      city, 
-      postal_code,
       tax_id,
       vat_id,
       is_business
@@ -39,9 +36,6 @@ const updateProfile = async (req, res) => {
       company_address,
       company_city,
       company_postal_code,
-      address,
-      city,
-      postal_code,
       tax_id,
       vat_id,
       is_business
