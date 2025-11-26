@@ -138,7 +138,8 @@ app.listen(PORT, async () => {
     orderCleanupService.startOrderCleanupService();
     console.log('✅ Order Cleanup Service started');
   } catch (error) {
-    console.error('❌ Failed to start Invoice Reminder Service:', error);
+    console.error('❌ Failed to start Order Cleanup Service:', error);
+    console.error('   This is not critical, server will continue...');
   }
   
   // Start database backup service (Cron-Job)
