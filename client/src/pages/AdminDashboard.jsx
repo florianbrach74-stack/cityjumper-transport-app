@@ -757,6 +757,23 @@ export default function AdminDashboard() {
                           <div className="text-xs text-green-600 font-medium" title="Plattform-Provision (15%)">
                             💰 €{((order.price || 0) * 0.15).toFixed(2)}
                           </div>
+                          
+                          {/* Retouren-Info */}
+                          {order.return_status && order.return_status !== 'none' && order.return_fee && parseFloat(order.return_fee) > 0 && (
+                            <div className="mt-2 text-xs bg-orange-50 border border-orange-200 rounded p-2">
+                              <div className="font-semibold text-orange-900 flex items-center">
+                                🔄 Retoure
+                                {order.return_status === 'pending' && <span className="ml-2 text-orange-600">⏳ Läuft</span>}
+                                {order.return_status === 'completed' && <span className="ml-2 text-green-600">✓ Abgeschlossen</span>}
+                              </div>
+                              <div className="text-orange-700 font-bold mt-1">
+                                +€{parseFloat(order.return_fee).toFixed(2)}
+                              </div>
+                              <div className="text-gray-600 mt-1">
+                                {order.return_reason}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -807,6 +824,24 @@ export default function AdminDashboard() {
                               className="text-orange-600 hover:text-orange-900 font-medium text-left"
                             >
                               🔄 Retoure starten
+                            </button>
+                          )}
+                          {order.return_status === 'pending' && (
+                            <button
+                              onClick={async () => {
+                                if (confirm('Retoure als abgeschlossen markieren?')) {
+                                  try {
+                                    await api.post(`/admin/orders/${order.id}/complete-return`);
+                                    alert('Retoure abgeschlossen!');
+                                    loadData();
+                                  } catch (error) {
+                                    alert('Fehler: ' + (error.response?.data?.error || error.message));
+                                  }
+                                }
+                              }}
+                              className="text-green-600 hover:text-green-900 font-medium text-left"
+                            >
+                              ✅ Retoure abschließen
                             </button>
                           )}
                           {order.status !== 'cancelled' && !order.cancellation_status && (
