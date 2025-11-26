@@ -83,7 +83,7 @@ async function sendVerificationEmail(userId, email, firstName) {
       </html>
     `;
     
-    await sendEmail(email, subject, html);
+    await sendEmail({ to: email, subject, html });
     
     console.log(`✅ Verifizierungs-Email gesendet an ${email} (Code: ${code})`);
     return true;
