@@ -115,9 +115,18 @@ const CustomerManagement = ({ users, orders, onUpdateAccountStatus, onViewOrderD
                             </span>
                           )}
                         </h3>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-gray-600 mt-1 flex items-center">
                           <Mail className="h-4 w-4 inline mr-1" />
                           {customer.email}
+                          {customer.email_verified ? (
+                            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full" title="Email verifiziert">
+                              ✓
+                            </span>
+                          ) : (
+                            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full" title="Email nicht verifiziert">
+                              ⚠
+                            </span>
+                          )}
                         </p>
                         {customer.billing_email && (
                           <p className="text-sm text-blue-600 mt-1">
