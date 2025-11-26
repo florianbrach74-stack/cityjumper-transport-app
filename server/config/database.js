@@ -6,9 +6,12 @@ const pool = process.env.DATABASE_URL
   ? new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
+      max: 10, // Reduced from 20 to prevent connection exhaustion
+      min: 2, // Keep minimum connections alive
+      idleTimeoutMillis: 10000, // Close idle connections faster (10s instead of 30s)
+      connectionTimeoutMillis: 5000, // Increased timeout (5s instead of 2s)
+      acquireTimeoutMillis: 10000, // Max time to wait for connection from pool
+      allowExitOnIdle: false, // Keep pool alive
     })
   : new Pool({
       host: process.env.DB_HOST || 'localhost',
@@ -16,9 +19,12 @@ const pool = process.env.DATABASE_URL
       database: process.env.DB_NAME || 'zipmend_db',
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
+      max: 10,
+      min: 2,
+      idleTimeoutMillis: 10000,
+      connectionTimeoutMillis: 5000,
+      acquireTimeoutMillis: 10000,
+      allowExitOnIdle: false,
     });
 
 pool.on('connect', () => {

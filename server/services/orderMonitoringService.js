@@ -42,6 +42,7 @@ class OrderMonitoringService {
    * Sendet Email: "Noch nicht vermittelt - Preis anpassen?"
    */
   async checkPickupWindowStart(now) {
+    let client;
     try {
       // Finde alle pending Aufträge, bei denen:
       // - pickup_date + pickup_time_from <= jetzt
@@ -64,16 +65,24 @@ class OrderMonitoringService {
         AND (o.pickup_date + o.pickup_time_from) <= $1
       `;
       
-      const result = await pool.query(query, [now]);
+      client = await pool.connect();
+      const result = await client.query(query, [now]);
       
       console.log(`📧 [Zeitfenster-Start] Found ${result.rows.length} orders to notify`);
       
       for (const order of result.rows) {
-        await this.sendPickupWindowStartNotification(order);
+        try {
+          await this.sendPickupWindowStartNotification(order);
+        } catch (notifyError) {
+          console.error(`❌ [Zeitfenster-Start] Failed to notify order #${order.id}:`, notifyError.message);
+          // Continue with next order
+        }
       }
       
     } catch (error) {
-      console.error('❌ [Zeitfenster-Start] Error:', error);
+      console.error('❌ [Zeitfenster-Start] Error:', error.message);
+    } finally {
+      if (client) client.release();
     }
   }
   
@@ -158,6 +167,7 @@ class OrderMonitoringService {
    * Sendet Email und archiviert Auftrag
    */
   async checkExpiredOrders(now) {
+    let client;
     try {
       // Finde alle pending Aufträge, bei denen:
       // - pickup_date + pickup_time_to + 1h <= jetzt
@@ -187,16 +197,24 @@ class OrderMonitoringService {
         ) <= $1
       `;
       
-      const result = await pool.query(query, [now]);
+      client = await pool.connect();
+      const result = await client.query(query, [now]);
       
       console.log(`🗄️ [Ablauf] Found ${result.rows.length} expired orders to archive`);
       
       for (const order of result.rows) {
-        await this.archiveExpiredOrder(order);
+        try {
+          await this.archiveExpiredOrder(order);
+        } catch (archiveError) {
+          console.error(`❌ [Ablauf] Failed to archive order #${order.id}:`, archiveError.message);
+          // Continue with next order
+        }
       }
       
     } catch (error) {
-      console.error('❌ [Ablauf] Error:', error);
+      console.error('❌ [Ablauf] Error:', error.message);
+    } finally {
+      if (client) client.release();
     }
   }
   
