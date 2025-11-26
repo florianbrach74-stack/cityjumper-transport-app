@@ -45,6 +45,7 @@ export default function AdminDashboard() {
   const [showBulkInvoiceModal, setShowBulkInvoiceModal] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [selectedOrderForReturn, setSelectedOrderForReturn] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
   const moreMenuRef = useRef(null);
 
   // Save activeTab to localStorage whenever it changes
@@ -542,6 +543,95 @@ export default function AdminDashboard() {
               </div>
             )}
             
+            {/* Status Filter */}
+            <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-700">Filter:</span>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setStatusFilter('all')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                        statusFilter === 'all'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                      }`}
+                    >
+                      Alle ({orders.length})
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter('pending')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                        statusFilter === 'pending'
+                          ? 'bg-yellow-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                      }`}
+                    >
+                      🟡 Offen ({orders.filter(o => o.status === 'pending').length})
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter('accepted')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                        statusFilter === 'accepted'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                      }`}
+                    >
+                      🔵 Akzeptiert ({orders.filter(o => o.status === 'accepted').length})
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter('in_transit')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                        statusFilter === 'in_transit'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                      }`}
+                    >
+                      🟣 Unterwegs ({orders.filter(o => o.status === 'in_transit' || o.status === 'picked_up').length})
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter('delivered')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                        statusFilter === 'delivered'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                      }`}
+                    >
+                      🟢 Zugestellt ({orders.filter(o => o.status === 'delivered').length})
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter('completed')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                        statusFilter === 'completed'
+                          ? 'bg-green-700 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                      }`}
+                    >
+                      ✅ Abgeschlossen ({orders.filter(o => o.status === 'completed').length})
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter('cancelled')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                        statusFilter === 'cancelled'
+                          ? 'bg-red-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                      }`}
+                    >
+                      🔴 Storniert ({orders.filter(o => o.cancellation_status).length})
+                    </button>
+                  </div>
+                </div>
+                {statusFilter !== 'all' && (
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className="text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    ✕ Filter zurücksetzen
+                  </button>
+                )}
+              </div>
+            </div>
+            
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -570,7 +660,18 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {orders.map((order) => (
+                  {orders
+                    .filter(order => {
+                      if (statusFilter === 'all') return true;
+                      if (statusFilter === 'pending') return order.status === 'pending';
+                      if (statusFilter === 'accepted') return order.status === 'accepted';
+                      if (statusFilter === 'in_transit') return order.status === 'in_transit' || order.status === 'picked_up';
+                      if (statusFilter === 'delivered') return order.status === 'delivered';
+                      if (statusFilter === 'completed') return order.status === 'completed';
+                      if (statusFilter === 'cancelled') return order.cancellation_status !== null;
+                      return true;
+                    })
+                    .map((order) => (
                     <tr key={order.id} className={selectedOrdersForInvoice.includes(order.id) ? 'bg-blue-50' : ''}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {order.status === 'completed' && (
