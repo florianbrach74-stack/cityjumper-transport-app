@@ -19,7 +19,23 @@ const register = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password, role, company_name, first_name, last_name, phone } = req.body;
+    const { 
+      email, password, role, company_name, first_name, last_name, phone,
+      company_address, company_postal_code, company_city, company_country,
+      tax_id, vat_id
+    } = req.body;
+
+    // Validate required fields
+    if (!phone) {
+      return res.status(400).json({ error: 'Telefonnummer ist erforderlich' });
+    }
+
+    if (!company_address || !company_postal_code || !company_city) {
+      return res.status(400).json({ 
+        error: 'Rechnungsadresse ist erforderlich',
+        details: ['Straße, PLZ und Stadt müssen angegeben werden']
+      });
+    }
 
     // Validate password strength
     const passwordValidation = validatePassword(password);
@@ -45,6 +61,12 @@ const register = async (req, res) => {
       first_name,
       last_name,
       phone,
+      company_address,
+      company_postal_code,
+      company_city,
+      company_country: company_country || 'Deutschland',
+      tax_id,
+      vat_id,
     });
 
     // Send verification email

@@ -232,6 +232,65 @@ const Register = () => {
               </div>
             </div>
 
+            {/* Rechnungsadresse (Pflicht) */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-yellow-900 mb-3">
+                📍 Rechnungsadresse *
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="company_address" className="block text-sm font-medium text-gray-700">
+                    Straße und Hausnummer *
+                  </label>
+                  <input
+                    id="company_address"
+                    name="company_address"
+                    type="text"
+                    required
+                    value={formData.company_address}
+                    onChange={handleChange}
+                    placeholder="z.B. Musterstraße 123"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="company_postal_code" className="block text-sm font-medium text-gray-700">
+                      PLZ *
+                    </label>
+                    <input
+                      id="company_postal_code"
+                      name="company_postal_code"
+                      type="text"
+                      required
+                      value={formData.company_postal_code}
+                      onChange={handleChange}
+                      placeholder="12345"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="company_city" className="block text-sm font-medium text-gray-700">
+                      Stadt *
+                    </label>
+                    <input
+                      id="company_city"
+                      name="company_city"
+                      type="text"
+                      required
+                      value={formData.company_city}
+                      onChange={handleChange}
+                      placeholder="Berlin"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Diese Adresse wird für die Rechnungsstellung benötigt
+                </p>
+              </div>
+            </div>
+
             {/* Company Details Toggle */}
             {formData.company_name && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
