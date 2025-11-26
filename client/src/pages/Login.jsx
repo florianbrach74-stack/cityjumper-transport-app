@@ -20,7 +20,17 @@ const Login = () => {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login fehlgeschlagen');
+      const errorData = err.response?.data;
+      
+      // Prüfe ob Email-Verifizierung erforderlich ist
+      if (errorData?.requiresVerification) {
+        navigate('/verify-email', { 
+          state: { email: errorData.email || email } 
+        });
+        return;
+      }
+      
+      setError(errorData?.error || 'Login fehlgeschlagen');
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { validatePassword } = require('../utils/passwordValidator');
+const { sendVerificationEmail } = require('../services/emailVerificationService');
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -46,16 +47,24 @@ const register = async (req, res) => {
       phone,
     });
 
-    const token = generateToken(user);
+    // Send verification email
+    try {
+      await sendVerificationEmail(user.id, user.email, user.first_name);
+      console.log('✅ Verification email sent to:', user.email);
+    } catch (emailError) {
+      console.error('❌ Failed to send verification email:', emailError);
+      // Continue anyway - user can request new code
+    }
 
+    // Return success without token - user must verify email first
     res.status(201).json({
-      message: 'User registered successfully',
-      token,
+      message: 'Registrierung erfolgreich! Bitte prüfen Sie Ihre Emails.',
+      requiresVerification: true,
+      email: user.email,
       user: {
         id: user.id,
         email: user.email,
         role: user.role,
-        company_name: user.company_name,
         first_name: user.first_name,
         last_name: user.last_name,
       },
@@ -85,6 +94,15 @@ const login = async (req, res) => {
     const isValidPassword = await User.verifyPassword(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check if email is verified
+    if (!user.email_verified) {
+      return res.status(403).json({ 
+        error: 'Email nicht verifiziert. Bitte prüfen Sie Ihre Emails.',
+        requiresVerification: true,
+        email: user.email
+      });
     }
 
     const token = generateToken(user);
@@ -122,11 +140,12 @@ const getProfile = async (req, res) => {
 
 // Validation rules
 const registerValidation = [
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 8 }),
-  body('role').isIn(['customer', 'contractor', 'employee']),
-  body('first_name').notEmpty().trim(),
-  body('last_name').notEmpty().trim(),
+  body('email').isEmail().normalizeEmail().withMessage('Gültige Email-Adresse erforderlich'),
+  body('password').isLength({ min: 8 }).withMessage('Passwort muss mindestens 8 Zeichen lang sein'),
+  body('role').isIn(['customer', 'contractor', 'employee']).withMessage('Ungültige Rolle'),
+  body('first_name').notEmpty().trim().withMessage('Vorname ist erforderlich'),
+  body('last_name').notEmpty().trim().withMessage('Nachname ist erforderlich'),
+  body('phone').notEmpty().trim().withMessage('Telefonnummer ist erforderlich'),
 ];
 
 const loginValidation = [

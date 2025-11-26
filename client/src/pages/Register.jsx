@@ -52,8 +52,18 @@ const Register = () => {
 
     try {
       const { confirmPassword, ...registerData } = formData;
-      await register(registerData);
-      navigate('/dashboard');
+      const response = await register(registerData);
+      
+      // Prüfe ob Email-Verifizierung erforderlich ist
+      if (response?.requiresVerification) {
+        // Zur Verifizierungs-Seite weiterleiten
+        navigate('/verify-email', { 
+          state: { email: formData.email } 
+        });
+      } else {
+        // Direkt zum Dashboard (sollte nicht passieren bei neuen Benutzern)
+        navigate('/dashboard');
+      }
     } catch (err) {
       const errorMsg = err.response?.data?.error || 'Registrierung fehlgeschlagen';
       const details = err.response?.data?.details;
@@ -199,7 +209,7 @@ const Register = () => {
 
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  Telefon (optional)
+                  Telefon *
                 </label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -209,11 +219,16 @@ const Register = () => {
                     id="phone"
                     name="phone"
                     type="tel"
+                    required
                     value={formData.phone}
                     onChange={handleChange}
+                    placeholder="+49 123 456789"
                     className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                   />
                 </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Für Rückfragen zu Ihren Aufträgen
+                </p>
               </div>
             </div>
 

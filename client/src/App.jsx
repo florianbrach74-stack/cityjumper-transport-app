@@ -25,6 +25,7 @@ import EmployeeSettings from './pages/EmployeeSettings';
 import ContractorOrdersWithAssignment from './pages/ContractorOrdersWithAssignment';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import ChatBot from './components/ChatBot';
 
 const DashboardRouter = () => {
@@ -65,6 +66,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/agb" element={<AGBNew />} />
