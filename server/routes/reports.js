@@ -122,17 +122,18 @@ router.get('/summary', authenticateToken, async (req, res) => {
 
       if (userRole === 'admin') {
         summary.totalRevenue += customerPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
-        summary.totalContractorPayout += contractorPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
-        summary.totalPlatformCommission += commission;
+        summary.totalContractorPayout += contractorPrice + (order.waiting_time_approved ? waitingTimeFee * 0.85 : 0);
+        summary.totalPlatformCommission += commission + (order.waiting_time_approved ? waitingTimeFee * 0.15 : 0);
         if (order.waiting_time_approved) {
           summary.totalWaitingTimeFees += waitingTimeFee;
         }
         
-        // Add return fees (like waiting time)
+        // Add return fees (Contractor gets 85%, platform gets 15%)
         if (returnFee > 0) {
           summary.totalReturnFees += returnFee;
           summary.totalRevenue += returnFee;
-          summary.totalContractorPayout += returnFee; // Contractor gets return fee
+          summary.totalContractorPayout += returnFee * 0.85; // Contractor gets 85%
+          summary.totalPlatformCommission += returnFee * 0.15; // Platform gets 15%
         }
         
         // Add cancellation fees and penalties
@@ -164,15 +165,15 @@ router.get('/summary', authenticateToken, async (req, res) => {
           summary.totalRevenue -= customerCompensation; // Reduce their cost
         }
       } else if (userRole === 'contractor') {
-        summary.totalRevenue += contractorPrice + (order.waiting_time_approved ? waitingTimeFee : 0);
+        summary.totalRevenue += contractorPrice + (order.waiting_time_approved ? waitingTimeFee * 0.85 : 0);
         if (order.waiting_time_approved) {
-          summary.totalWaitingTimeFees += waitingTimeFee;
+          summary.totalWaitingTimeFees += waitingTimeFee * 0.85;
         }
         
-        // Contractor sees return fees they received
+        // Contractor sees return fees they received (85%)
         if (returnFee > 0 && order.contractor_id === userId) {
-          summary.totalReturnFees += returnFee;
-          summary.totalRevenue += returnFee;
+          summary.totalReturnFees += returnFee * 0.85;
+          summary.totalRevenue += returnFee * 0.85;
         }
         
         // Contractor sees cancellation fees they received (from customer cancellation)

@@ -498,9 +498,12 @@ const ContractorDashboard = () => {
                     <strong>Anweisung:</strong> Transportgut zum Absender zurückbringen
                   </div>
                   <div className="bg-white rounded p-2 border border-orange-200">
-                    <div className="text-xs text-gray-600">Zusätzliche Vergütung:</div>
+                    <div className="text-xs text-gray-600">Zusätzliche Vergütung (85%):</div>
                     <div className="text-lg font-bold text-green-600">
-                      +{formatPrice(parseFloat(order.return_fee))}
+                      +{formatPrice(parseFloat(order.return_fee) * 0.85)}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Kundenpreis: {formatPrice(parseFloat(order.return_fee))} - 15% Provision
                     </div>
                   </div>
                   <div className="mt-2 pt-2 border-t border-orange-200">
@@ -508,14 +511,14 @@ const ContractorDashboard = () => {
                     <div className="text-xl font-bold text-green-700">
                       {formatPrice(
                         parseFloat(order.contractor_price || order.price * 0.85) + 
-                        (order.waiting_time_approved ? parseFloat(order.waiting_time_fee || 0) : 0) +
-                        parseFloat(order.return_fee || 0)
+                        (order.waiting_time_approved ? parseFloat(order.waiting_time_fee || 0) * 0.85 : 0) +
+                        parseFloat(order.return_fee || 0) * 0.85
                       )}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       = Auftrag ({formatPrice(order.contractor_price || order.price * 0.85)})
-                      {order.waiting_time_approved && order.waiting_time_fee > 0 && ` + Wartezeit (${formatPrice(order.waiting_time_fee)})`}
-                      {` + Retoure (${formatPrice(order.return_fee)})`}
+                      {order.waiting_time_approved && order.waiting_time_fee > 0 && ` + Wartezeit (${formatPrice(parseFloat(order.waiting_time_fee) * 0.85)})`}
+                      {` + Retoure (${formatPrice(parseFloat(order.return_fee) * 0.85)})`}
                     </div>
                   </div>
                 </div>
