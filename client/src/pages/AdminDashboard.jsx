@@ -793,7 +793,7 @@ export default function AdminDashboard() {
                           >
                             🧾 Rechnung erstellen
                           </button>
-                          {(order.status === 'delivered' || order.status === 'in_transit') && 
+                          {(order.status === 'accepted' || order.status === 'picked_up' || order.status === 'in_transit' || order.status === 'delivered') && 
                            (!order.return_status || order.return_status === 'none') && (
                             <button
                               onClick={async () => {
