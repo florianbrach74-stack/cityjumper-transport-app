@@ -17,7 +17,7 @@ const getEmailDisclaimer = () => `
 `;
 
 // Helper function to send emails via Resend
-const sendEmail = async ({ to, subject, html }) => {
+const sendEmail = async ({ to, subject, html, attachments }) => {
   try {
     // Initialize Resend if not already done
     if (!resend && process.env.RESEND_API_KEY) {
@@ -30,19 +30,33 @@ const sendEmail = async ({ to, subject, html }) => {
       console.warn('⚠️  Resend API key not configured - email will be logged only');
       console.log(`📧 Would send email to: ${to}`);
       console.log(`   Subject: ${subject}`);
+      console.log(`   Attachments: ${attachments ? attachments.length : 0}`);
       return { success: false, message: 'Email service not configured' };
     }
 
     console.log(`📧 Sending email via Resend to: ${to}`);
     console.log(`   Subject: ${subject}`);
     console.log(`   API Key present: ${!!process.env.RESEND_API_KEY}`);
+    console.log(`   Attachments: ${attachments ? attachments.length : 0}`);
     
-    const data = await resend.emails.send({
+    const emailData = {
       from: 'Courierly <noreply@courierly.de>',
       to: Array.isArray(to) ? to : [to],
       subject: subject,
       html: html,
-    });
+    };
+    
+    // Add attachments if provided
+    if (attachments && attachments.length > 0) {
+      const fs = require('fs');
+      emailData.attachments = attachments.map(att => ({
+        filename: att.filename,
+        content: fs.readFileSync(att.path)
+      }));
+      console.log(`   📎 Attached: ${attachments.map(a => a.filename).join(', ')}`);
+    }
+    
+    const data = await resend.emails.send(emailData);
 
     console.log('✅ Email sent successfully via Resend');
     console.log(`   Message ID: ${data.id}`);

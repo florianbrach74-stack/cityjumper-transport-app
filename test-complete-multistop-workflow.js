@@ -12,18 +12,31 @@ async function testCompleteMultiStopWorkflow() {
   let cmrIds = [];
   
   try {
-    // 1. Use existing customer
+    // 1. Use existing customer - prefer florian's email
     console.log('1️⃣ Setup Test User...');
     const userResult = await pool.query(`
-      SELECT id, email, first_name, last_name FROM users WHERE role = 'customer' LIMIT 1
+      SELECT id, email, first_name, last_name FROM users 
+      WHERE role = 'customer' 
+      AND email LIKE '%florian%'
+      LIMIT 1
     `);
     
+    let customerId, customerEmail;
     if (userResult.rows.length === 0) {
-      throw new Error('No customer found in database. Please create a customer first.');
+      // Fallback to any customer
+      const fallbackResult = await pool.query(`
+        SELECT id, email, first_name, last_name FROM users WHERE role = 'customer' LIMIT 1
+      `);
+      if (fallbackResult.rows.length === 0) {
+        throw new Error('No customer found in database. Please create a customer first.');
+      }
+      customerId = fallbackResult.rows[0].id;
+      customerEmail = fallbackResult.rows[0].email;
+    } else {
+      customerId = userResult.rows[0].id;
+      customerEmail = userResult.rows[0].email;
     }
-    
-    const customerId = userResult.rows[0].id;
-    console.log(`   ✅ Using customer: ${userResult.rows[0].email} (ID ${customerId})`);
+    console.log(`   ✅ Using customer: ${customerEmail} (ID ${customerId})`);
     
     // 2. Use existing contractor
     console.log('\n2️⃣ Setup Test Contractor...');
@@ -228,25 +241,25 @@ async function testCompleteMultiStopWorkflow() {
     console.log('\n1️⃣2️⃣ Send Email with Combined PDF...');
     const emailService = require('./server/utils/emailService');
     
-    // Get customer email
+    // Get customer details
     const customer = await pool.query(`
       SELECT email, first_name, last_name FROM users WHERE id = $1
     `, [customerId]);
     
-    const customerEmail = customer.rows[0].email;
+    const finalCustomerEmail = customer.rows[0].email;
     const customerName = `${customer.rows[0].first_name} ${customer.rows[0].last_name}`;
     
     // Get order details
     const order = await Order.findById(orderId);
     
-    console.log(`   📧 Sending to: ${customerEmail}`);
+    console.log(`   📧 Sending to: ${finalCustomerEmail}`);
     console.log(`   📄 Attachment: ${pdfPath}`);
     
     // Send email with attachment
     const fullPdfPath = path.join(__dirname, 'uploads/cmr', pdfPath);
     
     await emailService.sendEmail({
-      to: customerEmail,
+      to: finalCustomerEmail,
       subject: `Auftrag #${orderId} abgeschlossen - CMR Dokumente`,
       html: `
         <h2>Sehr geehrte/r ${customerName},</h2>
@@ -272,7 +285,7 @@ async function testCompleteMultiStopWorkflow() {
     console.log('\n═══════════════════════════════════════════════════════════');
     console.log('📊 FINAL SUMMARY:\n');
     console.log(`   Order ID: #${orderId}`);
-    console.log(`   Customer: ${customerName} (${customerEmail})`);
+    console.log(`   Customer: ${customerName} (${finalCustomerEmail})`);
     console.log(`   Contractor: Test Contractor`);
     console.log(`   Total Stops: 2`);
     console.log(`   CMRs Created: ${cmrIds.length}`);
