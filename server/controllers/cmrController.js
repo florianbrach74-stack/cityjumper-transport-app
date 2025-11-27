@@ -4,21 +4,24 @@ const User = require('../models/User');
 const CMRPdfGenerator = require('../services/cmrPdfGenerator');
 const { sendEmail } = require('../config/email');
 
-// Helper function to check if all deliveries go to same address
-const checkSameDeliveryAddress = (order, deliveryStops) => {
+// Helper function to check if all deliveries go to same RECIPIENT (address + name)
+const checkSameDeliveryRecipient = (order, deliveryStops) => {
   if (deliveryStops.length === 0) return false;
   
-  const mainAddress = {
+  const mainRecipient = {
+    name: (order.delivery_contact_name || order.delivery_company || '')?.toLowerCase().trim(),
     address: order.delivery_address?.toLowerCase().trim(),
     city: order.delivery_city?.toLowerCase().trim(),
     postal_code: order.delivery_postal_code?.toLowerCase().trim()
   };
   
-  // Check if all stops have same address as main delivery
+  // Check if all stops have same recipient (name + address)
   return deliveryStops.every(stop => {
-    return stop.address?.toLowerCase().trim() === mainAddress.address &&
-           stop.city?.toLowerCase().trim() === mainAddress.city &&
-           stop.postal_code?.toLowerCase().trim() === mainAddress.postal_code;
+    const stopName = (stop.contact_name || stop.company || '')?.toLowerCase().trim();
+    return stopName === mainRecipient.name &&
+           stop.address?.toLowerCase().trim() === mainRecipient.address &&
+           stop.city?.toLowerCase().trim() === mainRecipient.city &&
+           stop.postal_code?.toLowerCase().trim() === mainRecipient.postal_code;
   });
 };
 
@@ -83,9 +86,9 @@ const createCMRForOrder = async (orderId) => {
     const totalPickups = hasMultiplePickups ? pickupStops.length + 1 : 1;
     const totalDeliveries = hasMultipleDeliveries ? deliveryStops.length + 1 : 1;
     
-    // Check if all pickups/deliveries are from/to same address
+    // Check if all pickups/deliveries are from/to same address/recipient
     const samePickupAddress = hasMultiplePickups && checkSamePickupAddress(order, pickupStops);
-    const sameDeliveryAddress = hasMultipleDeliveries && checkSameDeliveryAddress(order, deliveryStops);
+    const sameDeliveryRecipient = hasMultipleDeliveries && checkSameDeliveryRecipient(order, deliveryStops);
     
     // Determine signature sharing logic
     // Sender can share signature if:
@@ -96,10 +99,10 @@ const createCMRForOrder = async (orderId) => {
     const canShareCarrierSignature = true;
     
     // Receiver can share signature if:
-    // - Multiple deliveries AND all go to same address
+    // - Multiple deliveries AND all go to SAME RECIPIENT (address + name)
     // - OR multiple pickups AND single delivery (e.g. 3 Möbelhäuser → 1 Kunde)
     const canShareReceiverSignature = 
-      (hasMultipleDeliveries && sameDeliveryAddress) ||
+      (hasMultipleDeliveries && sameDeliveryRecipient) ||
       (hasMultiplePickups && !hasMultipleDeliveries);
     
     const cmrGroupId = `ORDER-${orderId}`;

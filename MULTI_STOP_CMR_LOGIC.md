@@ -31,7 +31,9 @@
 ---
 
 ### **Szenario 3: Ein Absender → Mehrere Sendungen zum SELBEN Empfänger**
-*Beispiel: Firma → 5x Pakete zum selben Kunden*
+*Beispiel: Firma → 5x Pakete zum selben Kunden (gleicher Name + gleiche Adresse)*
+
+**Wichtig:** System prüft **Name UND Adresse**!
 
 **Unterschriften:**
 - ✅ Absender unterschreibt **1x** (wird auf alle CMRs kopiert)
@@ -42,6 +44,16 @@
 - **Empfänger zu Hause:** ✅ Unterschrift → ❌ **KEIN Foto**
 - **Empfänger nicht da:** 📸 **EIN Foto für alle Sendungen** (Ablage vor Haustür)
 - Das Foto wird an das Gesamt-PDF angehängt
+
+**Edge Case - Gleiche Adresse, VERSCHIEDENE Namen:**
+*Beispiel: 2 Kündigungen → Max Müller + Anna Müller (Ehefrau), gleiche Adresse*
+```
+❌ NICHT der gleiche Empfänger!
+→ 2 separate CMRs
+→ 2 separate Unterschriften ODER 2 separate Fotos
+→ Foto 1: Kündigung für Max im Briefkasten
+→ Foto 2: Kündigung für Anna im Briefkasten
+```
 
 ---
 
@@ -211,10 +223,29 @@ shared_delivery_photo_base64 TEXT   -- EIN Foto für alle CMRs (bei gleichem Emp
 ## 🔍 Entscheidungslogik im Code
 
 ```javascript
+// Helper: Prüfe ob alle Zustellungen zum SELBEN EMPFÄNGER gehen
+const checkSameDeliveryRecipient = (order, deliveryStops) => {
+  const mainRecipient = {
+    name: (order.delivery_contact_name || order.delivery_company || '')?.toLowerCase().trim(),
+    address: order.delivery_address?.toLowerCase().trim(),
+    city: order.delivery_city?.toLowerCase().trim(),
+    postal_code: order.delivery_postal_code?.toLowerCase().trim()
+  };
+  
+  // Prüfe Name UND Adresse!
+  return deliveryStops.every(stop => {
+    const stopName = (stop.contact_name || stop.company || '')?.toLowerCase().trim();
+    return stopName === mainRecipient.name &&
+           stop.address?.toLowerCase().trim() === mainRecipient.address &&
+           stop.city?.toLowerCase().trim() === mainRecipient.city &&
+           stop.postal_code?.toLowerCase().trim() === mainRecipient.postal_code;
+  });
+};
+
 // Prüfe ob Empfänger-Unterschrift geteilt werden kann
 const canShareReceiverSignature = 
-  // Mehrere Zustellungen zur selben Adresse
-  (hasMultipleDeliveries && sameDeliveryAddress) ||
+  // Mehrere Zustellungen zum SELBEN EMPFÄNGER (Name + Adresse!)
+  (hasMultipleDeliveries && sameDeliveryRecipient) ||
   // Mehrere Abholungen, aber nur eine Zustellung
   (hasMultiplePickups && !hasMultipleDeliveries);
 
@@ -231,6 +262,20 @@ if (canShareReceiverSignature) {
   // → shared_delivery_photo_base64 auf alle CMRs
   // → KEINE Unterschrift
 }
+```
+
+### **Wichtig: Name + Adresse = Empfänger**
+
+```javascript
+// ✅ GLEICHER Empfänger:
+Empfänger 1: "Max Müller", "Hauptstraße 1", "10115", "Berlin"
+Empfänger 2: "Max Müller", "Hauptstraße 1", "10115", "Berlin"
+→ Kann Unterschrift teilen!
+
+// ❌ VERSCHIEDENE Empfänger (trotz gleicher Adresse):
+Empfänger 1: "Max Müller", "Hauptstraße 1", "10115", "Berlin"
+Empfänger 2: "Anna Müller", "Hauptstraße 1", "10115", "Berlin"
+→ Separate Unterschriften/Fotos!
 ```
 
 ---
