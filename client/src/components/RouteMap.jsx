@@ -47,25 +47,82 @@ function MapBounds({ pickup, delivery }) {
   return null;
 }
 
-export default function RouteMap({ pickup, delivery, onRouteCalculated }) {
+export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryStops = [], onRouteCalculated }) {
   const [routeData, setRouteData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const geocodeAddress = async (address) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
+      );
+      const data = await response.json();
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lon: parseFloat(data[0].lon)
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (pickup && delivery) {
       fetchRoute();
     }
-  }, [pickup, delivery]);
+  }, [pickup, delivery, pickupStops, deliveryStops]);
 
   const fetchRoute = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Use OSRM (OpenStreetMap Routing Machine) for real routing
+      // Build waypoints: pickup -> pickupStops -> delivery -> deliveryStops
+      const waypoints = [];
+      
+      // Start with main pickup
+      waypoints.push(`${pickup.lon},${pickup.lat}`);
+      
+      // Add additional pickup stops
+      for (const stop of pickupStops) {
+        if (stop.city && stop.postal_code) {
+          try {
+            const geocoded = await geocodeAddress(`${stop.postal_code} ${stop.city}, ${stop.country || 'Deutschland'}`);
+            if (geocoded) {
+              waypoints.push(`${geocoded.lon},${geocoded.lat}`);
+            }
+          } catch (e) {
+            console.warn('Could not geocode pickup stop:', stop);
+          }
+        }
+      }
+      
+      // Add main delivery
+      waypoints.push(`${delivery.lon},${delivery.lat}`);
+      
+      // Add additional delivery stops
+      for (const stop of deliveryStops) {
+        if (stop.city && stop.postal_code) {
+          try {
+            const geocoded = await geocodeAddress(`${stop.postal_code} ${stop.city}, ${stop.country || 'Deutschland'}`);
+            if (geocoded) {
+              waypoints.push(`${geocoded.lon},${geocoded.lat}`);
+            }
+          } catch (e) {
+            console.warn('Could not geocode delivery stop:', stop);
+          }
+        }
+      }
+
+      // Use OSRM (OpenStreetMap Routing Machine) for real routing with all waypoints
+      const waypointsStr = waypoints.join(';');
       const response = await fetch(
-        `https://router.project-osrm.org/route/v1/driving/${pickup.lon},${pickup.lat};${delivery.lon},${delivery.lat}?overview=full&geometries=geojson&steps=true`
+        `https://router.project-osrm.org/route/v1/driving/${waypointsStr}?overview=full&geometries=geojson&steps=true`
       );
       
       const data = await response.json();

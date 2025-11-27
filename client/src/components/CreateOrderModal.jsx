@@ -833,6 +833,8 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
               <RouteMap 
                 pickup={pickupLocation} 
                 delivery={deliveryLocation}
+                pickupStops={pickupStops}
+                deliveryStops={deliveryStops}
                 onRouteCalculated={handleRouteCalculated}
               />
             </div>
