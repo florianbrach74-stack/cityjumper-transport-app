@@ -11,6 +11,11 @@ router.get('/', auth, async (req, res) => {
     res.json({ routes });
   } catch (error) {
     console.error('Get saved routes error:', error);
+    // If table doesn't exist yet, return empty array instead of error
+    if (error.code === '42P01') {
+      console.warn('saved_routes table does not exist yet - returning empty array');
+      return res.json({ routes: [] });
+    }
     res.status(500).json({ error: 'Fehler beim Laden der gespeicherten Routen' });
   }
 });
@@ -29,6 +34,9 @@ router.get('/:id', auth, async (req, res) => {
     res.json({ route });
   } catch (error) {
     console.error('Get saved route error:', error);
+    if (error.code === '42P01') {
+      return res.status(404).json({ error: 'Route nicht gefunden' });
+    }
     res.status(500).json({ error: 'Fehler beim Laden der Route' });
   }
 });
