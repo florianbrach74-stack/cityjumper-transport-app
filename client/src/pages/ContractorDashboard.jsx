@@ -258,7 +258,7 @@ const ContractorDashboard = () => {
                   <span className="text-gray-500 ml-2">({order.pickup_city})</span>
                   
                   {/* Multi-Stop Pickup Indicator */}
-                  {order.pickup_stops && JSON.parse(order.pickup_stops).length > 0 && (
+                  {order.pickup_stops && typeof order.pickup_stops === 'string' && JSON.parse(order.pickup_stops).length > 0 && (
                     <div className="mt-2 bg-blue-50 border border-blue-200 rounded px-2 py-1">
                       <span className="text-blue-700 font-semibold text-xs">
                         📦 {JSON.parse(order.pickup_stops).length + 1} Abholungen
@@ -286,7 +286,7 @@ const ContractorDashboard = () => {
                   )}
                   
                   {/* Multi-Stop Pickup Details */}
-                  {order.pickup_stops && JSON.parse(order.pickup_stops).length > 0 && (
+                  {order.pickup_stops && typeof order.pickup_stops === 'string' && JSON.parse(order.pickup_stops).length > 0 && (
                     <div className="mt-2 bg-blue-50 border border-blue-200 rounded p-2">
                       <div className="font-semibold text-blue-700 text-xs mb-1">
                         📦 Zusätzliche Abholungen ({JSON.parse(order.pickup_stops).length}):
@@ -313,7 +313,7 @@ const ContractorDashboard = () => {
                   <span className="text-gray-500 ml-2">({order.delivery_city})</span>
                   
                   {/* Multi-Stop Indicator */}
-                  {order.delivery_stops && JSON.parse(order.delivery_stops).length > 0 && (
+                  {order.delivery_stops && typeof order.delivery_stops === 'string' && JSON.parse(order.delivery_stops).length > 0 && (
                     <div className="mt-2 bg-orange-50 border border-orange-200 rounded px-2 py-1">
                       <span className="text-orange-700 font-semibold text-xs">
                         🚚 MULTI-STOP: {JSON.parse(order.delivery_stops).length + 1} Zustellungen
@@ -341,7 +341,7 @@ const ContractorDashboard = () => {
                   )}
                   
                   {/* Multi-Stop Details for accepted orders */}
-                  {order.delivery_stops && JSON.parse(order.delivery_stops).length > 0 && (
+                  {order.delivery_stops && typeof order.delivery_stops === 'string' && JSON.parse(order.delivery_stops).length > 0 && (
                     <div className="mt-2 bg-orange-50 border border-orange-200 rounded p-2">
                       <div className="font-semibold text-orange-700 text-xs mb-1">
                         🚚 Zusätzliche Zustellungen ({JSON.parse(order.delivery_stops).length}):

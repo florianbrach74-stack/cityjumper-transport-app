@@ -372,6 +372,25 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       }));
       
       validatePrice(recommendedPrice.toFixed(2));
+    } else if (totalExtraStops > 0 && !formData.price) {
+      // Fallback für Multi-Stop ohne Route: Schätze Basispreis
+      const estimatedDistance = 20; // 20km Schätzung
+      const estimatedDuration = 60; // 1 Stunde Schätzung
+      
+      const distanceCost = estimatedDistance * PRICE_PER_KM;
+      const timeCost = (estimatedDuration / 60) * HOURLY_RATE;
+      
+      const calculatedMinimumPrice = distanceCost + timeCost + START_FEE + calculatedFee + helpFee;
+      const recommendedPrice = calculatedMinimumPrice * 1.2;
+      
+      setMinimumPrice(calculatedMinimumPrice);
+      
+      setFormData(prev => ({
+        ...prev,
+        price: recommendedPrice.toFixed(2)
+      }));
+      
+      validatePrice(recommendedPrice.toFixed(2));
     }
   }, [pickupStops.length, deliveryStops.length, needsLoadingHelp, needsUnloadingHelp, routeInfo]);
 
