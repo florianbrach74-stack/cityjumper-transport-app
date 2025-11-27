@@ -925,8 +925,14 @@ const confirmDelivery = async (req, res) => {
       hasPhoto: !!cmr.delivery_photo_base64
     });
 
-    // CRITICAL: Check if this CMR is already completed
-    if (cmr.consignee_signature || cmr.delivery_photo_base64) {
+    // CRITICAL: Check if this CMR is already completed (check ALL possible fields!)
+    const isAlreadyCompleted = cmr.consignee_signature || 
+                                cmr.shared_receiver_signature || 
+                                cmr.delivery_photo_base64 || 
+                                cmr.shared_delivery_photo_base64 ||
+                                cmr.consignee_photo;
+    
+    if (isAlreadyCompleted) {
       console.log('⚠️ CMR already has signature/photo - rejecting duplicate submission');
       return res.status(400).json({ 
         error: 'Dieser Stop wurde bereits abgeschlossen',
@@ -985,15 +991,21 @@ const confirmDelivery = async (req, res) => {
     
     console.log(`📦 [BACKEND] Checking completion status for ${allCMRs.length} CMRs:`);
     allCMRs.forEach((c, i) => {
-      const status = c.consignee_signature ? '✅ Signature' : c.delivery_photo_base64 ? '✅ Photo' : '❌ Missing';
+      const hasSignature = c.consignee_signature || c.shared_receiver_signature;
+      const hasPhoto = c.delivery_photo_base64 || c.shared_delivery_photo_base64 || c.consignee_photo;
+      const status = hasSignature ? '✅ Signature' : hasPhoto ? '✅ Photo' : '❌ Missing';
       console.log(`   CMR ${i + 1} (ID: ${c.id}): ${status}`);
     });
     
     let allStopsCompleted = false;
     if (isMultiStop) {
-      // Check if all CMRs have signatures or photos
+      // Check if all CMRs have signatures or photos (check ALL possible fields!)
       allStopsCompleted = allCMRs.every(cmr => 
-        cmr.consignee_signature || cmr.delivery_photo_base64 || cmr.shared_receiver_signature
+        cmr.consignee_signature || 
+        cmr.shared_receiver_signature || 
+        cmr.delivery_photo_base64 || 
+        cmr.shared_delivery_photo_base64 ||
+        cmr.consignee_photo
       );
       console.log(`📊 [BACKEND] Multi-Stop Order: ${allCMRs.length} stops, all completed: ${allStopsCompleted}`);
     } else {
