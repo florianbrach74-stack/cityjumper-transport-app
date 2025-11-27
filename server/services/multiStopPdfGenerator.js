@@ -50,15 +50,33 @@ class MultiStopPdfGenerator {
       doc.fontSize(12).text(`${cmrs.length} Zustellungen`, { align: 'center' });
       doc.moveDown(2);
       
-      // Add summary
-      doc.fontSize(12).text('Übersicht:', { underline: true });
+      // Add summary with route
+      doc.fontSize(12).text('Zustellreihenfolge:', { underline: true });
       doc.moveDown(0.5);
+      doc.fontSize(10).fillColor('gray').text('Bitte in dieser Reihenfolge abarbeiten:', { indent: 20 });
+      doc.moveDown(0.5);
+      doc.fillColor('black');
+      
       cmrs.forEach((cmr, index) => {
-        doc.fontSize(10).text(
-          `${index + 1}. ${cmr.consignee_name} - ${cmr.consignee_city}`,
-          { indent: 20 }
+        const isLast = index === cmrs.length - 1;
+        doc.fontSize(11).fillColor('blue').text(
+          `${index + 1}. Zustellung`,
+          { indent: 20, underline: true }
         );
+        doc.fontSize(10).fillColor('black').text(
+          `   ${cmr.consignee_name}`,
+          { indent: 30 }
+        );
+        doc.fontSize(9).text(
+          `   ${cmr.consignee_address}, ${cmr.consignee_postal_code} ${cmr.consignee_city}`,
+          { indent: 30 }
+        );
+        if (!isLast) {
+          doc.fontSize(9).fillColor('gray').text('   ↓', { indent: 30 });
+        }
+        doc.moveDown(0.3);
       });
+      doc.fillColor('black');
 
       // Add each CMR + Photo
       for (let i = 0; i < cmrs.length; i++) {
@@ -159,29 +177,42 @@ class MultiStopPdfGenerator {
     doc.text(`Gewicht: ${cmr.gross_weight ? cmr.gross_weight + ' kg' : 'N/A'}`);
     doc.moveDown();
 
-    // Signatures
+    // Signatures Section
     doc.fontSize(11).text('Unterschriften:', { underline: true });
+    doc.moveDown(0.5);
+    
+    // Empfänger Info nochmal anzeigen (wichtig für Unterschrift!)
+    doc.fontSize(10).fillColor('blue').text('Zustellung an:', { underline: true });
+    doc.fontSize(9).fillColor('black').text(cmr.consignee_name);
+    doc.text(`${cmr.consignee_address}`);
+    doc.text(`${cmr.consignee_postal_code} ${cmr.consignee_city}`);
+    doc.moveDown(0.5);
     
     // Sender signature
+    doc.fillColor('black');
     if (cmr.sender_signature || cmr.shared_sender_signature) {
-      doc.fontSize(9).text('Absender:', { continued: true });
-      doc.text(' ✓ Unterschrieben', { color: 'green' });
+      doc.fontSize(9).text('✓ Absender unterschrieben', { fillColor: 'green' });
+    } else {
+      doc.fontSize(9).text('⚠ Absender: Unterschrift fehlt', { fillColor: 'red' });
     }
     
     // Carrier signature
     if (cmr.carrier_signature || cmr.shared_carrier_signature) {
-      doc.fontSize(9).text('Frachtführer:', { continued: true });
-      doc.text(' ✓ Unterschrieben', { color: 'green' });
+      doc.fontSize(9).text('✓ Frachtführer unterschrieben', { fillColor: 'green' });
+    } else {
+      doc.fontSize(9).text('⚠ Frachtführer: Unterschrift fehlt', { fillColor: 'red' });
     }
     
     // Receiver signature
     if (cmr.consignee_signature || cmr.shared_receiver_signature) {
-      doc.fontSize(9).text('Empfänger:', { continued: true });
-      doc.text(' ✓ Unterschrieben', { color: 'green' });
+      doc.fontSize(9).text('✓ Empfänger unterschrieben', { fillColor: 'green' });
     } else if (cmr.delivery_photo_base64 || cmr.shared_delivery_photo_base64) {
-      doc.fontSize(9).text('Empfänger:', { continued: true });
-      doc.text(' Nicht angetroffen (Foto vorhanden)', { color: 'orange' });
+      doc.fontSize(9).text('📷 Empfänger nicht angetroffen (Foto vorhanden)', { fillColor: 'orange' });
+    } else {
+      doc.fontSize(9).text('⚠ Empfänger: Unterschrift fehlt', { fillColor: 'red' });
     }
+    
+    doc.fillColor('black');
 
     doc.moveDown();
 
