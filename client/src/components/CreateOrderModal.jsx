@@ -426,6 +426,9 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         height: formData.height ? parseFloat(formData.height) : null,
         pallets: formData.pallets ? parseInt(formData.pallets) : null,
         price: formData.price ? parseFloat(formData.price) : null,
+        // Route-Daten
+        distance_km: routeInfo?.distance || 0,
+        duration_minutes: routeInfo?.durationMinutes || 0,
         // Multi-Stop-Daten
         pickup_stops: pickupStops.length > 0 ? pickupStops : undefined,
         delivery_stops: deliveryStops.length > 0 ? deliveryStops : undefined,
