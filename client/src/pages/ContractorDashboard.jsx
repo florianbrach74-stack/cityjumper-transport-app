@@ -252,6 +252,21 @@ const ContractorDashboard = () => {
                 <div className="text-gray-600">
                   <span className="font-semibold text-lg">PLZ {order.pickup_postal_code}</span>
                   <span className="text-gray-500 ml-2">({order.pickup_city})</span>
+                  
+                  {/* Multi-Stop Pickup Indicator */}
+                  {order.pickup_stops && JSON.parse(order.pickup_stops).length > 0 && (
+                    <div className="mt-2 bg-blue-50 border border-blue-200 rounded px-2 py-1">
+                      <span className="text-blue-700 font-semibold text-xs">
+                        📦 {JSON.parse(order.pickup_stops).length + 1} Abholungen
+                      </span>
+                      <div className="text-xs text-blue-600 mt-1">
+                        PLZ: {order.pickup_postal_code}
+                        {JSON.parse(order.pickup_stops).map((stop, i) => (
+                          <span key={i}>, {stop.postal_code}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 // Vollständige Adresse für angenommene Aufträge
@@ -265,6 +280,23 @@ const ContractorDashboard = () => {
                       {order.pickup_contact_phone && ` - ${order.pickup_contact_phone}`}
                     </div>
                   )}
+                  
+                  {/* Multi-Stop Pickup Details */}
+                  {order.pickup_stops && JSON.parse(order.pickup_stops).length > 0 && (
+                    <div className="mt-2 bg-blue-50 border border-blue-200 rounded p-2">
+                      <div className="font-semibold text-blue-700 text-xs mb-1">
+                        📦 Zusätzliche Abholungen ({JSON.parse(order.pickup_stops).length}):
+                      </div>
+                      {JSON.parse(order.pickup_stops).map((stop, i) => (
+                        <div key={i} className="text-xs text-gray-700 mt-1 pl-2 border-l-2 border-blue-300">
+                          <div>{stop.address}, {stop.postal_code} {stop.city}</div>
+                          {stop.contact_name && (
+                            <div className="text-gray-500">Kontakt: {stop.contact_name}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -275,6 +307,21 @@ const ContractorDashboard = () => {
                 <div className="text-gray-600">
                   <span className="font-semibold text-lg">PLZ {order.delivery_postal_code}</span>
                   <span className="text-gray-500 ml-2">({order.delivery_city})</span>
+                  
+                  {/* Multi-Stop Indicator */}
+                  {order.delivery_stops && JSON.parse(order.delivery_stops).length > 0 && (
+                    <div className="mt-2 bg-orange-50 border border-orange-200 rounded px-2 py-1">
+                      <span className="text-orange-700 font-semibold text-xs">
+                        🚚 MULTI-STOP: {JSON.parse(order.delivery_stops).length + 1} Zustellungen
+                      </span>
+                      <div className="text-xs text-orange-600 mt-1">
+                        PLZ: {order.delivery_postal_code}
+                        {JSON.parse(order.delivery_stops).map((stop, i) => (
+                          <span key={i}>, {stop.postal_code}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 // Vollständige Adresse für angenommene Aufträge
@@ -286,6 +333,23 @@ const ContractorDashboard = () => {
                     <div className="text-gray-500 text-xs mt-1">
                       Kontakt: {order.delivery_contact_name}
                       {order.delivery_contact_phone && ` - ${order.delivery_contact_phone}`}
+                    </div>
+                  )}
+                  
+                  {/* Multi-Stop Details for accepted orders */}
+                  {order.delivery_stops && JSON.parse(order.delivery_stops).length > 0 && (
+                    <div className="mt-2 bg-orange-50 border border-orange-200 rounded p-2">
+                      <div className="font-semibold text-orange-700 text-xs mb-1">
+                        🚚 Zusätzliche Zustellungen ({JSON.parse(order.delivery_stops).length}):
+                      </div>
+                      {JSON.parse(order.delivery_stops).map((stop, i) => (
+                        <div key={i} className="text-xs text-gray-700 mt-1 pl-2 border-l-2 border-orange-300">
+                          <div>{stop.address}, {stop.postal_code} {stop.city}</div>
+                          {stop.contact_name && (
+                            <div className="text-gray-500">Kontakt: {stop.contact_name}</div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </>
