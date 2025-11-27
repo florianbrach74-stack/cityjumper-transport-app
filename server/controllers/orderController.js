@@ -95,54 +95,23 @@ const createOrder = async (req, res) => {
     const pickupStops = req.body.pickup_stops || [];
     const deliveryStops = req.body.delivery_stops || [];
     
-    let totalDistance = 0;
-    let totalDuration = 0;
-    let routeSegments = [];
-    
     if (pickupStops.length > 0 || deliveryStops.length > 0) {
-      // Multi-stop order
+      // Multi-stop order - store stops without calculating route (route is calculated in frontend)
       console.log('Processing multi-stop order:', { pickupStops: pickupStops.length, deliveryStops: deliveryStops.length });
-      
-      // Build complete route: all pickups, then all deliveries
-      const allStops = [
-        ...pickupStops.map(s => ({ ...s, type: 'pickup' })),
-        ...deliveryStops.map(s => ({ ...s, type: 'delivery' }))
-      ];
-      
-      // Calculate distance/duration for each segment
-      for (let i = 0; i < allStops.length; i++) {
-        const fromStop = i === 0 ? {
-          address: orderData.pickup_address,
-          postal_code: orderData.pickup_postal_code,
-          city: orderData.pickup_city
-        } : allStops[i - 1];
-        
-        const toStop = allStops[i];
-        
-        const segment = await calculateDistanceAndDuration(
-          fromStop.address,
-          fromStop.postal_code,
-          fromStop.city,
-          toStop.address,
-          toStop.postal_code,
-          toStop.city
-        );
-        
-        totalDistance += segment.distance_km;
-        totalDuration += segment.duration_minutes;
-        routeSegments.push(segment);
-      }
       
       // Store stops in database
       orderData.pickup_stops = JSON.stringify(pickupStops);
       orderData.delivery_stops = JSON.stringify(deliveryStops);
       
-      // Calculate extra stops (total stops - 1, since first is included in base price)
+      // Calculate extra stops fee
       const totalStops = pickupStops.length + deliveryStops.length;
       orderData.extra_stops_count = Math.max(0, totalStops);
       orderData.extra_stops_fee = orderData.extra_stops_count * 6.00; // 6€ per extra stop
       
-      console.log(`Multi-stop: ${totalStops} stops, ${orderData.extra_stops_count} extra, fee: €${orderData.extra_stops_fee}`);
+      console.log(`Multi-stop: ${totalStops} stops, fee: €${orderData.extra_stops_fee}`);
+      
+      // For multi-stop, use estimated distance/duration (route was calculated in frontend)
+      // We don't recalculate here to avoid API timeouts
     } else {
       // Single pickup/delivery
       const { distance_km, duration_minutes, route_geometry } = await calculateDistanceAndDuration(
