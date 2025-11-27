@@ -6,14 +6,22 @@ const { authenticateToken: auth } = require('../middleware/auth');
 // Get all saved routes for the authenticated customer
 router.get('/', auth, async (req, res) => {
   try {
+    console.log('📋 Loading saved routes for customer:', req.user.id);
     const customerId = req.user.id;
     const routes = await SavedRoute.findByCustomerId(customerId);
+    console.log(`✅ Found ${routes.length} saved routes`);
     res.json({ routes });
   } catch (error) {
-    console.error('Get saved routes error:', error);
+    console.error('❌ Get saved routes error:', error.message);
+    console.error('   Error code:', error.code);
     // If table doesn't exist yet, return empty array instead of error
     if (error.code === '42P01') {
-      console.warn('saved_routes table does not exist yet - returning empty array');
+      console.warn('⚠️ saved_routes table does not exist yet - returning empty array');
+      return res.json({ routes: [] });
+    }
+    // Handle connection timeout
+    if (error.message && error.message.includes('Connection terminated')) {
+      console.error('⚠️ Database connection timeout - returning empty array');
       return res.json({ routes: [] });
     }
     res.status(500).json({ error: 'Fehler beim Laden der gespeicherten Routen' });
