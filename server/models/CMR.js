@@ -99,6 +99,24 @@ class CMR {
       throw new Error('Order not found');
     }
 
+    // Check if this is a multi-stop order
+    const deliveryStops = order.delivery_stops ? 
+      (typeof order.delivery_stops === 'string' ? JSON.parse(order.delivery_stops) : order.delivery_stops) 
+      : [];
+    const pickupStops = order.pickup_stops ?
+      (typeof order.pickup_stops === 'string' ? JSON.parse(order.pickup_stops) : order.pickup_stops)
+      : [];
+    
+    const isMultiStop = deliveryStops.length > 0 || pickupStops.length > 0;
+    const totalStops = deliveryStops.length + 1; // Main delivery + extra delivery stops
+    
+    console.log(`Creating CMR for order ${orderId}:`, {
+      isMultiStop,
+      deliveryStops: deliveryStops.length,
+      pickupStops: pickupStops.length,
+      totalStops
+    });
+
     // Generate CMR number
     const cmrNumberResult = await pool.query('SELECT generate_cmr_number() as cmr_number');
     const cmr_number = cmrNumberResult.rows[0].cmr_number;
@@ -110,12 +128,13 @@ class CMR {
     const query = `
       INSERT INTO cmr_documents (
         order_id, cmr_number,
+        cmr_group_id, delivery_stop_index, total_stops, is_multi_stop,
         sender_name, sender_address, sender_city, sender_postal_code, sender_country,
         consignee_name, consignee_address, consignee_city, consignee_postal_code, consignee_country,
         carrier_name, carrier_address, carrier_city, carrier_postal_code,
         status
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'created'
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 'created'
       )
       RETURNING *
     `;
@@ -123,6 +142,11 @@ class CMR {
     const values = [
       orderId,
       cmr_number,
+      // Multi-stop info
+      `ORDER-${orderId}`,
+      0, // This is the main delivery (index 0)
+      totalStops,
+      isMultiStop,
       // Sender (from pickup)
       order.pickup_contact_name || 'Absender',
       order.pickup_address,
