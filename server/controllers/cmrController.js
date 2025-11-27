@@ -832,10 +832,21 @@ const confirmPickup = async (req, res) => {
 // Confirm delivery with receiver signature
 const confirmDelivery = async (req, res) => {
   try {
+    console.log('🚀 [BACKEND] ========== START DELIVERY CONFIRMATION ==========');
     const { orderId } = req.params;
-    const { receiverName, receiverSignature, deliveryPhoto, deliveryWaitingMinutes, waitingNotes } = req.body;
+    const { receiverName, receiverSignature, deliveryPhoto, deliveryWaitingMinutes, waitingNotes, cmrId } = req.body;
     const userId = req.user.id;
     const userRole = req.user.role;
+
+    console.log('🔍 [BACKEND] Request params:', {
+      orderId,
+      userId,
+      userRole,
+      cmrId: cmrId || 'not provided',
+      receiverName,
+      hasSignature: !!receiverSignature,
+      hasPhoto: !!deliveryPhoto
+    });
 
     console.log('📦 Delivery confirmation started for order:', orderId);
     console.log('User ID:', userId, 'Role:', userRole);
@@ -843,14 +854,22 @@ const confirmDelivery = async (req, res) => {
     console.log('📸 Delivery photo received:', deliveryPhoto ? `YES (${deliveryPhoto.length} chars)` : 'NO');
 
     // Verify order belongs to this contractor OR employee
+    console.log('🔍 [BACKEND] Fetching order...');
     const order = await Order.findById(orderId);
     if (!order) {
+      console.error('❌ [BACKEND] Order not found:', orderId);
       return res.status(404).json({ error: 'Order not found' });
     }
+    console.log('✅ [BACKEND] Order found:', {
+      id: order.id,
+      status: order.status,
+      contractor_id: order.contractor_id
+    });
     
     // Check authorization
     const pool = require('../config/database');
     if (userRole === 'employee') {
+      console.log('🔍 [BACKEND] Checking employee authorization...');
       const employeeCheck = await pool.query(
         `SELECT u.contractor_id 
          FROM users u 
@@ -860,37 +879,51 @@ const confirmDelivery = async (req, res) => {
       
       if (employeeCheck.rows.length === 0 || 
           employeeCheck.rows[0].contractor_id !== order.contractor_id) {
-        console.error('❌ Employee not authorized for this order');
+        console.error('❌ [BACKEND] Employee not authorized for this order');
         return res.status(403).json({ error: 'Unauthorized' });
       }
+      console.log('✅ [BACKEND] Employee authorized');
     } else if (order.contractor_id !== userId) {
+      console.error('❌ [BACKEND] Contractor not authorized for this order');
       return res.status(403).json({ error: 'Unauthorized' });
+    } else {
+      console.log('✅ [BACKEND] Contractor authorized');
     }
 
     // Get CMR - use specific cmrId if provided (for multi-stop), otherwise get next pending
     const cmrGroupId = `ORDER-${orderId}`;
-    const { cmrId } = req.body;
     
     let cmr;
     if (cmrId) {
       // Specific CMR requested (multi-stop)
+      console.log(`🔍 [BACKEND] Fetching specific CMR #${cmrId}...`);
       cmr = await CMR.findById(cmrId);
-      console.log(`📋 Using specific CMR #${cmrId}`);
+      console.log(`✅ [BACKEND] Using specific CMR #${cmrId}`);
     } else {
       // Get next pending CMR for multi-stop orders
+      console.log('🔍 [BACKEND] No cmrId provided, fetching next pending...');
       cmr = await CMR.getNextPendingDelivery(cmrGroupId);
       
       // Fallback to single CMR if not multi-stop
       if (!cmr) {
+        console.log('🔍 [BACKEND] No pending CMR, trying single order CMR...');
         cmr = await CMR.findByOrderId(orderId);
       }
     }
     
     if (!cmr) {
+      console.error('❌ [BACKEND] CMR not found or all deliveries already completed');
       return res.status(404).json({ error: 'CMR not found or all deliveries already completed' });
     }
     
-    console.log(`📋 Processing CMR #${cmr.id} (Stop ${cmr.delivery_stop_index + 1}/${cmr.total_stops})`);
+    console.log(`✅ [BACKEND] Processing CMR:`, {
+      id: cmr.id,
+      number: cmr.cmr_number,
+      stop: `${cmr.delivery_stop_index + 1}/${cmr.total_stops}`,
+      consignee: cmr.consignee_name,
+      hasSignature: !!cmr.consignee_signature,
+      hasPhoto: !!cmr.delivery_photo_base64
+    });
 
     // CRITICAL: Check if this CMR is already completed
     if (cmr.consignee_signature || cmr.delivery_photo_base64) {
@@ -946,12 +979,14 @@ const confirmDelivery = async (req, res) => {
     }
 
     // IMPORTANT: Reload CMRs from database to get fresh data including the one we just updated
+    console.log('🔄 [BACKEND] Reloading all CMRs from database...');
     const allCMRs = await CMR.findByGroupId(cmrGroupId);
     const isMultiStop = allCMRs.length > 1;
     
-    console.log(`📦 Checking completion status for ${allCMRs.length} CMRs:`);
+    console.log(`📦 [BACKEND] Checking completion status for ${allCMRs.length} CMRs:`);
     allCMRs.forEach((c, i) => {
-      console.log(`   CMR ${i + 1}: ${c.consignee_signature ? '✅ Signature' : c.delivery_photo_base64 ? '✅ Photo' : '❌ Missing'}`);
+      const status = c.consignee_signature ? '✅ Signature' : c.delivery_photo_base64 ? '✅ Photo' : '❌ Missing';
+      console.log(`   CMR ${i + 1} (ID: ${c.id}): ${status}`);
     });
     
     let allStopsCompleted = false;
@@ -960,9 +995,10 @@ const confirmDelivery = async (req, res) => {
       allStopsCompleted = allCMRs.every(cmr => 
         cmr.consignee_signature || cmr.delivery_photo_base64 || cmr.shared_receiver_signature
       );
-      console.log(`📦 Multi-Stop Order: ${allCMRs.length} stops, all completed: ${allStopsCompleted}`);
+      console.log(`📊 [BACKEND] Multi-Stop Order: ${allCMRs.length} stops, all completed: ${allStopsCompleted}`);
     } else {
       allStopsCompleted = true; // Single stop is always "all completed"
+      console.log(`📊 [BACKEND] Single-Stop Order: completed`);
     }
     
     // Update order status based on waiting time and completion
@@ -989,17 +1025,20 @@ const confirmDelivery = async (req, res) => {
 
     // Only send email and generate PDF if all stops are completed
     if (!allStopsCompleted) {
-      console.log(`📧 Skipping email - not all stops completed yet`);
+      console.log(`ℹ️ [BACKEND] Not all stops completed - returning early`);
+      const nextCMR = await CMR.getNextPendingDelivery(cmrGroupId);
+      console.log(`📧 [BACKEND] Next pending CMR:`, nextCMR ? `ID ${nextCMR.id}` : 'none');
+      console.log('🏁 [BACKEND] ========== END DELIVERY CONFIRMATION (PARTIAL) ==========');
       return res.json({ 
         success: true, 
         message: 'Zustellung bestätigt. Weitere Stops ausstehend.',
         allStopsCompleted: false,
-        nextCMR: await CMR.getNextPendingDelivery(cmrGroupId)
+        nextCMR: nextCMR
       });
     }
     
     // All stops completed - generate combined PDF and send email
-    console.log('📄 All stops completed - generating combined PDF...');
+    console.log('🎉 [BACKEND] All stops completed - generating combined PDF...');
     
     let pdfGenerated = false;
     let pdfPath = null;

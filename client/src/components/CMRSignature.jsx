@@ -34,29 +34,49 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
 
   const loadCMRGroup = async () => {
     try {
+      console.log('🔍 [CMR] Loading CMR group for order:', order.id);
       const token = localStorage.getItem('token');
       const response = await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/order/${order.id}/group`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      
+      console.log('🔍 [CMR] Response status:', response.status);
       const data = await response.json();
+      console.log('🔍 [CMR] Response data:', JSON.stringify(data, null, 2));
       
       if (data.isMultiStop && data.cmrs.length > 1) {
         setIsMultiStop(true);
         setCmrGroup(data);
-        console.log('📦 Multi-stop order detected:', data.cmrs.length, 'deliveries');
+        console.log('✅ [CMR] Multi-stop order detected:', data.cmrs.length, 'deliveries');
+        
+        // Log each CMR status
+        data.cmrs.forEach((cmr, idx) => {
+          console.log(`   CMR ${idx + 1}:`, {
+            id: cmr.id,
+            stop: `${cmr.delivery_stop_index + 1}/${cmr.total_stops}`,
+            completed: !!(cmr.consignee_signature || cmr.delivery_photo_base64),
+            hasSignature: !!cmr.consignee_signature,
+            hasPhoto: !!cmr.delivery_photo_base64
+          });
+        });
         
         // Find first uncompleted stop
         const firstUncompletedIndex = data.cmrs.findIndex(cmr => 
           !cmr.consignee_signature && !cmr.delivery_photo_base64
         );
+        console.log('🔍 [CMR] First uncompleted stop index:', firstUncompletedIndex);
         if (firstUncompletedIndex !== -1) {
           setCurrentStopIndex(firstUncompletedIndex);
+          console.log('✅ [CMR] Set current stop to:', firstUncompletedIndex + 1);
         }
+      } else {
+        console.log('ℹ️ [CMR] Single-stop order or no multi-stop data');
       }
     } catch (error) {
-      console.error('Error loading CMR group:', error);
+      console.error('❌ [CMR] Error loading CMR group:', error);
+      console.error('❌ [CMR] Error stack:', error.stack);
     } finally {
       setLoading(false);
     }
@@ -134,28 +154,40 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
 
   const handleDeliverySubmit = async () => {
     setSubmitting(true);
+    console.log('🚀 [DELIVERY] Starting delivery submission...');
+    
     try {
       const currentCMR = getCurrentCMR();
+      console.log('🔍 [DELIVERY] Current CMR:', currentCMR ? {
+        id: currentCMR.id,
+        stop: `${currentCMR.delivery_stop_index + 1}/${currentCMR.total_stops}`,
+        consignee: currentCMR.consignee_name
+      } : 'null');
 
       // Validate
       if (!receiverNotHome) {
         if (!receiverName || !receiverName.trim()) {
+          console.warn('⚠️ [DELIVERY] Validation failed: No receiver name');
           alert('Bitte geben Sie den Namen des Empfängers ein.');
           setSubmitting(false);
           return;
         }
         if (receiverSigRef.current?.isEmpty()) {
+          console.warn('⚠️ [DELIVERY] Validation failed: No signature');
           alert('Bitte lassen Sie den Empfänger unterschreiben.');
           setSubmitting(false);
           return;
         }
       } else {
         if (!deliveryPhoto) {
+          console.warn('⚠️ [DELIVERY] Validation failed: No photo');
           alert('Bitte machen Sie ein Foto der Zustellung.');
           setSubmitting(false);
           return;
         }
       }
+
+      console.log('✅ [DELIVERY] Validation passed');
 
       // Prepare data
       const data = {
@@ -167,13 +199,22 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
         cmrId: currentCMR?.id // WICHTIG: CMR ID mitschicken für Multi-Stop
       };
 
-      console.log('📦 Submitting delivery for CMR:', currentCMR?.id);
+      console.log('📦 [DELIVERY] Submitting delivery:', {
+        cmrId: data.cmrId,
+        receiverName: data.receiverName,
+        hasSignature: !!data.receiverSignature,
+        hasPhoto: !!data.deliveryPhoto,
+        isMultiStop: isMultiStop
+      });
       
       // Call onComplete which handles the API call
+      console.log('🔄 [DELIVERY] Calling onComplete...');
       await onComplete(data);
+      console.log('✅ [DELIVERY] onComplete finished successfully');
       
       // If multi-stop, reload and check status
       if (isMultiStop) {
+        console.log('🔄 [DELIVERY] Reloading CMR group...');
         await loadCMRGroup();
         
         // Check if all stops are completed NOW (after reload)
@@ -181,11 +222,12 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
           cmr.consignee_signature || cmr.delivery_photo_base64
         );
 
-        console.log(`✅ Stop ${currentStopIndex + 1}/${cmrGroup.cmrs.length} completed`);
-        console.log(`📊 All stops completed: ${allCompleted}`);
+        console.log(`✅ [DELIVERY] Stop ${currentStopIndex + 1}/${cmrGroup.cmrs.length} completed`);
+        console.log(`📊 [DELIVERY] All stops completed: ${allCompleted}`);
 
         if (!allCompleted) {
           // More stops remaining
+          console.log('ℹ️ [DELIVERY] More stops remaining - closing modal');
           alert(`Stop ${currentStopIndex + 1}/${cmrGroup.cmrs.length} erfolgreich abgeschlossen!\n\nWeitere Stops ausstehend.\nSie können jetzt:\n- Den nächsten Stop abschließen\n- Zurück zum Dashboard gehen\n- Andere Aufträge bearbeiten`);
           
           // Reset form for next delivery
@@ -200,13 +242,18 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
           onClose();
         } else {
           // All stops done - onComplete already handled the completion
-          console.log('🎉 All stops completed - order finished!');
+          console.log('🎉 [DELIVERY] All stops completed - order finished!');
         }
+      } else {
+        console.log('ℹ️ [DELIVERY] Single-stop order completed');
       }
     } catch (error) {
-      console.error('Error submitting delivery:', error);
+      console.error('❌ [DELIVERY] Error submitting delivery:', error);
+      console.error('❌ [DELIVERY] Error message:', error.message);
+      console.error('❌ [DELIVERY] Error stack:', error.stack);
       alert('Fehler beim Speichern: ' + (error.message || 'Unbekannter Fehler'));
     } finally {
+      console.log('🏁 [DELIVERY] Submission finished, setting submitting=false');
       setSubmitting(false);
     }
   };
