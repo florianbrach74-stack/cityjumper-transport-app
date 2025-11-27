@@ -283,8 +283,36 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     }
   };
 
+  // Geocode helper function
+  const geocodeAddress = async (address) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=de`,
+        {
+          headers: {
+            'User-Agent': 'CityJumper-Transport-App/1.0',
+            'Accept': 'application/json'
+          }
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          return {
+            lat: parseFloat(data[0].lat),
+            lon: parseFloat(data[0].lon)
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+    }
+    return null;
+  };
+
   // Load a saved route into the form
-  const handleLoadSavedRoute = (route) => {
+  const handleLoadSavedRoute = async (route) => {
     console.log('📍 Loading saved route:', route);
     
     setFormData(prev => ({
@@ -310,19 +338,31 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       height: route.cargo_height || prev.height,
     }));
 
-    // Set locations for map with FULL address data
+    // Geocode addresses to get coordinates
+    console.log('🔍 Geocoding addresses...');
+    const pickupAddress = `${route.pickup_address}, ${route.pickup_postal_code} ${route.pickup_city}, ${route.pickup_country || 'Deutschland'}`;
+    const deliveryAddress = `${route.delivery_address}, ${route.delivery_postal_code} ${route.delivery_city}, ${route.delivery_country || 'Deutschland'}`;
+    
+    const [pickupCoords, deliveryCoords] = await Promise.all([
+      geocodeAddress(pickupAddress),
+      geocodeAddress(deliveryAddress)
+    ]);
+
+    // Set locations for map with FULL address data AND coordinates
     const pickupLoc = {
       address: route.pickup_address,
       city: route.pickup_city,
       postalCode: route.pickup_postal_code,
-      country: route.pickup_country || 'Deutschland'
+      country: route.pickup_country || 'Deutschland',
+      ...(pickupCoords || {})
     };
     
     const deliveryLoc = {
       address: route.delivery_address,
       city: route.delivery_city,
       postalCode: route.delivery_postal_code,
-      country: route.delivery_country || 'Deutschland'
+      country: route.delivery_country || 'Deutschland',
+      ...(deliveryCoords || {})
     };
     
     console.log('📍 Setting pickup location:', pickupLoc);
