@@ -793,6 +793,16 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                   💰 Extra-Stops-Gebühr: {pickupStops.length + deliveryStops.length} Stops × 6€ = 
                   <span className="text-lg font-bold ml-2">€{extraStopsFee.toFixed(2)}</span>
                 </p>
+                {routeInfo && (
+                  <p className="text-xs text-gray-600 mt-2">
+                    💡 Tipp: Der Preis wird automatisch mit der Extra-Stops-Gebühr berechnet
+                  </p>
+                )}
+                {!routeInfo && (
+                  <p className="text-xs text-orange-600 mt-2">
+                    ⚠️ Bitte geben Sie Abhol- und Lieferadresse ein, um den Gesamtpreis zu berechnen
+                  </p>
+                )}
               </div>
             )}
           </div>

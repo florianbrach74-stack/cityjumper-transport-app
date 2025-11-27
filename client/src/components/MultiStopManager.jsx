@@ -22,7 +22,7 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
 
     onStopsChange([...stops, { ...newStop }]);
     
-    // Reset form but keep it open for adding more stops
+    // Reset form
     setNewStop({
       address: '',
       city: '',
@@ -32,8 +32,9 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
       contact_phone: '',
       notes: ''
     });
-    // Keep form open so user can add multiple stops easily
-    // setShowAddForm(false); // Commented out to keep form open
+    
+    // Close form automatically after adding
+    setShowAddForm(false);
   };
 
   const handleRemoveStop = (index) => {
