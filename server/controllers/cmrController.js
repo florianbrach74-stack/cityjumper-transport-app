@@ -882,6 +882,15 @@ const confirmDelivery = async (req, res) => {
     
     console.log(`📋 Processing CMR #${cmr.id} (Stop ${cmr.delivery_stop_index + 1}/${cmr.total_stops})`);
 
+    // CRITICAL: Check if this CMR is already completed
+    if (cmr.consignee_signature || cmr.delivery_photo_base64) {
+      console.log('⚠️ CMR already has signature/photo - rejecting duplicate submission');
+      return res.status(400).json({ 
+        error: 'Dieser Stop wurde bereits abgeschlossen',
+        allStopsCompleted: false
+      });
+    }
+
     // Update CMR with receiver signature and optional photo
     await pool.query(
       `UPDATE cmr_documents 
@@ -889,7 +898,9 @@ const confirmDelivery = async (req, res) => {
            consignee_signature = $2,
            consignee_signed_at = CURRENT_TIMESTAMP,
            consignee_photo = $4
-       WHERE id = $3`,
+       WHERE id = $3
+       AND consignee_signature IS NULL 
+       AND delivery_photo_base64 IS NULL`,
       [receiverName, receiverSignature, cmr.id, deliveryPhoto || null]
     );
     console.log('✅ Receiver signature saved' + (deliveryPhoto ? ' with photo' : ''));

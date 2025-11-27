@@ -176,9 +176,20 @@ const ContractorDashboard = () => {
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) throw new Error('Delivery confirmation failed');
+      const result = await response.json();
 
-      alert('Zustellung erfolgreich bestätigt! Der Kunde wurde benachrichtigt und das CMR-Dokument wurde versendet.');
+      if (!response.ok) {
+        // Show specific error message from backend
+        throw new Error(result.error || 'Delivery confirmation failed');
+      }
+
+      // Check if all stops are completed
+      if (result.allStopsCompleted) {
+        alert('Zustellung erfolgreich bestätigt! Der Kunde wurde benachrichtigt und das CMR-Dokument wurde versendet.');
+      } else {
+        alert('Stop erfolgreich abgeschlossen! Weitere Stops ausstehend.');
+      }
+      
       setSelectedOrderForDelivery(null);
       fetchOrders();
     } catch (error) {
