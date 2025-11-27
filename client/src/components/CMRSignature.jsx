@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { X, Camera, CheckCircle, ArrowRight, Package } from 'lucide-react';
-import api from '../utils/api';
 
 const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
   // Multi-stop state
@@ -35,8 +34,13 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
 
   const loadCMRGroup = async () => {
     try {
-      const response = await api.get(`/cmr/order/${order.id}/group`);
-      const data = response.data;
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/order/${order.id}/group`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
       
       if (data.isMultiStop && data.cmrs.length > 1) {
         setIsMultiStop(true);
@@ -96,9 +100,17 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
 
       // If multi-stop, save shared signatures
       if (isMultiStop && cmrGroup?.canShareSenderSignature) {
-        await api.post(`/cmr/order/${order.id}/shared-signatures`, {
-          senderSignature: data.senderSignature,
-          carrierSignature: data.carrierSignature
+        const token = localStorage.getItem('token');
+        await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/order/${order.id}/shared-signatures`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            senderSignature: data.senderSignature,
+            carrierSignature: data.carrierSignature
+          })
         });
         console.log('✅ Shared signatures saved for all CMRs');
       }
@@ -148,16 +160,29 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
 
       // If multi-stop, handle sequential delivery
       if (isMultiStop && currentCMR) {
+        const token = localStorage.getItem('token');
+        
         // Save photo if provided
         if (deliveryPhoto) {
-          await api.post(`/cmr/${currentCMR.id}/delivery-photo`, {
-            photoBase64: deliveryPhoto
+          await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/${currentCMR.id}/delivery-photo`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              photoBase64: deliveryPhoto
+            })
           });
         }
 
         // Check if there are more deliveries
-        const nextResponse = await api.get(`/cmr/order/${order.id}/next-delivery`);
-        const nextData = nextResponse.data;
+        const nextResponse = await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/order/${order.id}/next-delivery`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const nextData = await nextResponse.json();
 
         if (nextData.completed) {
           // All deliveries done!
