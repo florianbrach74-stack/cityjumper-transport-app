@@ -144,11 +144,8 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // Auto-fill "Bis" Zeit mit +30min wenn "Von" geändert wird (nur Vorschlag)
+    // Wenn Abholzeit Von geändert wird
     if (name === 'pickup_time_from' && value) {
-      const suggestedPickupTo = addMinutesToTime(value, 30);
-      const shouldUpdatePickupTo = !formData.pickup_time_to || formData.pickup_time_to < value;
-      
       // WICHTIG: Zustellzeit Bis muss mindestens Abholzeit Von + 30min sein
       const minDeliveryTimeTo = addMinutesToTime(value, 30);
       let newDeliveryTimeTo = formData.delivery_time_to;
@@ -161,7 +158,6 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       setFormData((prev) => ({
         ...prev,
         [name]: value,
-        pickup_time_to: shouldUpdatePickupTo ? suggestedPickupTo : prev.pickup_time_to,
         delivery_time_to: newDeliveryTimeTo,
       }));
     } else if (name === 'pickup_time_to' && value) {
