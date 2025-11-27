@@ -941,15 +941,14 @@ const confirmDelivery = async (req, res) => {
     }
 
     // Update CMR with receiver signature and optional photo
+    // Note: Duplicate check is already done above, so we can safely update
     await pool.query(
       `UPDATE cmr_documents 
        SET consignee_signed_name = $1,
            consignee_signature = $2,
            consignee_signed_at = CURRENT_TIMESTAMP,
            consignee_photo = $4
-       WHERE id = $3
-       AND consignee_signature IS NULL 
-       AND consignee_photo IS NULL`,
+       WHERE id = $3`,
       [receiverName, receiverSignature, cmr.id, deliveryPhoto || null]
     );
     console.log('✅ Receiver signature saved' + (deliveryPhoto ? ' with photo' : ''));
