@@ -940,18 +940,31 @@ const confirmDelivery = async (req, res) => {
       });
     }
 
-    // Update CMR with receiver signature and optional photo
+    // Update CMR with receiver signature OR photo (not both!)
     // Note: Duplicate check is already done above, so we can safely update
-    await pool.query(
-      `UPDATE cmr_documents 
-       SET consignee_signed_name = $1,
-           consignee_signature = $2,
-           consignee_signed_at = CURRENT_TIMESTAMP,
-           consignee_photo = $4
-       WHERE id = $3`,
-      [receiverName, receiverSignature, cmr.id, deliveryPhoto || null]
-    );
-    console.log('✅ Receiver signature saved' + (deliveryPhoto ? ' with photo' : ''));
+    if (receiverSignature) {
+      // Save signature only
+      await pool.query(
+        `UPDATE cmr_documents 
+         SET consignee_signed_name = $1,
+             consignee_signature = $2,
+             consignee_signed_at = CURRENT_TIMESTAMP
+         WHERE id = $3`,
+        [receiverName, receiverSignature, cmr.id]
+      );
+      console.log('✅ Receiver signature saved');
+    } else if (deliveryPhoto) {
+      // Save photo only
+      await pool.query(
+        `UPDATE cmr_documents 
+         SET consignee_signed_name = $1,
+             consignee_photo = $2,
+             consignee_signed_at = CURRENT_TIMESTAMP
+         WHERE id = $3`,
+        [receiverName, deliveryPhoto, cmr.id]
+      );
+      console.log('✅ Delivery photo saved');
+    }
 
     // Update order with delivery waiting time if provided
     if (deliveryWaitingMinutes && deliveryWaitingMinutes > 0) {
