@@ -211,11 +211,14 @@ const ContractorDashboard = () => {
         alert('Zustellung erfolgreich bestätigt! Der Kunde wurde benachrichtigt und das CMR-Dokument wurde versendet.');
       } else {
         console.log('✅ [DASHBOARD] Stop completed, more stops remaining');
-        alert('Stop erfolgreich abgeschlossen! Weitere Stops ausstehend.');
+        // Don't show alert here - CMRSignature will handle it
       }
       
       setSelectedOrderForDelivery(null);
       fetchOrders();
+      
+      // Return result so CMRSignature can use it
+      return result;
     } catch (error) {
       console.error('❌ [DASHBOARD] Error confirming delivery:', error);
       console.error('❌ [DASHBOARD] Error message:', error.message);

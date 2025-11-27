@@ -209,21 +209,21 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
       
       // Call onComplete which handles the API call
       console.log('🔄 [DELIVERY] Calling onComplete...');
-      await onComplete(data);
+      const response = await onComplete(data);
       console.log('✅ [DELIVERY] onComplete finished successfully');
+      console.log('📊 [DELIVERY] Backend response:', response);
       
-      // If multi-stop, reload and check status
+      // If multi-stop, reload and check status from BACKEND RESPONSE (not cached data!)
       if (isMultiStop) {
         console.log('🔄 [DELIVERY] Reloading CMR group...');
         await loadCMRGroup();
         
-        // Check if all stops are completed NOW (after reload)
-        const allCompleted = cmrGroup.cmrs.every(cmr => 
-          cmr.consignee_signature || cmr.delivery_photo_base64 || cmr.consignee_photo
-        );
+        // IMPORTANT: Use backend response, NOT cached frontend data!
+        // The backend has the REAL data from database, frontend has cached data
+        const allCompleted = response?.allStopsCompleted || false;
 
         console.log(`✅ [DELIVERY] Stop ${currentStopIndex + 1}/${cmrGroup.cmrs.length} completed`);
-        console.log(`📊 [DELIVERY] All stops completed: ${allCompleted}`);
+        console.log(`📊 [DELIVERY] All stops completed (from backend): ${allCompleted}`);
 
         if (!allCompleted) {
           // More stops remaining
@@ -243,6 +243,8 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
         } else {
           // All stops done - onComplete already handled the completion
           console.log('🎉 [DELIVERY] All stops completed - order finished!');
+          // Close modal after all stops are done
+          onClose();
         }
       } else {
         console.log('ℹ️ [DELIVERY] Single-stop order completed');
