@@ -72,17 +72,20 @@ let warmupInterval = null;
 const startConnectionWarming = () => {
   if (warmupInterval) return;
   
-  warmupInterval = setInterval(async () => {
-    if (isBusinessHours()) {
-      try {
-        // Simple query to keep connections warm
-        await pool.query('SELECT 1');
-        console.log('🔥 Connection warmed (business hours)');
-      } catch (error) {
-        console.error('⚠️ Connection warming failed:', error.message);
+  // Wait 10 seconds before starting to let DB initialize
+  setTimeout(() => {
+    warmupInterval = setInterval(async () => {
+      if (isBusinessHours()) {
+        try {
+          // Simple query to keep connections warm with retry
+          await queryWithRetry('SELECT 1', [], 2);
+          console.log('🔥 Connection warmed (business hours)');
+        } catch (error) {
+          console.error('⚠️ Connection warming failed:', error.message);
+        }
       }
-    }
-  }, 30000); // Every 30 seconds
+    }, 30000); // Every 30 seconds
+  }, 10000);
 };
 
 // Health check - more aggressive during business hours
@@ -90,31 +93,27 @@ let healthCheckInterval = null;
 const startHealthCheck = () => {
   if (healthCheckInterval) return;
   
-  healthCheckInterval = setInterval(async () => {
-    const interval = isBusinessHours() ? 60000 : 300000; // 1min vs 5min
-    
-    try {
-      const start = Date.now();
-      await pool.query('SELECT NOW()');
-      const duration = Date.now() - start;
-      
-      if (duration > 1000) {
-        console.warn(`⚠️ Slow DB response: ${duration}ms`);
-      }
-    } catch (error) {
-      console.error('❌ Health check failed:', error.message);
-      // Try to recover
+  // Wait 15 seconds before starting to let DB initialize
+  setTimeout(() => {
+    healthCheckInterval = setInterval(async () => {
       try {
-        await pool.query('SELECT 1');
-        console.log('✅ Connection recovered');
-      } catch (recoveryError) {
-        console.error('❌ Recovery failed:', recoveryError.message);
+        const start = Date.now();
+        await queryWithRetry('SELECT NOW()', [], 2);
+        const duration = Date.now() - start;
+        
+        if (duration > 1000) {
+          console.warn(`⚠️ Slow DB response: ${duration}ms`);
+        } else {
+          console.log(`✅ Health check passed (${duration}ms)`);
+        }
+      } catch (error) {
+        console.error('❌ Health check failed:', error.message);
       }
-    }
-  }, isBusinessHours() ? 60000 : 300000);
+    }, isBusinessHours() ? 60000 : 300000); // 1min vs 5min
+  }, 15000);
 };
 
-// Start monitoring
+// Start monitoring (delayed to allow DB to initialize)
 startConnectionWarming();
 startHealthCheck();
 
@@ -132,32 +131,48 @@ process.on('SIGTERM', async () => {
 const queryWithRetry = async (text, params, maxRetries = null) => {
   // More retries during business hours
   const retries = maxRetries || (isBusinessHours() ? 5 : 3);
+  let lastError;
   
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      return await pool.query(text, params);
+      const result = await pool.query(text, params);
+      
+      // Log successful retry
+      if (attempt > 1) {
+        console.log(`✅ Query succeeded on attempt ${attempt}/${retries}`);
+      }
+      
+      return result;
     } catch (error) {
-      console.error(`❌ Query failed (attempt ${attempt}/${retries}):`, error.message);
+      lastError = error;
       
       // Check if it's a connection error
       const isConnectionError = 
         error.message.includes('Connection terminated') ||
         error.message.includes('connection timeout') ||
+        error.message.includes('ECONNREFUSED') ||
         error.code === 'ECONNRESET' ||
         error.code === 'ETIMEDOUT' ||
+        error.code === 'ENOTFOUND' ||
         error.code === '57P01'; // admin_shutdown
       
       if (isConnectionError && attempt < retries) {
         // Faster retry during business hours
         const delay = isBusinessHours() ? attempt * 500 : attempt * 1000;
+        console.log(`⚠️ Query failed (attempt ${attempt}/${retries}): ${error.message}`);
         console.log(`   ⏳ Retrying in ${delay}ms... (Business hours: ${isBusinessHours()})`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
       
-      throw error;
+      // Last attempt or non-connection error
+      if (attempt === retries) {
+        console.error(`❌ Query failed after ${retries} attempts:`, error.message);
+      }
     }
   }
+  
+  throw lastError;
 };
 
 // Export both pool and retry wrapper
