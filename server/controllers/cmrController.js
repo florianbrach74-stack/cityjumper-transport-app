@@ -824,8 +824,15 @@ const confirmPickup = async (req, res) => {
       order: { ...order, status: 'picked_up' }
     });
   } catch (error) {
-    console.error('❌ Confirm pickup error:', error);
-    res.status(500).json({ error: 'Server error while confirming pickup' });
+    console.error('❌❌❌ [BACKEND] CRITICAL ERROR in confirmPickup ❌❌❌');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('🏁 [BACKEND] ========== END PICKUP CONFIRMATION (ERROR) ==========');
+    res.status(500).json({ 
+      error: 'Server error while confirming pickup',
+      details: error.message 
+    });
   }
 };
 
@@ -994,16 +1001,21 @@ const confirmDelivery = async (req, res) => {
     // Update order with delivery waiting time if provided
     if (deliveryWaitingMinutes && deliveryWaitingMinutes > 0) {
       console.log('⏱️ Saving delivery waiting time...');
-      await pool.query(
-        `UPDATE transport_orders 
-         SET delivery_waiting_minutes = $1,
-             delivery_waiting_notes = $2
-         WHERE id = $3`,
-        [deliveryWaitingMinutes, waitingNotes || null, orderId]
-      );
-      console.log(`✅ Delivery waiting time saved: ${deliveryWaitingMinutes} minutes`);
+      try {
+        await pool.query(
+          `UPDATE transport_orders 
+           SET delivery_waiting_minutes = $1,
+               delivery_waiting_notes = $2
+           WHERE id = $3`,
+          [deliveryWaitingMinutes, waitingNotes || null, orderId]
+        );
+        console.log(`✅ Delivery waiting time saved: ${deliveryWaitingMinutes} minutes`);
+      } catch (waitingTimeError) {
+        console.error('⚠️ Failed to save waiting time (non-critical):', waitingTimeError.message);
+      }
     }
 
+    console.log('📊 [BACKEND] Calculating waiting time fee...');
     // Calculate total waiting time and fee
     // IMPORTANT: The 30 minutes free allowance applies to the TOTAL waiting time, not per location
     const totalPickupWaiting = order.pickup_waiting_minutes || 0;
@@ -1187,10 +1199,11 @@ const confirmDelivery = async (req, res) => {
       order: { ...order, status: 'completed' }
     });
   } catch (error) {
-    console.error('❌ [BACKEND] Confirm delivery error:', error);
-    console.error('❌ [BACKEND] Error details:', error.message);
-    console.error('❌ [BACKEND] Error stack:', error.stack);
-    console.log('🏁 [BACKEND] ========== END DELIVERY CONFIRMATION (ERROR) ==========');
+    console.error('❌❌❌ [BACKEND] CRITICAL ERROR in confirmDelivery ❌❌❌');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('🏁 [BACKEND] ========== END DELIVERY CONFIRMATION (ERROR) ==========');
     res.status(500).json({ 
       error: 'Server error while confirming delivery',
       details: error.message 
