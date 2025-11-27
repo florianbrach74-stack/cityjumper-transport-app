@@ -149,10 +149,20 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       const suggestedPickupTo = addMinutesToTime(value, 30);
       const shouldUpdatePickupTo = !formData.pickup_time_to || formData.pickup_time_to < value;
       
+      // WICHTIG: Zustellzeit Bis muss mindestens Abholzeit Von + 30min sein
+      const minDeliveryTimeTo = addMinutesToTime(value, 30);
+      let newDeliveryTimeTo = formData.delivery_time_to;
+      
+      // Wenn Zustellzeit Bis kleiner als Minimum, aktualisiere sie
+      if (!formData.delivery_time_to || formData.delivery_time_to < minDeliveryTimeTo) {
+        newDeliveryTimeTo = minDeliveryTimeTo;
+      }
+      
       setFormData((prev) => ({
         ...prev,
         [name]: value,
         pickup_time_to: shouldUpdatePickupTo ? suggestedPickupTo : prev.pickup_time_to,
+        delivery_time_to: newDeliveryTimeTo,
       }));
     } else if (name === 'pickup_time_to' && value) {
       // WICHTIG: Abholzeit Bis darf NIEMALS größer als Zustellzeit Bis sein
@@ -176,7 +186,19 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         [name]: value,
       }));
     } else if (name === 'delivery_time_to' && value) {
-      // WICHTIG: Zustellzeit Bis muss >= Abholzeit Bis sein
+      // WICHTIG: Zustellzeit Bis muss >= Abholzeit Von + 30min sein (Mindestfahrzeit!)
+      const minDeliveryTimeTo = addMinutesToTime(formData.pickup_time_from || '00:00', 30);
+      
+      if (value < minDeliveryTimeTo) {
+        alert(`Zustellzeit "Bis" muss mindestens Abholzeit "Von" + 30min sein (${minDeliveryTimeTo})!`);
+        setFormData((prev) => ({
+          ...prev,
+          [name]: minDeliveryTimeTo,
+        }));
+        return;
+      }
+      
+      // ZUSÄTZLICH: Zustellzeit Bis muss >= Abholzeit Bis sein (falls Abholzeit Bis später ist)
       if (formData.pickup_time_to && value < formData.pickup_time_to) {
         alert(`Zustellzeit "Bis" (${value}) darf nicht vor Abholzeit "Bis" (${formData.pickup_time_to}) liegen!`);
         setFormData((prev) => ({
