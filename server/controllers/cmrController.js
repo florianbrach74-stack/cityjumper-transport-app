@@ -867,13 +867,23 @@ const confirmDelivery = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    // Get next pending CMR for multi-stop orders
+    // Get CMR - use specific cmrId if provided (for multi-stop), otherwise get next pending
     const cmrGroupId = `ORDER-${orderId}`;
-    let cmr = await CMR.getNextPendingDelivery(cmrGroupId);
+    const { cmrId } = req.body;
     
-    // Fallback to single CMR if not multi-stop
-    if (!cmr) {
-      cmr = await CMR.findByOrderId(orderId);
+    let cmr;
+    if (cmrId) {
+      // Specific CMR requested (multi-stop)
+      cmr = await CMR.findById(cmrId);
+      console.log(`📋 Using specific CMR #${cmrId}`);
+    } else {
+      // Get next pending CMR for multi-stop orders
+      cmr = await CMR.getNextPendingDelivery(cmrGroupId);
+      
+      // Fallback to single CMR if not multi-stop
+      if (!cmr) {
+        cmr = await CMR.findByOrderId(orderId);
+      }
     }
     
     if (!cmr) {

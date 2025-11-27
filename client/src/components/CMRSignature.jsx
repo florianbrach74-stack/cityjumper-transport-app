@@ -163,43 +163,30 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
         receiverSignature: receiverNotHome ? null : receiverSigRef.current.toDataURL(),
         deliveryPhoto: deliveryPhoto || undefined,
         deliveryWaitingMinutes: parseInt(waitingMinutes) || 0,
-        waitingNotes: waitingNotes.trim() || undefined
+        waitingNotes: waitingNotes.trim() || undefined,
+        cmrId: currentCMR?.id // WICHTIG: CMR ID mitschicken für Multi-Stop
       };
 
-      // If multi-stop, save to specific CMR
-      if (isMultiStop && currentCMR) {
-        const token = localStorage.getItem('token');
-        
-        // Save photo if provided
-        if (deliveryPhoto) {
-          await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/${currentCMR.id}/delivery-photo`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              photoBase64: deliveryPhoto
-            })
-          });
-        }
-
-        // Reload CMR group to check completion status
+      console.log('📦 Submitting delivery for CMR:', currentCMR?.id);
+      
+      // Call onComplete which handles the API call
+      await onComplete(data);
+      
+      // If multi-stop, reload and check status
+      if (isMultiStop) {
         await loadCMRGroup();
         
-        // Check if all stops are completed
+        // Check if all stops are completed NOW (after reload)
         const allCompleted = cmrGroup.cmrs.every(cmr => 
           cmr.consignee_signature || cmr.delivery_photo_base64
         );
 
-        if (allCompleted) {
-          // All deliveries done!
-          console.log('🎉 All deliveries completed!');
-          await onComplete(data);
-        } else {
-          // Stop saved, but more stops remaining
-          console.log('✅ Stop saved, more deliveries pending');
-          alert(`Stop ${currentStopIndex + 1}/${cmrGroup.cmrs.length} erfolgreich abgeschlossen!\n\nSie können jetzt:\n- Weitere Stops abschließen\n- Zurück zum Dashboard gehen\n- Andere Aufträge bearbeiten`);
+        console.log(`✅ Stop ${currentStopIndex + 1}/${cmrGroup.cmrs.length} completed`);
+        console.log(`📊 All stops completed: ${allCompleted}`);
+
+        if (!allCompleted) {
+          // More stops remaining
+          alert(`Stop ${currentStopIndex + 1}/${cmrGroup.cmrs.length} erfolgreich abgeschlossen!\n\nWeitere Stops ausstehend.\nSie können jetzt:\n- Den nächsten Stop abschließen\n- Zurück zum Dashboard gehen\n- Andere Aufträge bearbeiten`);
           
           // Reset form for next delivery
           setReceiverName('');
@@ -207,16 +194,14 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
           setDeliveryPhoto(null);
           setWaitingMinutes(0);
           setWaitingNotes('');
-          receiverSigRef.current?.clear();
-          setSubmitting(false);
+          if (receiverSigRef.current) receiverSigRef.current.clear();
           
-          // Close modal - contractor can reopen to do next stop
+          // Close modal
           onClose();
-          return;
+        } else {
+          // All stops done - onComplete already handled the completion
+          console.log('🎉 All stops completed - order finished!');
         }
-      } else {
-        // Single delivery
-        await onComplete(data);
       }
     } catch (error) {
       console.error('Error submitting delivery:', error);
