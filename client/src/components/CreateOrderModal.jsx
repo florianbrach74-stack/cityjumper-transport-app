@@ -139,25 +139,68 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     // Auto-fill "Bis" Zeit mit +30min wenn "Von" geändert wird
     if (name === 'pickup_time_from' && value) {
       const suggestedTo = addMinutesToTime(value, 30);
-      // Aktualisiere "Bis" wenn:
-      // 1. "Bis" ist leer ODER
-      // 2. "Bis" ist vor "Von" (ungültig)
       const shouldUpdateTo = !formData.pickup_time_to || formData.pickup_time_to <= value;
+      
+      // Wenn Lieferzeit "Von" kleiner als neue Abholzeit ist, aktualisiere sie
+      let newDeliveryTimeFrom = formData.delivery_time_from;
+      if (formData.delivery_time_from && formData.delivery_time_from < value) {
+        newDeliveryTimeFrom = value;
+      }
+      
       setFormData((prev) => ({
         ...prev,
         [name]: value,
         pickup_time_to: shouldUpdateTo ? suggestedTo : prev.pickup_time_to,
+        delivery_time_from: newDeliveryTimeFrom,
+        delivery_time_to: newDeliveryTimeFrom ? addMinutesToTime(newDeliveryTimeFrom, 30) : prev.delivery_time_to
       }));
-    } else if (name === 'delivery_time_from' && value) {
-      const suggestedTo = addMinutesToTime(value, 30);
-      // Aktualisiere "Bis" wenn:
-      // 1. "Bis" ist leer ODER
-      // 2. "Bis" ist vor "Von" (ungültig)
-      const shouldUpdateTo = !formData.delivery_time_to || formData.delivery_time_to <= value;
+    } else if (name === 'pickup_time_to' && value) {
+      // Wenn Lieferzeit "Von" kleiner als neue Abholzeit "Bis" ist, aktualisiere sie
+      let newDeliveryTimeFrom = formData.delivery_time_from;
+      if (formData.delivery_time_from && formData.delivery_time_from < value) {
+        newDeliveryTimeFrom = addMinutesToTime(value, 30);
+      }
+      
       setFormData((prev) => ({
         ...prev,
         [name]: value,
+        delivery_time_from: newDeliveryTimeFrom,
+        delivery_time_to: newDeliveryTimeFrom ? addMinutesToTime(newDeliveryTimeFrom, 30) : prev.delivery_time_to
+      }));
+    } else if (name === 'delivery_time_from' && value) {
+      // Lieferzeit "Von" darf NICHT kleiner als Abholzeit "Von" sein
+      const minDeliveryTime = formData.pickup_time_from || '00:00';
+      const adjustedValue = value < minDeliveryTime ? minDeliveryTime : value;
+      
+      const suggestedTo = addMinutesToTime(adjustedValue, 30);
+      const shouldUpdateTo = !formData.delivery_time_to || formData.delivery_time_to <= adjustedValue;
+      
+      if (value < minDeliveryTime) {
+        alert(`Zustellzeit "Von" darf nicht vor der Abholzeit (${minDeliveryTime}) liegen!`);
+      }
+      
+      setFormData((prev) => ({
+        ...prev,
+        [name]: adjustedValue,
         delivery_time_to: shouldUpdateTo ? suggestedTo : prev.delivery_time_to,
+      }));
+    } else if (name === 'delivery_time_to' && value) {
+      // Lieferzeit "Bis" muss mindestens +30min zur Lieferzeit "Von" sein
+      if (formData.delivery_time_from) {
+        const minDeliveryTimeTo = addMinutesToTime(formData.delivery_time_from, 30);
+        if (value < minDeliveryTimeTo) {
+          alert(`Zustellzeit "Bis" muss mindestens 30 Minuten nach "Von" (${minDeliveryTimeTo}) liegen!`);
+          setFormData((prev) => ({
+            ...prev,
+            [name]: minDeliveryTimeTo,
+          }));
+          return;
+        }
+      }
+      
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
       }));
     } else {
       setFormData((prev) => ({
@@ -389,7 +432,15 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
             cargo_height: formData.height ? parseFloat(formData.height) : null,
           };
           
-          await ordersAPI.post('/saved-routes', routeData);
+          const token = localStorage.getItem('token');
+          await fetch('https://cityjumper-api-production-01e4.up.railway.app/api/saved-routes', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(routeData)
+          });
           console.log('Route saved as template:', templateName);
         } catch (err) {
           console.error('Error saving route template:', err);
