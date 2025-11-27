@@ -46,6 +46,14 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
         setIsMultiStop(true);
         setCmrGroup(data);
         console.log('📦 Multi-stop order detected:', data.cmrs.length, 'deliveries');
+        
+        // Find first uncompleted stop
+        const firstUncompletedIndex = data.cmrs.findIndex(cmr => 
+          !cmr.consignee_signature && !cmr.delivery_photo_base64
+        );
+        if (firstUncompletedIndex !== -1) {
+          setCurrentStopIndex(firstUncompletedIndex);
+        }
       }
     } catch (error) {
       console.error('Error loading CMR group:', error);
@@ -251,49 +259,75 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
                       Welchen Stop möchten Sie jetzt abschließen?
                     </label>
                     <div className="grid grid-cols-1 gap-2">
-                      {cmrGroup?.cmrs.map((cmr, index) => {
-                        const isCompleted = cmr.consignee_signature || cmr.delivery_photo_base64;
-                        const isCurrent = index === currentStopIndex;
-                        
-                        return (
-                          <button
-                            key={cmr.id}
-                            onClick={() => setCurrentStopIndex(index)}
-                            disabled={isCompleted}
-                            className={`p-3 rounded-lg border-2 text-left transition-all ${
-                              isCurrent 
-                                ? 'border-primary-600 bg-primary-50' 
-                                : isCompleted
-                                ? 'border-green-300 bg-green-50 opacity-60 cursor-not-allowed'
-                                : 'border-gray-300 hover:border-primary-400'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  <span className={`text-sm font-medium ${
-                                    isCurrent ? 'text-primary-700' : isCompleted ? 'text-green-700' : 'text-gray-700'
-                                  }`}>
-                                    Stop {index + 1}/{totalStops}
-                                  </span>
-                                  {isCompleted && (
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
-                                  )}
+                      {cmrGroup?.cmrs
+                        .filter(cmr => !cmr.consignee_signature && !cmr.delivery_photo_base64) // Nur offene Stops
+                        .map((cmr, filteredIndex) => {
+                          const originalIndex = cmrGroup.cmrs.indexOf(cmr);
+                          const isCurrent = originalIndex === currentStopIndex;
+                          
+                          return (
+                            <button
+                              key={cmr.id}
+                              onClick={() => setCurrentStopIndex(originalIndex)}
+                              className={`p-3 rounded-lg border-2 text-left transition-all ${
+                                isCurrent 
+                                  ? 'border-primary-600 bg-primary-50' 
+                                  : 'border-gray-300 hover:border-primary-400'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <span className={`text-sm font-medium ${
+                                      isCurrent ? 'text-primary-700' : 'text-gray-700'
+                                    }`}>
+                                      Stop {originalIndex + 1}/{totalStops}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {cmr.consignee_name || 'Empfänger'}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {cmr.consignee_address}, {cmr.consignee_postal_code} {cmr.consignee_city}
+                                  </p>
                                 </div>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {cmr.consignee_name || 'Empfänger'}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {cmr.consignee_address}, {cmr.consignee_postal_code} {cmr.consignee_city}
-                                </p>
+                                {isCurrent && (
+                                  <ArrowRight className="h-5 w-5 text-primary-600" />
+                                )}
                               </div>
-                              {isCurrent && !isCompleted && (
-                                <ArrowRight className="h-5 w-5 text-primary-600" />
-                              )}
+                            </button>
+                          );
+                        })}
+                      
+                      {/* Show completed stops separately */}
+                      {cmrGroup?.cmrs
+                        .filter(cmr => cmr.consignee_signature || cmr.delivery_photo_base64)
+                        .map((cmr, index) => {
+                          const originalIndex = cmrGroup.cmrs.indexOf(cmr);
+                          return (
+                            <div
+                              key={cmr.id}
+                              className="p-3 rounded-lg border-2 border-green-300 bg-green-50 opacity-60"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-sm font-medium text-green-700">
+                                      Stop {originalIndex + 1}/{totalStops}
+                                    </span>
+                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                  </div>
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {cmr.consignee_name || 'Empfänger'}
+                                  </p>
+                                  <p className="text-xs text-green-600 font-medium">
+                                    ✓ Abgeschlossen
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                          </button>
-                        );
-                      })}
+                          );
+                        })}
                     </div>
                   </div>
                   

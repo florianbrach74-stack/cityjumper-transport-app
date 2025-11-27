@@ -924,9 +924,14 @@ const confirmDelivery = async (req, res) => {
       console.log(`⏱️ Total waiting time: ${totalWaitingMinutes} min - within free 30 min allowance`);
     }
 
-    // Check if this is a multi-stop order and if all stops are completed
+    // IMPORTANT: Reload CMRs from database to get fresh data including the one we just updated
     const allCMRs = await CMR.findByGroupId(cmrGroupId);
     const isMultiStop = allCMRs.length > 1;
+    
+    console.log(`📦 Checking completion status for ${allCMRs.length} CMRs:`);
+    allCMRs.forEach((c, i) => {
+      console.log(`   CMR ${i + 1}: ${c.consignee_signature ? '✅ Signature' : c.delivery_photo_base64 ? '✅ Photo' : '❌ Missing'}`);
+    });
     
     let allStopsCompleted = false;
     if (isMultiStop) {
