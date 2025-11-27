@@ -604,14 +604,56 @@ const downloadCMRPdf = async (req, res) => {
 
     console.log('✅ Order found:', order.id);
     
-    // Generate PDF (always regenerate to ensure it's up to date)
-    console.log('🔄 Generating PDF...');
-    const { filepath, filename } = await CMRPdfGenerator.generateCMR(cmr, order);
+    // Check if this is a multi-stop order
+    const isMultiStop = !!cmr.cmr_group_id;
+    console.log('📊 Is multi-stop:', isMultiStop);
+    
+    let filepath, filename;
+    const fs = require('fs');
+    
+    if (isMultiStop) {
+      // For multi-stop orders, check if all stops are completed
+      const pool = require('../config/database');
+      const cmrsResult = await pool.query(
+        'SELECT * FROM cmr_documents WHERE cmr_group_id = $1 ORDER BY id',
+        [cmr.cmr_group_id]
+      );
+      const allCmrs = cmrsResult.rows;
+      
+      const allCompleted = allCmrs.every(c => 
+        c.consignee_signature || c.delivery_photo_base64 || c.consignee_photo
+      );
+      
+      console.log(`📊 Multi-stop order: ${allCmrs.length} stops, all completed: ${allCompleted}`);
+      
+      if (allCompleted) {
+        // All stops completed - return combined PDF
+        console.log('🔄 Generating combined PDF for all stops...');
+        const MultiStopPdfGenerator = require('../services/multiStopPdfGenerator');
+        const result = await MultiStopPdfGenerator.generateCombinedPDF(order.id, cmr.cmr_group_id);
+        filepath = result.filepath;
+        filename = result.filename;
+        console.log('✅ Combined PDF generated:', filename);
+      } else {
+        // Not all stops completed - return individual CMR
+        console.log('🔄 Generating individual CMR (not all stops completed)...');
+        const result = await CMRPdfGenerator.generateCMR(cmr, order);
+        filepath = result.filepath;
+        filename = result.filename;
+        console.log('✅ Individual CMR generated:', filename);
+      }
+    } else {
+      // Single stop - generate regular CMR PDF
+      console.log('🔄 Generating single-stop CMR PDF...');
+      const result = await CMRPdfGenerator.generateCMR(cmr, order);
+      filepath = result.filepath;
+      filename = result.filename;
+      console.log('✅ Single CMR generated:', filename);
+    }
     
     console.log('✅ PDF generated:', filepath);
     
     // Check if file exists
-    const fs = require('fs');
     if (!fs.existsSync(filepath)) {
       console.error('❌ PDF file not found at:', filepath);
       return res.status(404).json({ error: 'PDF file not found' });
