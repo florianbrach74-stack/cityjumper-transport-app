@@ -99,7 +99,7 @@ const createOrder = async (req, res) => {
     let totalDuration = 0;
     
     if (pickupStops.length > 0 || deliveryStops.length > 0) {
-      // Multi-stop order - store stops without calculating route (route is calculated in frontend)
+      // Multi-stop order
       console.log('Processing multi-stop order:', { pickupStops: pickupStops.length, deliveryStops: deliveryStops.length });
       
       // Store stops in database
@@ -113,10 +113,32 @@ const createOrder = async (req, res) => {
       
       console.log(`Multi-stop: ${totalStops} stops, fee: €${orderData.extra_stops_fee}`);
       
-      // For multi-stop, use estimated distance/duration (route was calculated in frontend)
-      // Set to 0 or use default values - actual route is in frontend
-      totalDistance = 0;
-      totalDuration = 0;
+      // Use distance from frontend if available, otherwise calculate fallback
+      if (orderData.distance_km && orderData.distance_km > 0) {
+        totalDistance = orderData.distance_km;
+        totalDuration = orderData.duration_minutes || 0;
+        console.log(`Using frontend route: ${totalDistance}km, ${totalDuration}min`);
+      } else {
+        // Fallback: Calculate at least the main route (pickup to delivery)
+        console.log('Frontend route unavailable, calculating fallback...');
+        try {
+          const { distance_km, duration_minutes } = await calculateDistanceAndDuration(
+            orderData.pickup_address,
+            orderData.pickup_postal_code,
+            orderData.pickup_city,
+            orderData.delivery_address,
+            orderData.delivery_postal_code,
+            orderData.delivery_city
+          );
+          totalDistance = distance_km;
+          totalDuration = duration_minutes;
+          console.log(`Fallback route calculated: ${totalDistance}km, ${totalDuration}min`);
+        } catch (error) {
+          console.error('Fallback route calculation failed:', error.message);
+          totalDistance = 0;
+          totalDuration = 0;
+        }
+      }
     } else {
       // Single pickup/delivery
       const { distance_km, duration_minutes, route_geometry } = await calculateDistanceAndDuration(
