@@ -1,19 +1,36 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+// Check if we're in business hours (6:00-20:00 Berlin time)
+const isBusinessHours = () => {
+  const now = new Date();
+  const berlinTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
+  const hour = berlinTime.getHours();
+  return hour >= 6 && hour < 20;
+};
+
+// Aggressive settings for business hours, relaxed for off-hours
+const getPoolConfig = () => {
+  const isBusiness = isBusinessHours();
+  return {
+    max: isBusiness ? 30 : 20, // More connections during business hours
+    min: isBusiness ? 10 : 5, // Keep more connections warm
+    idleTimeoutMillis: isBusiness ? 60000 : 30000, // Keep alive longer (60s vs 30s)
+    connectionTimeoutMillis: isBusiness ? 15000 : 10000, // More time to connect
+    acquireTimeoutMillis: isBusiness ? 30000 : 20000, // More time to acquire
+    allowExitOnIdle: false,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: isBusiness ? 5000 : 10000, // Faster keepalive
+  };
+};
+
 // Support both DATABASE_URL (Railway, Heroku) and individual variables
+const poolConfig = getPoolConfig();
 const pool = process.env.DATABASE_URL
   ? new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-      max: 20, // Maximum pool size
-      min: 5, // Keep minimum connections alive to avoid cold starts
-      idleTimeoutMillis: 30000, // Keep connections alive longer (30s)
-      connectionTimeoutMillis: 10000, // Longer timeout for slow networks (10s)
-      acquireTimeoutMillis: 20000, // More time to wait for connection (20s)
-      allowExitOnIdle: false, // Keep pool alive
-      keepAlive: true, // Enable TCP keepalive
-      keepAliveInitialDelayMillis: 10000, // Start keepalive after 10s
+      ...poolConfig
     })
   : new Pool({
       host: process.env.DB_HOST || 'localhost',
@@ -21,14 +38,7 @@ const pool = process.env.DATABASE_URL
       database: process.env.DB_NAME || 'zipmend_db',
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD,
-      max: 20,
-      min: 5,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
-      acquireTimeoutMillis: 20000,
-      allowExitOnIdle: false,
-      keepAlive: true,
-      keepAliveInitialDelayMillis: 10000,
+      ...poolConfig
     });
 
 pool.on('connect', (client) => {
@@ -57,6 +67,59 @@ pool.query('SELECT NOW()', (err, res) => {
   }
 });
 
+// Connection warming - keep connections alive during business hours
+let warmupInterval = null;
+const startConnectionWarming = () => {
+  if (warmupInterval) return;
+  
+  warmupInterval = setInterval(async () => {
+    if (isBusinessHours()) {
+      try {
+        // Simple query to keep connections warm
+        await pool.query('SELECT 1');
+        console.log('🔥 Connection warmed (business hours)');
+      } catch (error) {
+        console.error('⚠️ Connection warming failed:', error.message);
+      }
+    }
+  }, 30000); // Every 30 seconds
+};
+
+// Health check - more aggressive during business hours
+let healthCheckInterval = null;
+const startHealthCheck = () => {
+  if (healthCheckInterval) return;
+  
+  healthCheckInterval = setInterval(async () => {
+    const interval = isBusinessHours() ? 60000 : 300000; // 1min vs 5min
+    
+    try {
+      const start = Date.now();
+      await pool.query('SELECT NOW()');
+      const duration = Date.now() - start;
+      
+      if (duration > 1000) {
+        console.warn(`⚠️ Slow DB response: ${duration}ms`);
+      }
+    } catch (error) {
+      console.error('❌ Health check failed:', error.message);
+      // Try to recover
+      try {
+        await pool.query('SELECT 1');
+        console.log('✅ Connection recovered');
+      } catch (recoveryError) {
+        console.error('❌ Recovery failed:', recoveryError.message);
+      }
+    }
+  }, isBusinessHours() ? 60000 : 300000);
+};
+
+// Start monitoring
+startConnectionWarming();
+startHealthCheck();
+
+console.log(`🕐 Database monitoring started (Business hours: ${isBusinessHours() ? 'YES' : 'NO'})`);
+
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('🛑 SIGTERM received, closing database pool...');
@@ -65,24 +128,30 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-// Retry wrapper for queries
-const queryWithRetry = async (text, params, maxRetries = 3) => {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+// Retry wrapper for queries - more aggressive during business hours
+const queryWithRetry = async (text, params, maxRetries = null) => {
+  // More retries during business hours
+  const retries = maxRetries || (isBusinessHours() ? 5 : 3);
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       return await pool.query(text, params);
     } catch (error) {
-      console.error(`❌ Query failed (attempt ${attempt}/${maxRetries}):`, error.message);
+      console.error(`❌ Query failed (attempt ${attempt}/${retries}):`, error.message);
       
       // Check if it's a connection error
       const isConnectionError = 
         error.message.includes('Connection terminated') ||
         error.message.includes('connection timeout') ||
         error.code === 'ECONNRESET' ||
+        error.code === 'ETIMEDOUT' ||
         error.code === '57P01'; // admin_shutdown
       
-      if (isConnectionError && attempt < maxRetries) {
-        console.log(`   ⏳ Retrying in ${attempt}s...`);
-        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+      if (isConnectionError && attempt < retries) {
+        // Faster retry during business hours
+        const delay = isBusinessHours() ? attempt * 500 : attempt * 1000;
+        console.log(`   ⏳ Retrying in ${delay}ms... (Business hours: ${isBusinessHours()})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
       
