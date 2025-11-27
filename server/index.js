@@ -78,6 +78,7 @@ app.use('/api/invoices', require('./routes/invoice-history'));
 app.use('/api/email-templates', require('./routes/email-templates'));
 app.use('/api/system', require('./routes/system-monitoring'));
 app.use('/api/backups', require('./routes/database-backups'));
+app.use('/api/saved-routes', require('./routes/savedRoutes'));
 
 // Serve static files (CMR PDFs)
 const path = require('path');

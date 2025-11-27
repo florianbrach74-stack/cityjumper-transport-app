@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ordersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { X, MapPin, Calendar, Truck, Package, AlertCircle } from 'lucide-react';
+import { X, MapPin, Calendar, Truck, Package, AlertCircle, Star } from 'lucide-react';
 import AddressSearch from './AddressSearch';
 import RouteMap from './RouteMap';
 import MultiStopManager from './MultiStopManager';
+import SavedRoutesManager from './SavedRoutesManager';
 
 const CreateOrderModal = ({ onClose, onSuccess }) => {
   const { user } = useAuth();
@@ -65,6 +66,9 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const [legalDelivery, setLegalDelivery] = useState(false);
   const [showLegalDeliveryInfo, setShowLegalDeliveryInfo] = useState(false);
   const [loadingHelpFee, setLoadingHelpFee] = useState(0);
+  const [showSavedRoutes, setShowSavedRoutes] = useState(false);
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
 
   const vehicleTypes = [
     'Kleintransporter (bis 2 Paletten)',
@@ -229,6 +233,46 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       }
     }
   };
+
+  // Load a saved route into the form
+  const handleLoadSavedRoute = (route) => {
+    setFormData(prev => ({
+      ...prev,
+      pickup_address: route.pickup_address,
+      pickup_city: route.pickup_city,
+      pickup_postal_code: route.pickup_postal_code,
+      pickup_country: route.pickup_country || 'Deutschland',
+      pickup_company: route.pickup_company || prev.pickup_company,
+      pickup_contact_name: route.pickup_contact_name || prev.pickup_contact_name,
+      pickup_contact_phone: route.pickup_contact_phone || prev.pickup_contact_phone,
+      delivery_address: route.delivery_address,
+      delivery_city: route.delivery_city,
+      delivery_postal_code: route.delivery_postal_code,
+      delivery_country: route.delivery_country || 'Deutschland',
+      delivery_company: route.delivery_company || '',
+      delivery_contact_name: route.delivery_contact_name || '',
+      delivery_contact_phone: route.delivery_contact_phone || '',
+      description: route.cargo_description || prev.description,
+      weight: route.cargo_weight || prev.weight,
+      length: route.cargo_length || prev.length,
+      width: route.cargo_width || prev.width,
+      height: route.cargo_height || prev.height,
+    }));
+
+    // Set locations for map
+    setPickupLocation({
+      city: route.pickup_city,
+      postalCode: route.pickup_postal_code,
+      country: route.pickup_country || 'Deutschland'
+    });
+    setDeliveryLocation({
+      city: route.delivery_city,
+      postalCode: route.delivery_postal_code,
+      country: route.delivery_country || 'Deutschland'
+    });
+
+    setShowSavedRoutes(false);
+  };
   
   // Aktualisiere Preis und Extra-Stops-Gebühr wenn Stops sich ändern
   useEffect(() => {
@@ -318,6 +362,41 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       console.log('Sending order data:', orderData);
       const response = await ordersAPI.createOrder(orderData);
       console.log('Order created successfully:', response);
+      
+      // Save as template if requested
+      if (saveAsTemplate && templateName) {
+        try {
+          const routeData = {
+            route_name: templateName,
+            pickup_address: formData.pickup_address,
+            pickup_city: formData.pickup_city,
+            pickup_postal_code: formData.pickup_postal_code,
+            pickup_country: formData.pickup_country,
+            pickup_company: formData.pickup_company,
+            pickup_contact_name: formData.pickup_contact_name,
+            pickup_contact_phone: formData.pickup_contact_phone,
+            delivery_address: formData.delivery_address,
+            delivery_city: formData.delivery_city,
+            delivery_postal_code: formData.delivery_postal_code,
+            delivery_country: formData.delivery_country,
+            delivery_company: formData.delivery_company,
+            delivery_contact_name: formData.delivery_contact_name,
+            delivery_contact_phone: formData.delivery_contact_phone,
+            cargo_description: formData.description,
+            cargo_weight: formData.weight ? parseFloat(formData.weight) : null,
+            cargo_length: formData.length ? parseFloat(formData.length) : null,
+            cargo_width: formData.width ? parseFloat(formData.width) : null,
+            cargo_height: formData.height ? parseFloat(formData.height) : null,
+          };
+          
+          await ordersAPI.post('/saved-routes', routeData);
+          console.log('Route saved as template:', templateName);
+        } catch (err) {
+          console.error('Error saving route template:', err);
+          // Don't block order creation if template save fails
+        }
+      }
+      
       onSuccess();
       onClose();
     } catch (err) {
@@ -347,13 +426,30 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         {/* Header */}
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
           <h3 className="text-xl font-semibold text-gray-900">Neuen Transportauftrag erstellen</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 focus:outline-none"
-          >
-            <X className="h-6 w-6" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowSavedRoutes(!showSavedRoutes)}
+              className="flex items-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-700 border border-yellow-300 rounded-lg hover:bg-yellow-100 transition-colors"
+            >
+              <Star className="h-4 w-4" />
+              Gespeicherte Routen
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-500 focus:outline-none"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
         </div>
+
+        {/* Saved Routes Section */}
+        {showSavedRoutes && (
+          <div className="p-6 bg-yellow-50 border-b">
+            <SavedRoutesManager onSelectRoute={handleLoadSavedRoute} />
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -922,7 +1018,39 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
             </div>
           )}
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          {/* Save as Template Option */}
+          <div className="pt-4 border-t">
+            <label className="flex items-center space-x-2 text-sm text-gray-700 mb-4">
+              <input
+                type="checkbox"
+                checked={saveAsTemplate}
+                onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span className="flex items-center">
+                <Star className="h-4 w-4 mr-1 text-yellow-500" />
+                Diese Route als Vorlage speichern
+              </span>
+            </label>
+            
+            {saveAsTemplate && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Vorlagenname *
+                </label>
+                <input
+                  type="text"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder="z.B. Werk Berlin → Lager Hamburg"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  required={saveAsTemplate}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-3">
             <button
               type="button"
               onClick={onClose}
