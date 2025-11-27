@@ -202,6 +202,11 @@ class Order {
         o.loading_help_fee,
         -- Rechtssichere Zustellung (wichtig für Auftragnehmer)
         o.legal_delivery,
+        -- Multi-Stop Info (wichtig für Routenplanung!)
+        o.pickup_stops,
+        o.delivery_stops,
+        o.extra_stops_count,
+        o.extra_stops_fee,
         -- KEINE Beschreibung/Transportgut vor Zuweisung
         -- KEINE genauen Adressen
         -- KEINE Kontaktdaten
