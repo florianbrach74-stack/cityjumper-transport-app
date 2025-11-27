@@ -719,6 +719,23 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {order.pickup_city} → {order.delivery_city}
+                        {(() => {
+                          const deliveryStops = order.delivery_stops 
+                            ? (typeof order.delivery_stops === 'string' ? JSON.parse(order.delivery_stops) : order.delivery_stops)
+                            : [];
+                          const pickupStops = order.pickup_stops
+                            ? (typeof order.pickup_stops === 'string' ? JSON.parse(order.pickup_stops) : order.pickup_stops)
+                            : [];
+                          const hasMultiStop = pickupStops.length > 0 || deliveryStops.length > 0;
+                          
+                          return hasMultiStop && (
+                            <div className="mt-1">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                🚚 {pickupStops.length + deliveryStops.length + 2} Stops
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
