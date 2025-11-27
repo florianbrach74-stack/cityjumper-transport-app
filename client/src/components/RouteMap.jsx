@@ -54,8 +54,16 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
 
   const geocodeAddress = async (address) => {
     try {
+      // Add delay to respect Nominatim rate limits (1 request per second)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'CityJumper Transport App'
+          }
+        }
       );
       const data = await response.json();
       if (data && data.length > 0) {
