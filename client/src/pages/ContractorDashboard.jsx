@@ -171,7 +171,13 @@ const ContractorDashboard = () => {
       cmrId: data.cmrId,
       receiverName: data.receiverName,
       hasSignature: !!data.receiverSignature,
-      hasPhoto: !!data.deliveryPhoto
+      signatureLength: data.receiverSignature ? data.receiverSignature.length : 0,
+      signaturePreview: data.receiverSignature ? data.receiverSignature.substring(0, 50) + '...' : 'null',
+      hasPhoto: !!data.deliveryPhoto,
+      photoLength: data.deliveryPhoto ? data.deliveryPhoto.length : 0,
+      photoPreview: data.deliveryPhoto ? data.deliveryPhoto.substring(0, 50) + '...' : 'null',
+      deliveryWaitingMinutes: data.deliveryWaitingMinutes,
+      waitingNotes: data.waitingNotes
     });
     
     try {

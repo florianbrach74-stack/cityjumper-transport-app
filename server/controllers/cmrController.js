@@ -922,7 +922,9 @@ const confirmDelivery = async (req, res) => {
       stop: `${cmr.delivery_stop_index + 1}/${cmr.total_stops}`,
       consignee: cmr.consignee_name,
       hasSignature: !!cmr.consignee_signature,
-      hasPhoto: !!cmr.delivery_photo_base64
+      hasPhoto: !!(cmr.delivery_photo_base64 || cmr.consignee_photo),
+      hasConsigneePhoto: !!cmr.consignee_photo,
+      hasDeliveryPhotoBase64: !!cmr.delivery_photo_base64
     });
 
     // CRITICAL: Check if this CMR is already completed (check ALL possible fields!)
@@ -947,8 +949,10 @@ const confirmDelivery = async (req, res) => {
       receiverName,
       hasSignature: !!receiverSignature,
       signatureLength: receiverSignature ? receiverSignature.length : 0,
+      signaturePreview: receiverSignature ? receiverSignature.substring(0, 50) + '...' : 'null',
       hasPhoto: !!deliveryPhoto,
-      photoLength: deliveryPhoto ? deliveryPhoto.length : 0
+      photoLength: deliveryPhoto ? deliveryPhoto.length : 0,
+      photoPreview: deliveryPhoto ? deliveryPhoto.substring(0, 50) + '...' : 'null'
     });
 
     if (receiverSignature) {
