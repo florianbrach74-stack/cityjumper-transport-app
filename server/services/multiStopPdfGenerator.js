@@ -115,6 +115,34 @@ class MultiStopPdfGenerator {
       // Transfer signatures based on multi-stop scenario
       this.transferSignatures(cmrs);
       
+      // CRITICAL: Save transferred signatures to database BEFORE generating PDFs!
+      console.log('💾 Saving transferred signatures to database...');
+      const pool = require('../config/database');
+      for (const cmr of cmrs) {
+        try {
+          await pool.query(
+            `UPDATE cmr_documents 
+             SET sender_signature = $1,
+                 sender_signed_at = $2,
+                 carrier_signature = $3,
+                 carrier_signed_by = $4,
+                 carrier_signed_at = $5
+             WHERE id = $6`,
+            [
+              cmr.sender_signature || null,
+              cmr.sender_signed_at || null,
+              cmr.carrier_signature || null,
+              cmr.carrier_signed_by || null,
+              cmr.carrier_signed_at || null,
+              cmr.id
+            ]
+          );
+          console.log(`   ✅ Signatures saved for CMR ${cmr.id}`);
+        } catch (saveError) {
+          console.error(`   ⚠️ Failed to save signatures for CMR ${cmr.id}:`, saveError.message);
+        }
+      }
+      
       // CRITICAL: Only generate PDFs for COMPLETED CMRs!
       const completedCmrs = cmrs.filter(cmr => {
         const hasSignature = cmr.consignee_signature || cmr.shared_receiver_signature;
