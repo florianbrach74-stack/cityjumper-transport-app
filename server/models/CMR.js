@@ -110,20 +110,84 @@ class CMR {
     const isMultiStop = deliveryStops.length > 0 || pickupStops.length > 0;
     const totalStops = deliveryStops.length + 1; // Main delivery + extra delivery stops
     
-    console.log(`Creating CMR for order ${orderId}:`, {
+    console.log(`Creating CMR(s) for order ${orderId}:`, {
       isMultiStop,
       deliveryStops: deliveryStops.length,
       pickupStops: pickupStops.length,
       totalStops
     });
-
-    // Generate CMR number
-    const cmrNumberResult = await pool.query('SELECT generate_cmr_number() as cmr_number');
-    const cmr_number = cmrNumberResult.rows[0].cmr_number;
-
+    
     // Get contractor data for carrier info
     const contractorResult = await pool.query('SELECT * FROM users WHERE id = $1', [order.contractor_id]);
     const contractor = contractorResult.rows[0];
+    
+    // If multi-stop, create ALL CMRs at once
+    if (isMultiStop && deliveryStops.length > 0) {
+      console.log(`📋 Multi-Stop detected! Creating ${totalStops} CMRs...`);
+      const createdCMRs = [];
+      const cmrGroupId = `ORDER-${orderId}`;
+      
+      // Create main delivery CMR (index 0)
+      const mainCMRNumber = (await pool.query('SELECT generate_cmr_number() as cmr_number')).rows[0].cmr_number;
+      const mainCMR = await this.create({
+        order_id: orderId,
+        cmr_group_id: cmrGroupId,
+        delivery_stop_index: 0,
+        total_stops: totalStops,
+        is_multi_stop: true,
+        sender_name: order.pickup_contact_name || 'Absender',
+        sender_address: order.pickup_address,
+        sender_city: order.pickup_city,
+        sender_postal_code: order.pickup_postal_code,
+        sender_country: 'Deutschland',
+        consignee_name: order.delivery_contact_name || 'Empfänger',
+        consignee_address: order.delivery_address,
+        consignee_city: order.delivery_city,
+        consignee_postal_code: order.delivery_postal_code,
+        consignee_country: 'Deutschland',
+        carrier_name: contractor ? (contractor.company_name || `${contractor.first_name} ${contractor.last_name}`) : 'Frachtführer',
+        carrier_address: contractor?.company_address || '',
+        carrier_city: contractor?.company_city || '',
+        carrier_postal_code: contractor?.company_postal_code || ''
+      });
+      createdCMRs.push(mainCMR);
+      console.log(`   ✅ Created CMR 1/${totalStops}: ${mainCMR.cmr_number}`);
+      
+      // Create CMRs for additional delivery stops
+      for (let i = 0; i < deliveryStops.length; i++) {
+        const stop = deliveryStops[i];
+        const stopCMRNumber = (await pool.query('SELECT generate_cmr_number() as cmr_number')).rows[0].cmr_number;
+        const stopCMR = await this.create({
+          order_id: orderId,
+          cmr_group_id: cmrGroupId,
+          delivery_stop_index: i + 1,
+          total_stops: totalStops,
+          is_multi_stop: true,
+          sender_name: order.pickup_contact_name || 'Absender',
+          sender_address: order.pickup_address,
+          sender_city: order.pickup_city,
+          sender_postal_code: order.pickup_postal_code,
+          sender_country: 'Deutschland',
+          consignee_name: stop.contact_name || 'Empfänger',
+          consignee_address: stop.address,
+          consignee_city: stop.city,
+          consignee_postal_code: stop.postal_code,
+          consignee_country: stop.country || 'Deutschland',
+          carrier_name: contractor ? (contractor.company_name || `${contractor.first_name} ${contractor.last_name}`) : 'Frachtführer',
+          carrier_address: contractor?.company_address || '',
+          carrier_city: contractor?.company_city || '',
+          carrier_postal_code: contractor?.company_postal_code || ''
+        });
+        createdCMRs.push(stopCMR);
+        console.log(`   ✅ Created CMR ${i + 2}/${totalStops}: ${stopCMR.cmr_number}`);
+      }
+      
+      console.log(`✅ Created ${createdCMRs.length} CMRs for multi-stop order ${orderId}`);
+      return createdCMRs[0]; // Return first CMR for compatibility
+    }
+    
+    // Single delivery - create one CMR
+    const cmr_number = (await pool.query('SELECT generate_cmr_number() as cmr_number')).rows[0].cmr_number;
 
     const query = `
       INSERT INTO cmr_documents (
