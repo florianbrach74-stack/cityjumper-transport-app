@@ -56,15 +56,15 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
           console.log(`   CMR ${idx + 1}:`, {
             id: cmr.id,
             stop: `${cmr.delivery_stop_index + 1}/${cmr.total_stops}`,
-            completed: !!(cmr.consignee_signature || cmr.delivery_photo_base64),
+            completed: !!(cmr.consignee_signature || cmr.delivery_photo_base64 || cmr.consignee_photo),
             hasSignature: !!cmr.consignee_signature,
-            hasPhoto: !!cmr.delivery_photo_base64
+            hasPhoto: !!(cmr.delivery_photo_base64 || cmr.consignee_photo)
           });
         });
         
         // Find first uncompleted stop
         const firstUncompletedIndex = data.cmrs.findIndex(cmr => 
-          !cmr.consignee_signature && !cmr.delivery_photo_base64
+          !cmr.consignee_signature && !cmr.delivery_photo_base64 && !cmr.consignee_photo
         );
         console.log('🔍 [CMR] First uncompleted stop index:', firstUncompletedIndex);
         if (firstUncompletedIndex !== -1) {
@@ -219,7 +219,7 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
         
         // Check if all stops are completed NOW (after reload)
         const allCompleted = cmrGroup.cmrs.every(cmr => 
-          cmr.consignee_signature || cmr.delivery_photo_base64
+          cmr.consignee_signature || cmr.delivery_photo_base64 || cmr.consignee_photo
         );
 
         console.log(`✅ [DELIVERY] Stop ${currentStopIndex + 1}/${cmrGroup.cmrs.length} completed`);
