@@ -95,6 +95,9 @@ const createOrder = async (req, res) => {
     const pickupStops = req.body.pickup_stops || [];
     const deliveryStops = req.body.delivery_stops || [];
     
+    let totalDistance = 0;
+    let totalDuration = 0;
+    
     if (pickupStops.length > 0 || deliveryStops.length > 0) {
       // Multi-stop order - store stops without calculating route (route is calculated in frontend)
       console.log('Processing multi-stop order:', { pickupStops: pickupStops.length, deliveryStops: deliveryStops.length });
@@ -111,7 +114,9 @@ const createOrder = async (req, res) => {
       console.log(`Multi-stop: ${totalStops} stops, fee: €${orderData.extra_stops_fee}`);
       
       // For multi-stop, use estimated distance/duration (route was calculated in frontend)
-      // We don't recalculate here to avoid API timeouts
+      // Set to 0 or use default values - actual route is in frontend
+      totalDistance = 0;
+      totalDuration = 0;
     } else {
       // Single pickup/delivery
       const { distance_km, duration_minutes, route_geometry } = await calculateDistanceAndDuration(
