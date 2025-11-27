@@ -2,7 +2,7 @@ const CMR = require('../models/CMR');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const CMRPdfGenerator = require('../services/cmrPdfGenerator');
-const { sendEmail } = require('../config/email');
+const emailService = require('../utils/emailService');
 
 // Helper function to check if all deliveries go to same RECIPIENT (address + name)
 const checkSameDeliveryRecipient = (order, deliveryStops) => {
@@ -1095,10 +1095,11 @@ const confirmDelivery = async (req, res) => {
         console.log('   PDF was generated:', pdfGenerated);
       }
       
-      await sendEmail(
-        customer.email,
-        '✅ Paket zugestellt - Auftrag abgeschlossen',
-        `
+      console.log('📧 [BACKEND] Sending email to customer...');
+      await emailService.sendEmail({
+        to: customer.email,
+        subject: '✅ Paket zugestellt - Auftrag abgeschlossen',
+        html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #16a34a;">Paket erfolgreich zugestellt</h2>
             <p>Hallo ${customer.first_name} ${customer.last_name},</p>
@@ -1117,21 +1118,30 @@ const confirmDelivery = async (req, res) => {
             <p style="margin-top: 30px;">Vielen Dank für Ihr Vertrauen!<br>Ihr Courierly Team</p>
           </div>
         `,
-        attachments
-      );
+        attachments: pdfPath && fs.existsSync(pdfPath) ? [{
+          filename: isMultiStop ? `CMR_MultiStop_Auftrag_${orderId}.pdf` : `CMR_Auftrag_${orderId}.pdf`,
+          path: pdfPath
+        }] : []
+      });
+      console.log('✅ [BACKEND] Email sent successfully');
     } catch (emailError) {
       console.error('⚠️ Email notification failed (non-critical):', emailError.message);
     }
 
+    console.log('🎉 [BACKEND] All stops completed - order finished!');
+    console.log('🏁 [BACKEND] ========== END DELIVERY CONFIRMATION (COMPLETE) ==========');
+    
     res.json({
-      message: 'Delivery confirmed successfully',
-      cmr: updatedCmr,
-      order: { ...order, status: 'delivered' }
+      success: true,
+      message: 'Alle Zustellungen abgeschlossen! Der Kunde wurde benachrichtigt.',
+      allStopsCompleted: true,
+      order: { ...order, status: 'completed' }
     });
   } catch (error) {
-    console.error('❌ Confirm delivery error:', error);
-    console.error('Error details:', error.message);
-    console.error('Error stack:', error.stack);
+    console.error('❌ [BACKEND] Confirm delivery error:', error);
+    console.error('❌ [BACKEND] Error details:', error.message);
+    console.error('❌ [BACKEND] Error stack:', error.stack);
+    console.log('🏁 [BACKEND] ========== END DELIVERY CONFIRMATION (ERROR) ==========');
     res.status(500).json({ 
       error: 'Server error while confirming delivery',
       details: error.message 
