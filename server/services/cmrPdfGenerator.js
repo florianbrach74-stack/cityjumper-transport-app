@@ -38,11 +38,16 @@ class CMRPdfGenerator {
         if (cmrData.delivery_stop_index !== null && cmrData.delivery_stop_index !== undefined) {
           const stopNumber = cmrData.delivery_stop_index + 1;
           const totalStops = cmrData.total_stops || stopNumber;
+          
+          // Draw box for multi-stop indicator
+          doc.rect(30, 130, 300, 45).fillAndStroke('#f0f9ff', '#3b82f6');
+          
           doc.fontSize(14).font('Helvetica-Bold').fillColor('black')
-            .text(`📍 ZUSTELLUNG ${stopNumber}/${totalStops}`, 30, 130);
-          doc.fontSize(11).font('Helvetica').fillColor('black')
-            .text(`→ ${cmrData.consignee_name}`, 30, 148)
-            .text(`   ${cmrData.consignee_address}, ${cmrData.consignee_postal_code} ${cmrData.consignee_city}`, 30, 162);
+            .text(`ZUSTELLUNG ${stopNumber}/${totalStops}`, 40, 138);
+          doc.fontSize(10).font('Helvetica').fillColor('#1e40af')
+            .text(`Empfaenger: ${cmrData.consignee_name}`, 40, 155)
+            .text(`${cmrData.consignee_address}, ${cmrData.consignee_postal_code} ${cmrData.consignee_city}`, 40, 167);
+          doc.fillColor('black');
         }
 
         // Generate QR Code for tracking
