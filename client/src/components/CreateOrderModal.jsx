@@ -171,26 +171,11 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
         [name]: value,
       }));
     } else if (name === 'delivery_time_from' && value) {
-      // WICHTIG: Zustellzeit "Von" muss mindestens gleich Zustellzeit "Bis" sein (Punktlandung)
-      // Aber Zustellzeit "Bis" muss mindestens Abholzeit "Von" + 30min sein
-      const minDeliveryTimeTo = addMinutesToTime(formData.pickup_time_from || '00:00', 30);
-      
-      // Wenn Zustellzeit "Von" gesetzt wird, setze "Bis" auf gleichen Wert (Punktlandung)
-      // ABER nur wenn "Bis" das Minimum erfüllt
-      let newDeliveryTimeTo = formData.delivery_time_to;
-      if (value >= minDeliveryTimeTo) {
-        // Punktlandung möglich
-        newDeliveryTimeTo = value;
-      } else {
-        // Minimum nicht erfüllt, setze auf Minimum
-        newDeliveryTimeTo = minDeliveryTimeTo;
-        alert(`Zustellzeit "Bis" muss mindestens Abholzeit "Von" + 30min sein (${minDeliveryTimeTo}). Zustellzeit wurde angepasst.`);
-      }
-      
+      // Zustellzeit Von und Bis können identisch sein (Punktzustellung)
+      // Setze einfach den Wert, keine Auto-Anpassung
       setFormData((prev) => ({
         ...prev,
         [name]: value,
-        delivery_time_to: newDeliveryTimeTo,
       }));
     } else if (name === 'delivery_time_to' && value) {
       // Zustellzeit "Bis" muss MINDESTENS Abholzeit "Von" + 30min sein
