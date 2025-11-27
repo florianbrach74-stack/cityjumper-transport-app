@@ -8,7 +8,11 @@ const {
   addPublicSignature,
   downloadCMRPdf,
   confirmPickup,
-  confirmDelivery
+  confirmDelivery,
+  getCMRsByGroupId,
+  getNextPendingDelivery,
+  updateSharedSignatures,
+  updateDeliveryPhoto
 } = require('../controllers/cmrController');
 
 // Get CMR by order ID (requires auth)
@@ -34,5 +38,11 @@ router.post('/public/:cmrNumber/consignee', addPublicSignature); // Consignee
 
 // Download CMR PDF (PUBLIC - no auth required)
 router.get('/:cmrNumber/download', downloadCMRPdf);
+
+// Multi-Stop CMR routes
+router.get('/order/:orderId/group', authenticateToken, getCMRsByGroupId);
+router.get('/order/:orderId/next-delivery', authenticateToken, getNextPendingDelivery);
+router.post('/order/:orderId/shared-signatures', authenticateToken, updateSharedSignatures);
+router.post('/:cmrId/delivery-photo', authenticateToken, updateDeliveryPhoto);
 
 module.exports = router;

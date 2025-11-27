@@ -1031,6 +1031,111 @@ const confirmDelivery = async (req, res) => {
   }
 };
 
+// Get all CMRs for a multi-stop order
+const getCMRsByGroupId = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const cmrGroupId = `ORDER-${orderId}`;
+    
+    const cmrs = await CMR.findByGroupId(cmrGroupId);
+    
+    if (!cmrs || cmrs.length === 0) {
+      return res.status(404).json({ error: 'No CMRs found for this order' });
+    }
+    
+    res.json({ 
+      cmrs,
+      isMultiStop: cmrs[0].is_multi_stop,
+      totalStops: cmrs[0].total_stops,
+      canShareSenderSignature: cmrs[0].can_share_sender_signature,
+      canShareReceiverSignature: cmrs[0].can_share_receiver_signature
+    });
+  } catch (error) {
+    console.error('Error getting CMRs by group:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Get next pending delivery for multi-stop order
+const getNextPendingDelivery = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const cmrGroupId = `ORDER-${orderId}`;
+    
+    const nextCMR = await CMR.getNextPendingDelivery(cmrGroupId);
+    
+    if (!nextCMR) {
+      // All deliveries completed
+      const isCompleted = await CMR.isGroupCompleted(cmrGroupId);
+      return res.json({ 
+        completed: true,
+        allDeliveriesCompleted: isCompleted
+      });
+    }
+    
+    res.json({ 
+      completed: false,
+      nextDelivery: nextCMR
+    });
+  } catch (error) {
+    console.error('Error getting next pending delivery:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Update shared signatures for all CMRs in a group
+const updateSharedSignatures = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { senderSignature, carrierSignature } = req.body;
+    const cmrGroupId = `ORDER-${orderId}`;
+    
+    if (!senderSignature && !carrierSignature) {
+      return res.status(400).json({ error: 'At least one signature required' });
+    }
+    
+    const updatedCMRs = await CMR.updateSharedSignatures(
+      cmrGroupId,
+      senderSignature || null,
+      carrierSignature || null
+    );
+    
+    res.json({ 
+      message: 'Shared signatures updated',
+      updatedCount: updatedCMRs.length
+    });
+  } catch (error) {
+    console.error('Error updating shared signatures:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Update delivery photo for specific CMR
+const updateDeliveryPhoto = async (req, res) => {
+  try {
+    const { cmrId } = req.params;
+    const { photoBase64 } = req.body;
+    
+    if (!photoBase64) {
+      return res.status(400).json({ error: 'Photo required' });
+    }
+    
+    const updatedCMR = await CMR.updateDeliveryPhoto(cmrId, photoBase64);
+    
+    if (!updatedCMR) {
+      return res.status(404).json({ error: 'CMR not found' });
+    }
+    
+    res.json({ 
+      message: 'Delivery photo updated',
+      cmr: updatedCMR
+    });
+  } catch (error) {
+    console.error('Error updating delivery photo:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   createCMRForOrder,
   getCMRByOrderId,
@@ -1041,4 +1146,8 @@ module.exports = {
   downloadCMRPdf,
   confirmPickup,
   confirmDelivery,
+  getCMRsByGroupId,
+  getNextPendingDelivery,
+  updateSharedSignatures,
+  updateDeliveryPhoto,
 };
