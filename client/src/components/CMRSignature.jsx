@@ -158,7 +158,7 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
         waitingNotes: waitingNotes.trim() || undefined
       };
 
-      // If multi-stop, handle sequential delivery
+      // If multi-stop, save to specific CMR
       if (isMultiStop && currentCMR) {
         const token = localStorage.getItem('token');
         
@@ -176,22 +176,22 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
           });
         }
 
-        // Check if there are more deliveries
-        const nextResponse = await fetch(`https://cityjumper-api-production-01e4.up.railway.app/api/cmr/order/${order.id}/next-delivery`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const nextData = await nextResponse.json();
+        // Reload CMR group to check completion status
+        await loadCMRGroup();
+        
+        // Check if all stops are completed
+        const allCompleted = cmrGroup.cmrs.every(cmr => 
+          cmr.consignee_signature || cmr.delivery_photo_base64
+        );
 
-        if (nextData.completed) {
+        if (allCompleted) {
           // All deliveries done!
           console.log('🎉 All deliveries completed!');
           await onComplete(data);
         } else {
-          // Move to next delivery
-          console.log('→ Moving to next delivery');
-          setCurrentStopIndex(currentStopIndex + 1);
+          // Stop saved, but more stops remaining
+          console.log('✅ Stop saved, more deliveries pending');
+          alert(`Stop ${currentStopIndex + 1}/${cmrGroup.cmrs.length} erfolgreich abgeschlossen!\n\nSie können jetzt:\n- Weitere Stops abschließen\n- Zurück zum Dashboard gehen\n- Andere Aufträge bearbeiten`);
           
           // Reset form for next delivery
           setReceiverName('');
@@ -199,12 +199,12 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
           setDeliveryPhoto(null);
           setWaitingMinutes(0);
           setWaitingNotes('');
-          if (receiverSigRef.current) {
-            receiverSigRef.current.clear();
-          }
-          
+          receiverSigRef.current?.clear();
           setSubmitting(false);
-          return; // Don't close modal, continue to next delivery
+          
+          // Close modal - contractor can reopen to do next stop
+          onClose();
+          return;
         }
       } else {
         // Single delivery
@@ -245,19 +245,72 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
               </h3>
               {isMultiStop && mode === 'delivery' && (
                 <div className="mt-2">
-                  <div className="flex items-center space-x-2">
+                  {/* Stop Selection */}
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Welchen Stop möchten Sie jetzt abschließen?
+                    </label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {cmrGroup?.cmrs.map((cmr, index) => {
+                        const isCompleted = cmr.consignee_signature || cmr.delivery_photo_base64;
+                        const isCurrent = index === currentStopIndex;
+                        
+                        return (
+                          <button
+                            key={cmr.id}
+                            onClick={() => setCurrentStopIndex(index)}
+                            disabled={isCompleted}
+                            className={`p-3 rounded-lg border-2 text-left transition-all ${
+                              isCurrent 
+                                ? 'border-primary-600 bg-primary-50' 
+                                : isCompleted
+                                ? 'border-green-300 bg-green-50 opacity-60 cursor-not-allowed'
+                                : 'border-gray-300 hover:border-primary-400'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <span className={`text-sm font-medium ${
+                                    isCurrent ? 'text-primary-700' : isCompleted ? 'text-green-700' : 'text-gray-700'
+                                  }`}>
+                                    Stop {index + 1}/{totalStops}
+                                  </span>
+                                  {isCompleted && (
+                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {cmr.consignee_name || 'Empfänger'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {cmr.consignee_address}, {cmr.consignee_postal_code} {cmr.consignee_city}
+                                </p>
+                              </div>
+                              {isCurrent && !isCompleted && (
+                                <ArrowRight className="h-5 w-5 text-primary-600" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Current Stop Info */}
+                  <div className="flex items-center space-x-2 mb-2">
                     <Package className="h-4 w-4 text-primary-600" />
                     <span className="text-sm font-medium text-primary-600">
-                      Zustellung {currentStop} von {totalStops}
+                      Aktuell: Zustellung {currentStop} von {totalStops}
                     </span>
                   </div>
                   {currentCMR && (
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-600 mb-2">
                       {currentCMR.consignee_name} • {currentCMR.consignee_city}
                     </p>
                   )}
                   {/* Progress bar */}
-                  <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
                       className="bg-primary-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${(currentStop / totalStops) * 100}%` }}
