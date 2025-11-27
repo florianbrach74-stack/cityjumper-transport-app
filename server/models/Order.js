@@ -47,11 +47,13 @@ class Order {
         vehicle_type, weight, length, width, height, pallets, description,
         special_requirements, price, contractor_price, distance_km, duration_minutes, route_geometry,
         needs_loading_help, needs_unloading_help, loading_help_fee, legal_delivery,
+        pickup_stops, delivery_stops, extra_stops_count, extra_stops_fee,
         status
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
         $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33,
-        $34, $35, $36, $37, $38,
+        $34, $35, $36, $37,
+        $38, $39, $40, $41,
         'pending'
       ) RETURNING *
     `;
@@ -67,6 +69,10 @@ class Order {
       orderData.needs_unloading_help || false,
       orderData.loading_help_fee || 0,
       orderData.legal_delivery || false,
+      orderData.pickup_stops || null,
+      orderData.delivery_stops || null,
+      orderData.extra_stops_count || 0,
+      orderData.extra_stops_fee || 0,
     ];
 
     const result = await pool.query(query, values);
