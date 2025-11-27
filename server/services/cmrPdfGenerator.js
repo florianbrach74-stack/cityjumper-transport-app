@@ -13,8 +13,8 @@ class CMRPdfGenerator {
           fs.mkdirSync(uploadsDir, { recursive: true });
         }
 
-        // Use order ID for filename (not CMR number) for consistency
-        const filename = `cmr_${order.id}.pdf`;
+        // Use CMR ID for filename to avoid overwriting in multi-stop orders
+        const filename = `cmr_${cmrData.id}_${Date.now()}.pdf`;
         const filepath = path.join(uploadsDir, filename);
         console.log('   Saving PDF to:', filepath);
 
