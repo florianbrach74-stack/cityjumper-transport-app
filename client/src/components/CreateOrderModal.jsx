@@ -285,6 +285,8 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
 
   // Load a saved route into the form
   const handleLoadSavedRoute = (route) => {
+    console.log('📍 Loading saved route:', route);
+    
     setFormData(prev => ({
       ...prev,
       pickup_address: route.pickup_address,
@@ -308,17 +310,26 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       height: route.cargo_height || prev.height,
     }));
 
-    // Set locations for map
-    setPickupLocation({
+    // Set locations for map with FULL address data
+    const pickupLoc = {
+      address: route.pickup_address,
       city: route.pickup_city,
       postalCode: route.pickup_postal_code,
       country: route.pickup_country || 'Deutschland'
-    });
-    setDeliveryLocation({
+    };
+    
+    const deliveryLoc = {
+      address: route.delivery_address,
       city: route.delivery_city,
       postalCode: route.delivery_postal_code,
       country: route.delivery_country || 'Deutschland'
-    });
+    };
+    
+    console.log('📍 Setting pickup location:', pickupLoc);
+    console.log('📍 Setting delivery location:', deliveryLoc);
+    
+    setPickupLocation(pickupLoc);
+    setDeliveryLocation(deliveryLoc);
     
     // Reset multi-stop data (saved routes don't have multi-stop info)
     setPickupStops([]);
