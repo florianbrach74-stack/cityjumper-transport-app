@@ -4,6 +4,24 @@ const User = require('../models/User');
 const CMRPdfGenerator = require('../services/cmrPdfGenerator');
 const { sendEmail } = require('../config/email');
 
+// Helper function to check if all deliveries go to same address
+const checkSameDeliveryAddress = (order, deliveryStops) => {
+  if (deliveryStops.length === 0) return false;
+  
+  const mainAddress = {
+    address: order.delivery_address?.toLowerCase().trim(),
+    city: order.delivery_city?.toLowerCase().trim(),
+    postal_code: order.delivery_postal_code?.toLowerCase().trim()
+  };
+  
+  // Check if all stops have same address as main delivery
+  return deliveryStops.every(stop => {
+    return stop.address?.toLowerCase().trim() === mainAddress.address &&
+           stop.city?.toLowerCase().trim() === mainAddress.city &&
+           stop.postal_code?.toLowerCase().trim() === mainAddress.postal_code;
+  });
+};
+
 const createCMRForOrder = async (orderId) => {
   try {
     // Get order details
@@ -18,8 +36,20 @@ const createCMRForOrder = async (orderId) => {
       throw new Error('Contractor not found');
     }
 
-    // Parse delivery stops if they exist
+    // Parse pickup and delivery stops if they exist
+    let pickupStops = [];
     let deliveryStops = [];
+    
+    try {
+      if (order.pickup_stops && typeof order.pickup_stops === 'string') {
+        pickupStops = JSON.parse(order.pickup_stops);
+      } else if (Array.isArray(order.pickup_stops)) {
+        pickupStops = order.pickup_stops;
+      }
+    } catch (e) {
+      console.log('No pickup stops or parse error:', e.message);
+    }
+    
     try {
       if (order.delivery_stops && typeof order.delivery_stops === 'string') {
         deliveryStops = JSON.parse(order.delivery_stops);
@@ -30,31 +60,57 @@ const createCMRForOrder = async (orderId) => {
       console.log('No delivery stops or parse error:', e.message);
     }
 
+    const hasMultiplePickups = pickupStops.length > 0;
     const hasMultipleDeliveries = deliveryStops.length > 0;
-    const totalStops = hasMultipleDeliveries ? deliveryStops.length + 1 : 1; // +1 for main delivery
+    const totalPickups = hasMultiplePickups ? pickupStops.length + 1 : 1;
+    const totalDeliveries = hasMultipleDeliveries ? deliveryStops.length + 1 : 1;
+    
+    // Determine signature sharing logic
+    const canShareSenderSignature = !hasMultiplePickups; // Only if single pickup
+    const canShareCarrierSignature = true; // Carrier always same
+    
+    // Check if all deliveries go to same address (for shared receiver signature)
+    const canShareReceiverSignature = hasMultipleDeliveries && checkSameDeliveryAddress(order, deliveryStops);
+    
     const cmrGroupId = `ORDER-${orderId}`;
 
     console.log(`📦 Creating CMR(s) for order ${orderId}`);
-    console.log(`   Multi-Stop: ${hasMultipleDeliveries ? 'Yes' : 'No'}`);
-    console.log(`   Total Stops: ${totalStops}`);
+    console.log(`   Multiple Pickups: ${hasMultiplePickups ? 'Yes' : 'No'} (${totalPickups})`);
+    console.log(`   Multiple Deliveries: ${hasMultipleDeliveries ? 'Yes' : 'No'} (${totalDeliveries})`);
+    console.log(`   Can share sender signature: ${canShareSenderSignature}`);
+    console.log(`   Can share receiver signature: ${canShareReceiverSignature}`);
 
     const createdCMRs = [];
+    
+    // Total stops = total deliveries (we create one CMR per delivery)
+    const totalStops = totalDeliveries;
 
     // Helper function to create CMR data
-    const createCMRData = (deliveryInfo, stopIndex, isMainDelivery = false) => {
+    const createCMRData = (deliveryInfo, stopIndex, pickupInfo = null, isMainDelivery = false) => {
+      // Use provided pickup info or default to main pickup
+      const senderInfo = pickupInfo || {
+        contact_name: order.pickup_contact_name,
+        address: order.pickup_address,
+        city: order.pickup_city,
+        postal_code: order.pickup_postal_code,
+        country: order.pickup_country
+      };
+      
       return {
         order_id: orderId,
         cmr_group_id: cmrGroupId,
         delivery_stop_index: stopIndex,
         total_stops: totalStops,
-        is_multi_stop: hasMultipleDeliveries,
+        is_multi_stop: hasMultipleDeliveries || hasMultiplePickups,
+        can_share_sender_signature: canShareSenderSignature,
+        can_share_receiver_signature: canShareReceiverSignature,
         
-        // Sender (from pickup) - SAME for all CMRs
-        sender_name: order.pickup_contact_name || `${order.customer_first_name} ${order.customer_last_name}`,
-        sender_address: order.pickup_address,
-        sender_city: order.pickup_city,
-        sender_postal_code: order.pickup_postal_code,
-        sender_country: order.pickup_country || 'Deutschland',
+        // Sender (from pickup) - Can be different if multiple pickups
+        sender_name: senderInfo.contact_name || `${order.customer_first_name} ${order.customer_last_name}`,
+        sender_address: senderInfo.address,
+        sender_city: senderInfo.city,
+        sender_postal_code: senderInfo.postal_code,
+        sender_country: senderInfo.country || 'Deutschland',
         
         // Consignee (DIFFERENT for each stop)
         consignee_name: deliveryInfo.contact_name || deliveryInfo.company || 'Empfänger',

@@ -10,6 +10,8 @@ async function up() {
     ADD COLUMN IF NOT EXISTS delivery_stop_index INTEGER DEFAULT 0,
     ADD COLUMN IF NOT EXISTS total_stops INTEGER DEFAULT 1,
     ADD COLUMN IF NOT EXISTS is_multi_stop BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS can_share_sender_signature BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS can_share_receiver_signature BOOLEAN DEFAULT false,
     ADD COLUMN IF NOT EXISTS shared_sender_signature TEXT,
     ADD COLUMN IF NOT EXISTS shared_carrier_signature TEXT,
     ADD COLUMN IF NOT EXISTS delivery_photo_base64 TEXT;
@@ -53,6 +55,8 @@ async function down() {
     DROP COLUMN IF EXISTS delivery_stop_index,
     DROP COLUMN IF EXISTS total_stops,
     DROP COLUMN IF EXISTS is_multi_stop,
+    DROP COLUMN IF EXISTS can_share_sender_signature,
+    DROP COLUMN IF EXISTS can_share_receiver_signature,
     DROP COLUMN IF EXISTS shared_sender_signature,
     DROP COLUMN IF EXISTS shared_carrier_signature,
     DROP COLUMN IF EXISTS delivery_photo_base64;

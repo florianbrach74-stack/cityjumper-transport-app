@@ -8,6 +8,8 @@ class CMR {
       delivery_stop_index,
       total_stops,
       is_multi_stop,
+      can_share_sender_signature,
+      can_share_receiver_signature,
       sender_name,
       sender_address,
       sender_city,
@@ -45,6 +47,7 @@ class CMR {
       INSERT INTO cmr_documents (
         order_id, cmr_number,
         cmr_group_id, delivery_stop_index, total_stops, is_multi_stop,
+        can_share_sender_signature, can_share_receiver_signature,
         sender_name, sender_address, sender_city, sender_postal_code, sender_country,
         consignee_name, consignee_address, consignee_city, consignee_postal_code, consignee_country,
         carrier_name, carrier_address, carrier_city, carrier_postal_code,
@@ -55,7 +58,7 @@ class CMR {
         status
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-        $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, 'created'
+        $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, 'created'
       ) RETURNING *
     `;
 
@@ -65,6 +68,8 @@ class CMR {
       delivery_stop_index || 0,
       total_stops || 1,
       is_multi_stop || false,
+      can_share_sender_signature !== undefined ? can_share_sender_signature : true,
+      can_share_receiver_signature !== undefined ? can_share_receiver_signature : false,
       sender_name, sender_address, sender_city, sender_postal_code, sender_country,
       consignee_name, consignee_address, consignee_city, consignee_postal_code, consignee_country,
       carrier_name, carrier_address, carrier_city, carrier_postal_code,
