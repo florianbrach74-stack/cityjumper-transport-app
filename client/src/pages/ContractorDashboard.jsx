@@ -262,16 +262,26 @@ const ContractorDashboard = () => {
                     const pickupStops = order.pickup_stops
                       ? (typeof order.pickup_stops === 'string' ? JSON.parse(order.pickup_stops) : order.pickup_stops)
                       : [];
-                    return pickupStops.length > 0 && (
-                    <div className="mt-2 bg-blue-50 border border-blue-200 rounded px-2 py-1">
-                      <span className="text-blue-700 font-semibold text-xs">
-                        📦 {pickupStops.length + 1} Abholungen
+                    const deliveryStops = order.delivery_stops
+                      ? (typeof order.delivery_stops === 'string' ? JSON.parse(order.delivery_stops) : order.delivery_stops)
+                      : [];
+                    const hasMultiStop = pickupStops.length > 0 || deliveryStops.length > 0;
+                    
+                    return hasMultiStop && (
+                    <div className="mt-2 bg-purple-50 border border-purple-200 rounded px-2 py-1">
+                      <span className="text-purple-700 font-semibold text-xs">
+                        🚚 MULTI-STOP: {pickupStops.length + deliveryStops.length + 2} Adressen
                       </span>
-                      <div className="text-xs text-blue-600 mt-1">
-                        PLZ: {order.pickup_postal_code}
+                      <div className="text-xs text-purple-600 mt-1">
+                        <div><strong>Alle PLZ:</strong> {order.pickup_postal_code}
                         {pickupStops.map((stop, i) => (
-                          <span key={i}>, {stop.postal_code}</span>
+                          <span key={`p${i}`}> → {stop.postal_code}</span>
                         ))}
+                        <span> → {order.delivery_postal_code}</span>
+                        {deliveryStops.map((stop, i) => (
+                          <span key={`d${i}`}> → {stop.postal_code}</span>
+                        ))}
+                        </div>
                       </div>
                     </div>
                     );
@@ -321,26 +331,6 @@ const ContractorDashboard = () => {
                 <div className="text-gray-600">
                   <span className="font-semibold text-lg">PLZ {order.delivery_postal_code}</span>
                   <span className="text-gray-500 ml-2">({order.delivery_city})</span>
-                  
-                  {/* Multi-Stop Indicator */}
-                  {(() => {
-                    const deliveryStops = order.delivery_stops 
-                      ? (typeof order.delivery_stops === 'string' ? JSON.parse(order.delivery_stops) : order.delivery_stops)
-                      : [];
-                    return deliveryStops.length > 0 && (
-                      <div className="mt-2 bg-orange-50 border border-orange-200 rounded px-2 py-1">
-                        <span className="text-orange-700 font-semibold text-xs">
-                          🚚 MULTI-STOP: {deliveryStops.length + 1} Zustellungen
-                        </span>
-                        <div className="text-xs text-orange-600 mt-1">
-                          PLZ: {order.delivery_postal_code}
-                          {deliveryStops.map((stop, i) => (
-                            <span key={i}>, {stop.postal_code}</span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
                 </div>
               ) : (
                 // Vollständige Adresse für angenommene Aufträge
