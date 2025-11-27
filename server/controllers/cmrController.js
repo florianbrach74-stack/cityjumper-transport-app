@@ -22,6 +22,24 @@ const checkSameDeliveryAddress = (order, deliveryStops) => {
   });
 };
 
+// Helper function to check if all pickups go to same address
+const checkSamePickupAddress = (order, pickupStops) => {
+  if (pickupStops.length === 0) return false;
+  
+  const mainAddress = {
+    address: order.pickup_address?.toLowerCase().trim(),
+    city: order.pickup_city?.toLowerCase().trim(),
+    postal_code: order.pickup_postal_code?.toLowerCase().trim()
+  };
+  
+  // Check if all stops have same address as main pickup
+  return pickupStops.every(stop => {
+    return stop.address?.toLowerCase().trim() === mainAddress.address &&
+           stop.city?.toLowerCase().trim() === mainAddress.city &&
+           stop.postal_code?.toLowerCase().trim() === mainAddress.postal_code;
+  });
+};
+
 const createCMRForOrder = async (orderId) => {
   try {
     // Get order details
@@ -65,12 +83,24 @@ const createCMRForOrder = async (orderId) => {
     const totalPickups = hasMultiplePickups ? pickupStops.length + 1 : 1;
     const totalDeliveries = hasMultipleDeliveries ? deliveryStops.length + 1 : 1;
     
-    // Determine signature sharing logic
-    const canShareSenderSignature = !hasMultiplePickups; // Only if single pickup
-    const canShareCarrierSignature = true; // Carrier always same
+    // Check if all pickups/deliveries are from/to same address
+    const samePickupAddress = hasMultiplePickups && checkSamePickupAddress(order, pickupStops);
+    const sameDeliveryAddress = hasMultipleDeliveries && checkSameDeliveryAddress(order, deliveryStops);
     
-    // Check if all deliveries go to same address (for shared receiver signature)
-    const canShareReceiverSignature = hasMultipleDeliveries && checkSameDeliveryAddress(order, deliveryStops);
+    // Determine signature sharing logic
+    // Sender can share signature if:
+    // - No multiple pickups OR all pickups from same address
+    const canShareSenderSignature = !hasMultiplePickups || samePickupAddress;
+    
+    // Carrier always same
+    const canShareCarrierSignature = true;
+    
+    // Receiver can share signature if:
+    // - Multiple deliveries AND all go to same address
+    // - OR multiple pickups AND single delivery (e.g. 3 Möbelhäuser → 1 Kunde)
+    const canShareReceiverSignature = 
+      (hasMultipleDeliveries && sameDeliveryAddress) ||
+      (hasMultiplePickups && !hasMultipleDeliveries);
     
     const cmrGroupId = `ORDER-${orderId}`;
 
