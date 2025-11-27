@@ -319,6 +319,10 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       postalCode: route.delivery_postal_code,
       country: route.delivery_country || 'Deutschland'
     });
+    
+    // Reset multi-stop data (saved routes don't have multi-stop info)
+    setPickupStops([]);
+    setDeliveryStops([]);
 
     setShowSavedRoutes(false);
   };
