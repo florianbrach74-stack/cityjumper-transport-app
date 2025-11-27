@@ -210,7 +210,18 @@ class CMRPdfGenerator {
         this.drawBox(doc, 390, signatureY, 175, 100);
         doc.fontSize(8).font('Helvetica-Bold').text('24. Empfänger', 395, signatureY + 5);
         doc.fontSize(7).font('Helvetica').text('Unterschrift und Stempel des Empfängers', 395, signatureY + 20);
-        if (cmrData.consignee_signature) {
+        
+        // Check if delivery was confirmed with photo instead of signature
+        if (cmrData.consignee_photo) {
+          // Display "Siehe Foto im Anhang" text in field 24
+          doc.fontSize(9).font('Helvetica-Bold').text('Siehe Foto im Anhang', 395, signatureY + 40);
+          if (cmrData.consignee_signed_name) {
+            doc.fontSize(7).font('Helvetica').text(cmrData.consignee_signed_name, 395, signatureY + 78);
+          }
+          if (cmrData.consignee_signed_at) {
+            doc.fontSize(6).text(new Date(cmrData.consignee_signed_at).toLocaleString('de-DE'), 395, signatureY + 88);
+          }
+        } else if (cmrData.consignee_signature) {
           // Display signature image if it's a base64 string
           try {
             if (cmrData.consignee_signature.startsWith('data:image')) {
@@ -226,7 +237,9 @@ class CMRPdfGenerator {
           if (cmrData.consignee_signed_name) {
             doc.fontSize(7).font('Helvetica').text(cmrData.consignee_signed_name, 395, signatureY + 78);
           }
-          doc.fontSize(6).text(new Date(cmrData.consignee_signed_at).toLocaleString('de-DE'), 395, signatureY + 88);
+          if (cmrData.consignee_signed_at) {
+            doc.fontSize(6).text(new Date(cmrData.consignee_signed_at).toLocaleString('de-DE'), 395, signatureY + 88);
+          }
         }
         if (cmrData.consignee_remarks) {
           doc.fontSize(6).text(`Bemerkungen: ${cmrData.consignee_remarks}`, 395, signatureY + 95, { width: 165 });
