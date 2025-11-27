@@ -18,66 +18,128 @@ const createCMRForOrder = async (orderId) => {
       throw new Error('Contractor not found');
     }
 
-    // Prepare CMR data from order
-    const cmrData = {
-      order_id: orderId,
-      
-      // Sender (from pickup)
-      sender_name: order.pickup_contact_name || `${order.customer_first_name} ${order.customer_last_name}`,
-      sender_address: order.pickup_address,
-      sender_city: order.pickup_city,
-      sender_postal_code: order.pickup_postal_code,
-      sender_country: order.pickup_country || 'Deutschland',
-      
-      // Consignee (from delivery)
-      consignee_name: order.delivery_contact_name || 'Empfänger',
-      consignee_address: order.delivery_address,
-      consignee_city: order.delivery_city,
-      consignee_postal_code: order.delivery_postal_code,
-      consignee_country: order.delivery_country || 'Deutschland',
-      
-      // Carrier (contractor) - Feld 16: Transportunternehmer mit vollständiger Adresse
-      carrier_name: contractor.company_name || `${contractor.first_name} ${contractor.last_name}`,
-      carrier_address: contractor.company_address || '',
-      carrier_city: contractor.company_city || '',
-      carrier_postal_code: contractor.company_postal_code || '',
-      
-      // Shipment details
-      place_of_loading: `${order.pickup_city}, ${order.pickup_country || 'Deutschland'}`,
-      place_of_delivery: `${order.delivery_city}, ${order.delivery_country || 'Deutschland'}`,
-      documents_attached: 'Lieferschein',
-      
-      goods_description: order.description || 'Allgemeine Fracht',
-      number_of_packages: order.pallets || 1,
-      method_of_packing: order.pallets ? `${order.pallets} Palette(n)` : 'Paket',
-      marks_and_numbers: `Auftrag #${orderId}`,
-      gross_weight: order.weight,
-      volume: order.length && order.width && order.height 
-        ? (order.length * order.width * order.height / 1000000).toFixed(2)
-        : null,
-      
-      special_agreements: [
-        order.special_requirements,
-        order.needs_loading_help ? 'Beladehilfe erforderlich (+€6)' : null,
-        order.needs_unloading_help ? 'Entladehilfe erforderlich (+€6)' : null,
-        order.legal_delivery ? '⚠️ RECHTSSICHERE ZUSTELLUNG: Lassen Sie sich vom Absender das Transportgut zeigen (z.B. Kündigung) und bestätigen Sie den Inhalt! Nur so können Sie im Rechtsstreit bestätigen, was Sie transportiert haben.' : null
-      ].filter(Boolean).join(' | ') || 'Keine besonderen Vereinbarungen',
-      carriage_charges_paid: true,
-      carriage_charges_forward: false,
-      cash_on_delivery: null,
+    // Parse delivery stops if they exist
+    let deliveryStops = [];
+    try {
+      if (order.delivery_stops && typeof order.delivery_stops === 'string') {
+        deliveryStops = JSON.parse(order.delivery_stops);
+      } else if (Array.isArray(order.delivery_stops)) {
+        deliveryStops = order.delivery_stops;
+      }
+    } catch (e) {
+      console.log('No delivery stops or parse error:', e.message);
+    }
+
+    const hasMultipleDeliveries = deliveryStops.length > 0;
+    const totalStops = hasMultipleDeliveries ? deliveryStops.length + 1 : 1; // +1 for main delivery
+    const cmrGroupId = `ORDER-${orderId}`;
+
+    console.log(`📦 Creating CMR(s) for order ${orderId}`);
+    console.log(`   Multi-Stop: ${hasMultipleDeliveries ? 'Yes' : 'No'}`);
+    console.log(`   Total Stops: ${totalStops}`);
+
+    const createdCMRs = [];
+
+    // Helper function to create CMR data
+    const createCMRData = (deliveryInfo, stopIndex, isMainDelivery = false) => {
+      return {
+        order_id: orderId,
+        cmr_group_id: cmrGroupId,
+        delivery_stop_index: stopIndex,
+        total_stops: totalStops,
+        is_multi_stop: hasMultipleDeliveries,
+        
+        // Sender (from pickup) - SAME for all CMRs
+        sender_name: order.pickup_contact_name || `${order.customer_first_name} ${order.customer_last_name}`,
+        sender_address: order.pickup_address,
+        sender_city: order.pickup_city,
+        sender_postal_code: order.pickup_postal_code,
+        sender_country: order.pickup_country || 'Deutschland',
+        
+        // Consignee (DIFFERENT for each stop)
+        consignee_name: deliveryInfo.contact_name || deliveryInfo.company || 'Empfänger',
+        consignee_address: deliveryInfo.address,
+        consignee_city: deliveryInfo.city,
+        consignee_postal_code: deliveryInfo.postal_code,
+        consignee_country: deliveryInfo.country || 'Deutschland',
+        
+        // Carrier (contractor) - SAME for all CMRs
+        carrier_name: contractor.company_name || `${contractor.first_name} ${contractor.last_name}`,
+        carrier_address: contractor.company_address || '',
+        carrier_city: contractor.company_city || '',
+        carrier_postal_code: contractor.company_postal_code || '',
+        
+        // Shipment details
+        place_of_loading: `${order.pickup_city}, ${order.pickup_country || 'Deutschland'}`,
+        place_of_delivery: `${deliveryInfo.city}, ${deliveryInfo.country || 'Deutschland'}`,
+        documents_attached: 'Lieferschein',
+        
+        goods_description: order.description || 'Allgemeine Fracht',
+        number_of_packages: order.pallets || 1,
+        method_of_packing: order.pallets ? `${order.pallets} Palette(n)` : 'Paket',
+        marks_and_numbers: hasMultipleDeliveries 
+          ? `Auftrag #${orderId} - Zustellung ${stopIndex + 1}/${totalStops}`
+          : `Auftrag #${orderId}`,
+        gross_weight: order.weight,
+        volume: order.length && order.width && order.height 
+          ? (order.length * order.width * order.height / 1000000).toFixed(2)
+          : null,
+        
+        special_agreements: [
+          order.special_requirements,
+          order.needs_loading_help ? 'Beladehilfe erforderlich (+€6)' : null,
+          order.needs_unloading_help ? 'Entladehilfe erforderlich (+€6)' : null,
+          order.legal_delivery ? '⚠️ RECHTSSICHERE ZUSTELLUNG: Lassen Sie sich vom Absender das Transportgut zeigen (z.B. Kündigung) und bestätigen Sie den Inhalt! Nur so können Sie im Rechtsstreit bestätigen, was Sie transportiert haben.' : null,
+          hasMultipleDeliveries ? `📍 Multi-Stop-Auftrag: ${stopIndex + 1} von ${totalStops} Zustellungen` : null
+        ].filter(Boolean).join(' | ') || 'Keine besonderen Vereinbarungen',
+        carriage_charges_paid: true,
+        carriage_charges_forward: false,
+        cash_on_delivery: null,
+      };
     };
 
-    // Create CMR document
-    const cmr = await CMR.create(cmrData);
+    // Create CMR for main delivery (stop 0)
+    const mainDeliveryInfo = {
+      address: order.delivery_address,
+      city: order.delivery_city,
+      postal_code: order.delivery_postal_code,
+      country: order.delivery_country,
+      contact_name: order.delivery_contact_name,
+      company: order.delivery_company
+    };
 
-    // Generate PDF
-    const { filepath, filename } = await CMRPdfGenerator.generateCMR(cmr, order);
-    
-    // Update CMR with PDF URL
+    console.log(`   Creating CMR 1/${totalStops} (Main Delivery)`);
+    const mainCMRData = createCMRData(mainDeliveryInfo, 0, true);
+    const mainCMR = await CMR.create(mainCMRData);
+    createdCMRs.push(mainCMR);
+
+    // Create CMRs for additional delivery stops
+    if (hasMultipleDeliveries) {
+      for (let i = 0; i < deliveryStops.length; i++) {
+        const stop = deliveryStops[i];
+        console.log(`   Creating CMR ${i + 2}/${totalStops} (Additional Stop)`);
+        
+        const stopCMRData = createCMRData(stop, i + 1, false);
+        const stopCMR = await CMR.create(stopCMRData);
+        createdCMRs.push(stopCMR);
+      }
+    }
+
+    console.log(`✅ Created ${createdCMRs.length} CMR document(s) for order ${orderId}`);
+
+    // For now, only generate PDF for the first CMR (main delivery)
+    // Combined PDF will be generated when all deliveries are completed
+    const { filepath, filename } = await CMRPdfGenerator.generateCMR(mainCMR, order);
     const pdfUrl = `/uploads/cmr/${filename}`;
-    await CMR.updatePdfUrl(cmr.id, pdfUrl);
+    await CMR.updatePdfUrl(mainCMR.id, pdfUrl);
 
-    return { ...cmr, pdf_url: pdfUrl };
+    // Return all CMRs
+    return {
+      cmrs: createdCMRs,
+      mainCMR: { ...mainCMR, pdf_url: pdfUrl },
+      isMultiStop: hasMultipleDeliveries,
+      totalStops: totalStops
+    };
   } catch (error) {
     console.error('Error creating CMR:', error);
     throw error;

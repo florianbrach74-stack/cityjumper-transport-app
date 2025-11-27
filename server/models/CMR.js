@@ -4,6 +4,10 @@ class CMR {
   static async create(cmrData) {
     const {
       order_id,
+      cmr_group_id,
+      delivery_stop_index,
+      total_stops,
+      is_multi_stop,
       sender_name,
       sender_address,
       sender_city,
@@ -40,6 +44,7 @@ class CMR {
     const query = `
       INSERT INTO cmr_documents (
         order_id, cmr_number,
+        cmr_group_id, delivery_stop_index, total_stops, is_multi_stop,
         sender_name, sender_address, sender_city, sender_postal_code, sender_country,
         consignee_name, consignee_address, consignee_city, consignee_postal_code, consignee_country,
         carrier_name, carrier_address, carrier_city, carrier_postal_code,
@@ -50,12 +55,16 @@ class CMR {
         status
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-        $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, 'created'
+        $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, 'created'
       ) RETURNING *
     `;
 
     const values = [
       order_id, cmr_number,
+      cmr_group_id || `ORDER-${order_id}`,
+      delivery_stop_index || 0,
+      total_stops || 1,
+      is_multi_stop || false,
       sender_name, sender_address, sender_city, sender_postal_code, sender_country,
       consignee_name, consignee_address, consignee_city, consignee_postal_code, consignee_country,
       carrier_name, carrier_address, carrier_city, carrier_postal_code,
@@ -245,6 +254,68 @@ class CMR {
 
     const result = await pool.query(query, values);
     return result.rows;
+  }
+
+  // Get all CMRs for a group (multi-stop order)
+  static async findByGroupId(cmrGroupId) {
+    const query = `
+      SELECT * FROM cmr_documents 
+      WHERE cmr_group_id = $1 
+      ORDER BY delivery_stop_index ASC
+    `;
+    const result = await pool.query(query, [cmrGroupId]);
+    return result.rows;
+  }
+
+  // Update shared signatures for all CMRs in a group
+  static async updateSharedSignatures(cmrGroupId, senderSignature, carrierSignature) {
+    const query = `
+      UPDATE cmr_documents 
+      SET shared_sender_signature = $1,
+          shared_carrier_signature = $2
+      WHERE cmr_group_id = $3
+      RETURNING *
+    `;
+    const result = await pool.query(query, [senderSignature, carrierSignature, cmrGroupId]);
+    return result.rows;
+  }
+
+  // Update delivery photo for specific CMR
+  static async updateDeliveryPhoto(cmrId, photoBase64) {
+    const query = `
+      UPDATE cmr_documents 
+      SET delivery_photo_base64 = $1
+      WHERE id = $2
+      RETURNING *
+    `;
+    const result = await pool.query(query, [photoBase64, cmrId]);
+    return result.rows[0];
+  }
+
+  // Get next pending delivery in a multi-stop order
+  static async getNextPendingDelivery(cmrGroupId) {
+    const query = `
+      SELECT * FROM cmr_documents 
+      WHERE cmr_group_id = $1 
+        AND receiver_signature IS NULL
+      ORDER BY delivery_stop_index ASC
+      LIMIT 1
+    `;
+    const result = await pool.query(query, [cmrGroupId]);
+    return result.rows[0];
+  }
+
+  // Check if all deliveries in group are completed
+  static async isGroupCompleted(cmrGroupId) {
+    const query = `
+      SELECT COUNT(*) as total,
+             COUNT(receiver_signature) as completed
+      FROM cmr_documents 
+      WHERE cmr_group_id = $1
+    `;
+    const result = await pool.query(query, [cmrGroupId]);
+    const { total, completed } = result.rows[0];
+    return parseInt(total) === parseInt(completed);
   }
 }
 
