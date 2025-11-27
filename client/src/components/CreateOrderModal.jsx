@@ -147,66 +147,62 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     // Auto-fill "Bis" Zeit mit +30min wenn "Von" geändert wird
     if (name === 'pickup_time_from' && value) {
       const suggestedPickupTo = addMinutesToTime(value, 30);
-      const shouldUpdatePickupTo = !formData.pickup_time_to || formData.pickup_time_to <= value;
+      const shouldUpdatePickupTo = !formData.pickup_time_to || formData.pickup_time_to < value;
       
-      // WICHTIG: Zustellzeit "Bis" = Abholzeit "Von" + 30min
-      const deliveryTimeTo = addMinutesToTime(value, 30);
+      // WICHTIG: Zustellzeit "Bis" MUSS MINDESTENS Abholzeit "Von" + 30min sein
+      const minDeliveryTimeTo = addMinutesToTime(value, 30);
       
-      // Wenn Lieferzeit "Von" kleiner als neue Abholzeit ist, aktualisiere sie
-      let newDeliveryTimeFrom = formData.delivery_time_from;
-      if (formData.delivery_time_from && formData.delivery_time_from < value) {
-        newDeliveryTimeFrom = value;
+      // Wenn Zustellzeit "Bis" kleiner als Minimum ist, aktualisiere sie
+      let newDeliveryTimeTo = formData.delivery_time_to;
+      if (!formData.delivery_time_to || formData.delivery_time_to < minDeliveryTimeTo) {
+        newDeliveryTimeTo = minDeliveryTimeTo;
       }
       
       setFormData((prev) => ({
         ...prev,
         [name]: value,
         pickup_time_to: shouldUpdatePickupTo ? suggestedPickupTo : prev.pickup_time_to,
-        delivery_time_from: newDeliveryTimeFrom,
-        delivery_time_to: deliveryTimeTo // IMMER Abholzeit Von + 30min
+        delivery_time_to: newDeliveryTimeTo
       }));
     } else if (name === 'pickup_time_to' && value) {
-      // Wenn Lieferzeit "Von" kleiner als neue Abholzeit "Bis" ist, aktualisiere sie
-      let newDeliveryTimeFrom = formData.delivery_time_from;
-      if (formData.delivery_time_from && formData.delivery_time_from < value) {
-        newDeliveryTimeFrom = addMinutesToTime(value, 30);
+      // Keine Auto-Anpassung bei Abholzeit Bis
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    } else if (name === 'delivery_time_from' && value) {
+      // WICHTIG: Zustellzeit "Von" muss mindestens gleich Zustellzeit "Bis" sein (Punktlandung)
+      // Aber Zustellzeit "Bis" muss mindestens Abholzeit "Von" + 30min sein
+      const minDeliveryTimeTo = addMinutesToTime(formData.pickup_time_from || '00:00', 30);
+      
+      // Wenn Zustellzeit "Von" gesetzt wird, setze "Bis" auf gleichen Wert (Punktlandung)
+      // ABER nur wenn "Bis" das Minimum erfüllt
+      let newDeliveryTimeTo = formData.delivery_time_to;
+      if (value >= minDeliveryTimeTo) {
+        // Punktlandung möglich
+        newDeliveryTimeTo = value;
+      } else {
+        // Minimum nicht erfüllt, setze auf Minimum
+        newDeliveryTimeTo = minDeliveryTimeTo;
+        alert(`Zustellzeit "Bis" muss mindestens Abholzeit "Von" + 30min sein (${minDeliveryTimeTo}). Zustellzeit wurde angepasst.`);
       }
       
       setFormData((prev) => ({
         ...prev,
         [name]: value,
-        delivery_time_from: newDeliveryTimeFrom,
-        delivery_time_to: newDeliveryTimeFrom ? addMinutesToTime(newDeliveryTimeFrom, 30) : prev.delivery_time_to
-      }));
-    } else if (name === 'delivery_time_from' && value) {
-      // Lieferzeit "Von" darf NICHT kleiner als Abholzeit "Von" sein
-      const minDeliveryTime = formData.pickup_time_from || '00:00';
-      const adjustedValue = value < minDeliveryTime ? minDeliveryTime : value;
-      
-      const suggestedTo = addMinutesToTime(adjustedValue, 30);
-      const shouldUpdateTo = !formData.delivery_time_to || formData.delivery_time_to <= adjustedValue;
-      
-      if (value < minDeliveryTime) {
-        alert(`Zustellzeit "Von" darf nicht vor der Abholzeit (${minDeliveryTime}) liegen!`);
-      }
-      
-      setFormData((prev) => ({
-        ...prev,
-        [name]: adjustedValue,
-        delivery_time_to: shouldUpdateTo ? suggestedTo : prev.delivery_time_to,
+        delivery_time_to: newDeliveryTimeTo,
       }));
     } else if (name === 'delivery_time_to' && value) {
-      // Lieferzeit "Bis" muss mindestens +30min zur Lieferzeit "Von" sein
-      if (formData.delivery_time_from) {
-        const minDeliveryTimeTo = addMinutesToTime(formData.delivery_time_from, 30);
-        if (value < minDeliveryTimeTo) {
-          alert(`Zustellzeit "Bis" muss mindestens 30 Minuten nach "Von" (${minDeliveryTimeTo}) liegen!`);
-          setFormData((prev) => ({
-            ...prev,
-            [name]: minDeliveryTimeTo,
-          }));
-          return;
-        }
+      // Zustellzeit "Bis" muss MINDESTENS Abholzeit "Von" + 30min sein
+      const minDeliveryTimeTo = addMinutesToTime(formData.pickup_time_from || '00:00', 30);
+      
+      if (value < minDeliveryTimeTo) {
+        alert(`Zustellzeit "Bis" muss mindestens Abholzeit "Von" + 30 Minuten sein (${minDeliveryTimeTo})!`);
+        setFormData((prev) => ({
+          ...prev,
+          [name]: minDeliveryTimeTo,
+        }));
+        return;
       }
       
       setFormData((prev) => ({
