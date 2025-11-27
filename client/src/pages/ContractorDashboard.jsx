@@ -112,7 +112,11 @@ const ContractorDashboard = () => {
       const response = await verificationAPI.getStatus();
       setVerificationStatus(response.data.verificationStatus);
     } catch (error) {
-      console.error('Error fetching verification status:', error);
+      // Silently handle 404 - verification feature might not be available
+      if (error.response?.status !== 404) {
+        console.error('Error fetching verification status:', error);
+      }
+      setVerificationStatus(null);
     }
   };
 
