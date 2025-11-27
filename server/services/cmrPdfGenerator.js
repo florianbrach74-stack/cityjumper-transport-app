@@ -34,19 +34,13 @@ class CMRPdfGenerator {
         doc.fontSize(12).font('Helvetica-Bold').text(`CMR Nr: ${cmrData.cmr_number}`, 30, 100);
         doc.fontSize(10).font('Helvetica').text(`Datum: ${new Date(cmrData.created_at).toLocaleDateString('de-DE')}`, 30, 115);
         
-        // Multi-Stop Indicator
+        // Multi-Stop Indicator - nur Stop-Nummer, Empfänger ist in Feld 2
         if (cmrData.delivery_stop_index !== null && cmrData.delivery_stop_index !== undefined) {
           const stopNumber = cmrData.delivery_stop_index + 1;
           const totalStops = cmrData.total_stops || stopNumber;
           
-          // Draw box for multi-stop indicator
-          doc.rect(30, 130, 300, 45).fillAndStroke('#f0f9ff', '#3b82f6');
-          
-          doc.fontSize(14).font('Helvetica-Bold').fillColor('black')
-            .text(`ZUSTELLUNG ${stopNumber}/${totalStops}`, 40, 138);
-          doc.fontSize(10).font('Helvetica').fillColor('#1e40af')
-            .text(`Empfaenger: ${cmrData.consignee_name}`, 40, 155)
-            .text(`${cmrData.consignee_address}, ${cmrData.consignee_postal_code} ${cmrData.consignee_city}`, 40, 167);
+          doc.fontSize(12).font('Helvetica-Bold').fillColor('red')
+            .text(`MULTI-STOP: ZUSTELLUNG ${stopNumber}/${totalStops}`, 30, 130);
           doc.fillColor('black');
         }
 

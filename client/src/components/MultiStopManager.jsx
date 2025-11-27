@@ -19,6 +19,12 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
       alert('Bitte Adresse und Stadt eingeben');
       return;
     }
+    
+    // For delivery stops, contact_name is required
+    if (type === 'delivery' && !newStop.contact_name) {
+      alert('Bitte Empfängername eingeben (wird für CMR Feld 2 benötigt)');
+      return;
+    }
 
     onStopsChange([...stops, { ...newStop }]);
     
@@ -119,13 +125,15 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Kontaktperson
+                {type === 'delivery' ? 'Empfängername *' : 'Kontaktperson'}
               </label>
               <input
                 type="text"
                 value={newStop.contact_name}
                 onChange={(e) => setNewStop({ ...newStop, contact_name: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required={type === 'delivery'}
+                placeholder={type === 'delivery' ? 'z.B. Max Mustermann' : ''}
               />
             </div>
             <div>
