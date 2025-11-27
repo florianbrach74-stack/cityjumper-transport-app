@@ -867,11 +867,20 @@ const confirmDelivery = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    // Get CMR
-    const cmr = await CMR.findByOrderId(orderId);
+    // Get next pending CMR for multi-stop orders
+    const cmrGroupId = `ORDER-${orderId}`;
+    let cmr = await CMR.getNextPendingDelivery(cmrGroupId);
+    
+    // Fallback to single CMR if not multi-stop
     if (!cmr) {
-      return res.status(404).json({ error: 'CMR not found' });
+      cmr = await CMR.findByOrderId(orderId);
     }
+    
+    if (!cmr) {
+      return res.status(404).json({ error: 'CMR not found or all deliveries already completed' });
+    }
+    
+    console.log(`📋 Processing CMR #${cmr.id} (Stop ${cmr.delivery_stop_index + 1}/${cmr.total_stops})`);
 
     // Update CMR with receiver signature and optional photo
     await pool.query(
@@ -916,7 +925,6 @@ const confirmDelivery = async (req, res) => {
     }
 
     // Check if this is a multi-stop order and if all stops are completed
-    const cmrGroupId = `ORDER-${orderId}`;
     const allCMRs = await CMR.findByGroupId(cmrGroupId);
     const isMultiStop = allCMRs.length > 1;
     
