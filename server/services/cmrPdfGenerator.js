@@ -33,6 +33,15 @@ class CMRPdfGenerator {
         // CMR Number and Date
         doc.fontSize(12).font('Helvetica-Bold').text(`CMR Nr: ${cmrData.cmr_number}`, 30, 100);
         doc.fontSize(10).font('Helvetica').text(`Datum: ${new Date(cmrData.created_at).toLocaleDateString('de-DE')}`, 30, 115);
+        
+        // Multi-Stop Indicator
+        if (cmrData.delivery_stop_index !== null && cmrData.delivery_stop_index !== undefined) {
+          const stopNumber = cmrData.delivery_stop_index + 1;
+          const totalStops = cmrData.total_stops || stopNumber;
+          doc.fontSize(14).font('Helvetica-Bold').fillColor('blue')
+            .text(`📍 ZUSTELLUNG ${stopNumber}/${totalStops}`, 30, 130);
+          doc.fillColor('black');
+        }
 
         // Generate QR Code for tracking
         const qrCodeUrl = `${process.env.CLIENT_URL}/cmr/${cmrData.cmr_number}`;

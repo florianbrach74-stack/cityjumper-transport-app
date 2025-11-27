@@ -112,10 +112,10 @@ class CMR {
         order_id, cmr_number,
         sender_name, sender_address, sender_city, sender_postal_code, sender_country,
         consignee_name, consignee_address, consignee_city, consignee_postal_code, consignee_country,
-        carrier_name,
+        carrier_name, carrier_address, carrier_city, carrier_postal_code,
         status
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'created'
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'created'
       )
       RETURNING *
     `;
@@ -135,8 +135,11 @@ class CMR {
       order.delivery_city,
       order.delivery_postal_code,
       'Deutschland',
-      // Carrier
-      contractor ? (contractor.company_name || `${contractor.first_name} ${contractor.last_name}`) : 'Frachtführer'
+      // Carrier (Frachtführer)
+      contractor ? (contractor.company_name || `${contractor.first_name} ${contractor.last_name}`) : 'Frachtführer',
+      contractor?.company_address || '',
+      contractor?.company_city || '',
+      contractor?.company_postal_code || ''
     ];
 
     const result = await pool.query(query, values);
