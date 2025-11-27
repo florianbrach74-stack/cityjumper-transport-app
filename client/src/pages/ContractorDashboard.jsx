@@ -56,6 +56,20 @@ const ContractorDashboard = () => {
         ordersAPI.getOrders(),
         bidsAPI.getMyBids(),
       ]);
+      
+      // Debug logging for multi-stop orders
+      console.log('📦 Available Orders:', availableRes.data.orders.length);
+      availableRes.data.orders.forEach(order => {
+        console.log(`Order #${order.id}:`, {
+          pickup_stops_type: typeof order.pickup_stops,
+          pickup_stops_value: order.pickup_stops,
+          delivery_stops_type: typeof order.delivery_stops,
+          delivery_stops_value: order.delivery_stops,
+          has_pickup_stops: order.pickup_stops ? true : false,
+          has_delivery_stops: order.delivery_stops ? true : false
+        });
+      });
+      
       setAvailableOrders(availableRes.data.orders);
       setMyOrders(myOrdersRes.data.orders);
       setMyBids(myBidsRes.data.bids);
@@ -266,6 +280,14 @@ const ContractorDashboard = () => {
                       ? (typeof order.delivery_stops === 'string' ? JSON.parse(order.delivery_stops) : order.delivery_stops)
                       : [];
                     const hasMultiStop = pickupStops.length > 0 || deliveryStops.length > 0;
+                    
+                    // Debug logging for this specific order
+                    console.log(`🚚 Order #${order.id} Multi-Stop Check:`, {
+                      pickupStops_length: pickupStops.length,
+                      deliveryStops_length: deliveryStops.length,
+                      hasMultiStop: hasMultiStop,
+                      will_show_badge: hasMultiStop
+                    });
                     
                     return hasMultiStop && (
                     <div className="mt-2 bg-purple-50 border border-purple-200 rounded px-2 py-1">
