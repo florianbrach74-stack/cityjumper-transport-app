@@ -115,13 +115,31 @@ class MultiStopPdfGenerator {
       // Transfer signatures based on multi-stop scenario
       this.transferSignatures(cmrs);
       
+      // CRITICAL: Only generate PDFs for COMPLETED CMRs!
+      const completedCmrs = cmrs.filter(cmr => {
+        const hasSignature = cmr.consignee_signature || cmr.shared_receiver_signature;
+        const hasPhoto = cmr.delivery_photo_base64 || cmr.shared_delivery_photo_base64 || cmr.consignee_photo;
+        const isCompleted = hasSignature || hasPhoto;
+        console.log(`   CMR ${cmr.delivery_stop_index + 1}: ${isCompleted ? '✅ Completed' : '❌ Not completed'} (Signature: ${!!hasSignature}, Photo: ${!!hasPhoto})`);
+        return isCompleted;
+      });
+
+      if (completedCmrs.length === 0) {
+        throw new Error('No completed CMRs found - cannot generate PDF');
+      }
+
+      console.log(`   Generating PDFs for ${completedCmrs.length}/${cmrs.length} completed CMR(s)`);
+
       const individualPdfs = [];
-      for (let i = 0; i < cmrs.length; i++) {
-        const cmr = cmrs[i];
-        console.log(`   Generating CMR ${i + 1}/${cmrs.length}: ${cmr.cmr_number}`);
+      for (let i = 0; i < completedCmrs.length; i++) {
+        const cmr = completedCmrs[i];
+        console.log(`   Generating CMR ${i + 1}/${completedCmrs.length}: ${cmr.cmr_number}`);
         
         // Generate individual CMR using the REAL CMR format
-        const cmrFilepath = await CMRPdfGenerator.generateCMR(cmr, order);
+        // IMPORTANT: generateCMR returns an OBJECT { filepath, filename }, not a string!
+        const result = await CMRPdfGenerator.generateCMR(cmr, order);
+        const cmrFilepath = result.filepath; // Extract filepath from result object
+        console.log(`   ✅ CMR PDF generated at: ${cmrFilepath}`);
         individualPdfs.push(cmrFilepath);
       }
 
@@ -130,9 +148,16 @@ class MultiStopPdfGenerator {
       const mergedPdf = await PDFDocument.create();
       
       for (const pdfPath of individualPdfs) {
+        console.log(`   📄 Reading PDF: ${pdfPath}`);
+        if (!fs.existsSync(pdfPath)) {
+          console.error(`   ❌ PDF not found: ${pdfPath}`);
+          throw new Error(`PDF file not found: ${pdfPath}`);
+        }
         const pdfBytes = fs.readFileSync(pdfPath);
+        console.log(`   ✅ PDF read (${pdfBytes.length} bytes)`);
         const pdf = await PDFDocument.load(pdfBytes);
         const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        console.log(`   ✅ Copied ${copiedPages.length} page(s)`);
         copiedPages.forEach((page) => mergedPdf.addPage(page));
       }
 

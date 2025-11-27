@@ -292,7 +292,7 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
                     </label>
                     <div className="grid grid-cols-1 gap-2">
                       {cmrGroup?.cmrs
-                        .filter(cmr => !cmr.consignee_signature && !cmr.delivery_photo_base64) // Nur offene Stops
+                        .filter(cmr => !cmr.consignee_signature && !cmr.delivery_photo_base64 && !cmr.consignee_photo)
                         .map((cmr, filteredIndex) => {
                           const originalIndex = cmrGroup.cmrs.indexOf(cmr);
                           const isCurrent = originalIndex === currentStopIndex;
@@ -333,7 +333,7 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
                       
                       {/* Show completed stops separately */}
                       {cmrGroup?.cmrs
-                        .filter(cmr => cmr.consignee_signature || cmr.delivery_photo_base64)
+                        .filter(cmr => cmr.consignee_signature || cmr.delivery_photo_base64 || cmr.consignee_photo)
                         .map((cmr, index) => {
                           const originalIndex = cmrGroup.cmrs.indexOf(cmr);
                           return (
