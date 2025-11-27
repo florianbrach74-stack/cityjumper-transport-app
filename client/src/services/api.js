@@ -86,4 +86,10 @@ export const verificationAPI = {
   downloadDocument: (documentId) => `${API_URL}/verification/documents/${documentId}/download`,
 };
 
+// CMR API
+export const cmrAPI = {
+  getNextPendingDelivery: (orderId) => api.get(`/cmr/order/${orderId}/next-delivery`),
+  getCMRsByGroup: (orderId) => api.get(`/cmr/order/${orderId}/group`),
+};
+
 export default api;

@@ -915,9 +915,26 @@ const confirmDelivery = async (req, res) => {
       console.log(`⏱️ Total waiting time: ${totalWaitingMinutes} min - within free 30 min allowance`);
     }
 
-    // Update order status based on waiting time
-    let newStatus = 'completed';
-    if (waitingTimeFee > 0) {
+    // Check if this is a multi-stop order and if all stops are completed
+    const cmrGroupId = `ORDER-${orderId}`;
+    const allCMRs = await CMR.findByGroupId(cmrGroupId);
+    const isMultiStop = allCMRs.length > 1;
+    
+    let allStopsCompleted = false;
+    if (isMultiStop) {
+      // Check if all CMRs have signatures or photos
+      allStopsCompleted = allCMRs.every(cmr => 
+        cmr.consignee_signature || cmr.delivery_photo_base64 || cmr.shared_receiver_signature
+      );
+      console.log(`📦 Multi-Stop Order: ${allCMRs.length} stops, all completed: ${allStopsCompleted}`);
+    } else {
+      allStopsCompleted = true; // Single stop is always "all completed"
+    }
+    
+    // Update order status based on waiting time and completion
+    let newStatus = allStopsCompleted ? 'completed' : 'picked_up';
+    
+    if (allStopsCompleted && waitingTimeFee > 0) {
       newStatus = 'pending_approval'; // Needs admin approval for waiting time fee
       console.log('📊 Order requires admin approval for waiting time fee');
       
@@ -928,24 +945,49 @@ const confirmDelivery = async (req, res) => {
          WHERE id = $3`,
         [newStatus, waitingTimeFee, orderId]
       );
-    } else {
+    } else if (allStopsCompleted) {
       await Order.updateStatus(orderId, 'completed');
+    } else {
+      console.log(`⏸️ Not all stops completed yet - keeping status as 'picked_up'`);
     }
     
     console.log(`✅ Order status updated to: ${newStatus}`);
 
-    // Regenerate CMR PDF with all signatures
-    console.log('📄 Regenerating CMR PDF...');
-    const updatedCmr = await CMR.findByOrderId(orderId);
-    console.log('   CMR data:', { id: updatedCmr.id, orderId: updatedCmr.order_id });
+    // Only send email and generate PDF if all stops are completed
+    if (!allStopsCompleted) {
+      console.log(`📧 Skipping email - not all stops completed yet`);
+      return res.json({ 
+        success: true, 
+        message: 'Zustellung bestätigt. Weitere Stops ausstehend.',
+        allStopsCompleted: false,
+        nextCMR: await CMR.getNextPendingDelivery(cmrGroupId)
+      });
+    }
+    
+    // All stops completed - generate combined PDF and send email
+    console.log('📄 All stops completed - generating combined PDF...');
     
     let pdfGenerated = false;
+    let pdfPath = null;
+    
     try {
-      await CMRPdfGenerator.generateCMR(updatedCmr, order);
-      console.log('✅ CMR PDF generated');
-      pdfGenerated = true;
+      if (isMultiStop) {
+        // Generate combined PDF with all CMRs
+        const MultiStopPdfGenerator = require('../services/multiStopPdfGenerator');
+        const { filepath, filename } = await MultiStopPdfGenerator.generateCombinedPDF(orderId, cmrGroupId);
+        pdfPath = filepath;
+        console.log('✅ Combined PDF generated:', filename);
+        pdfGenerated = true;
+      } else {
+        // Single stop - generate regular CMR PDF
+        const updatedCmr = await CMR.findByOrderId(orderId);
+        await CMRPdfGenerator.generateCMR(updatedCmr, order);
+        pdfPath = require('path').join(__dirname, '../../uploads/cmr', `cmr_${orderId}.pdf`);
+        console.log('✅ CMR PDF generated');
+        pdfGenerated = true;
+      }
     } catch (pdfError) {
-      console.error('⚠️ CMR PDF generation failed:', pdfError);
+      console.error('⚠️ PDF generation failed:', pdfError);
       console.error('   Error stack:', pdfError.stack);
     }
 
@@ -957,34 +999,27 @@ const confirmDelivery = async (req, res) => {
       const contractorId = order.contractor_id;
       const contractor = await User.findById(contractorId);
       
-      // Read CMR PDF file
+      // Read PDF file (combined or single CMR)
       const fs = require('fs');
-      const path = require('path');
-      const cmrPath = path.join(__dirname, '../../uploads/cmr', `cmr_${orderId}.pdf`);
-      console.log('   Looking for PDF at:', cmrPath);
+      console.log('   Looking for PDF at:', pdfPath);
       
       let attachments = [];
-      if (fs.existsSync(cmrPath)) {
-        const pdfBuffer = fs.readFileSync(cmrPath);
+      if (pdfPath && fs.existsSync(pdfPath)) {
+        const pdfBuffer = fs.readFileSync(pdfPath);
         const pdfBase64 = pdfBuffer.toString('base64');
         
+        const filename = isMultiStop 
+          ? `CMR_MultiStop_Auftrag_${orderId}.pdf`
+          : `CMR_Auftrag_${orderId}.pdf`;
+        
         attachments = [{
-          filename: `CMR_Auftrag_${orderId}.pdf`,
+          filename,
           content: pdfBase64,
         }];
-        console.log('📎 CMR PDF attached to email (size:', pdfBuffer.length, 'bytes)');
+        console.log('📎 PDF attached to email (size:', pdfBuffer.length, 'bytes)');
       } else {
-        console.log('⚠️ CMR PDF not found at:', cmrPath);
+        console.log('⚠️ PDF not found at:', pdfPath);
         console.log('   PDF was generated:', pdfGenerated);
-        
-        // List files in uploads/cmr directory
-        const cmrDir = path.join(__dirname, '../../uploads/cmr');
-        if (fs.existsSync(cmrDir)) {
-          const files = fs.readdirSync(cmrDir);
-          console.log('   Files in CMR directory:', files);
-        } else {
-          console.log('   CMR directory does not exist!');
-        }
       }
       
       await sendEmail(
