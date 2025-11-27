@@ -642,15 +642,34 @@ const ContractorDashboard = () => {
             )}
 
             {/* Status: Picked Up - Show "Zustellung" button */}
-            {order.status === 'picked_up' && (
-              <button
-                onClick={() => setSelectedOrderForDelivery(order)}
-                className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-              >
-                <Truck className="h-5 w-5 mr-2" />
-                Zustellung abschließen
-              </button>
-            )}
+            {order.status === 'picked_up' && (() => {
+              // Calculate button text for multi-stop orders
+              const deliveryStops = order.delivery_stops 
+                ? (typeof order.delivery_stops === 'string' ? JSON.parse(order.delivery_stops) : order.delivery_stops)
+                : [];
+              const pickupStops = order.pickup_stops
+                ? (typeof order.pickup_stops === 'string' ? JSON.parse(order.pickup_stops) : order.pickup_stops)
+                : [];
+              
+              const isMultiStop = deliveryStops.length > 0 || pickupStops.length > 0;
+              const totalStops = deliveryStops.length + 1; // Main + extra delivery stops
+              
+              // For now, we don't know which stop is next - show generic text
+              // TODO: Load next pending CMR from API
+              const buttonText = isMultiStop 
+                ? `Zustellung abschließen (${totalStops} Stops)`
+                : 'Zustellung abschließen';
+              
+              return (
+                <button
+                  onClick={() => setSelectedOrderForDelivery(order)}
+                  className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  <Truck className="h-5 w-5 mr-2" />
+                  {buttonText}
+                </button>
+              );
+            })()}
 
             {/* CMR Button - visible after pickup */}
             {(order.status === 'picked_up' || order.status === 'delivered' || order.status === 'pending_approval' || order.status === 'completed') && (
