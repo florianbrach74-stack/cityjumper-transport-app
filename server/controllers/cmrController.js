@@ -942,28 +942,49 @@ const confirmDelivery = async (req, res) => {
 
     // Update CMR with receiver signature OR photo (not both!)
     // Note: Duplicate check is already done above, so we can safely update
+    console.log('💾 [BACKEND] Saving delivery data:', {
+      cmrId: cmr.id,
+      receiverName,
+      hasSignature: !!receiverSignature,
+      signatureLength: receiverSignature ? receiverSignature.length : 0,
+      hasPhoto: !!deliveryPhoto,
+      photoLength: deliveryPhoto ? deliveryPhoto.length : 0
+    });
+
     if (receiverSignature) {
       // Save signature only
-      await pool.query(
+      console.log('💾 [BACKEND] Saving SIGNATURE for CMR', cmr.id);
+      const result = await pool.query(
         `UPDATE cmr_documents 
          SET consignee_signed_name = $1,
              consignee_signature = $2,
              consignee_signed_at = CURRENT_TIMESTAMP
-         WHERE id = $3`,
+         WHERE id = $3
+         RETURNING id, consignee_signed_name, consignee_signed_at`,
         [receiverName, receiverSignature, cmr.id]
       );
-      console.log('✅ Receiver signature saved');
+      console.log('✅ Receiver signature saved:', result.rows[0]);
     } else if (deliveryPhoto) {
       // Save photo only
-      await pool.query(
+      console.log('💾 [BACKEND] Saving PHOTO for CMR', cmr.id);
+      const result = await pool.query(
         `UPDATE cmr_documents 
          SET consignee_signed_name = $1,
              consignee_photo = $2,
              consignee_signed_at = CURRENT_TIMESTAMP
-         WHERE id = $3`,
+         WHERE id = $3
+         RETURNING id, consignee_signed_name, consignee_signed_at`,
         [receiverName, deliveryPhoto, cmr.id]
       );
-      console.log('✅ Delivery photo saved');
+      console.log('✅ Delivery photo saved:', result.rows[0]);
+    } else {
+      console.error('❌ [BACKEND] CRITICAL: No signature AND no photo provided!');
+      console.error('   receiverSignature:', receiverSignature);
+      console.error('   deliveryPhoto:', deliveryPhoto);
+      return res.status(400).json({ 
+        error: 'Bitte Unterschrift oder Foto bereitstellen',
+        allStopsCompleted: false
+      });
     }
 
     // Update order with delivery waiting time if provided
