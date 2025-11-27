@@ -40,6 +40,9 @@ class CMRPdfGenerator {
           const totalStops = cmrData.total_stops || stopNumber;
           doc.fontSize(14).font('Helvetica-Bold').fillColor('blue')
             .text(`📍 ZUSTELLUNG ${stopNumber}/${totalStops}`, 30, 130);
+          doc.fontSize(11).font('Helvetica').fillColor('blue')
+            .text(`→ ${cmrData.consignee_name}`, 30, 148)
+            .text(`   ${cmrData.consignee_address}, ${cmrData.consignee_postal_code} ${cmrData.consignee_city}`, 30, 162);
           doc.fillColor('black');
         }
 
