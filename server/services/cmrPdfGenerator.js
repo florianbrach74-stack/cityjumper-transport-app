@@ -102,7 +102,8 @@ class CMRPdfGenerator {
         doc.fontSize(9).font('Helvetica')
           .text(cmrData.carrier_name, 300, 170)
           .text(cmrData.carrier_address || '', 300, 183)
-          .text(cmrData.carrier_city ? `${cmrData.carrier_postal_code} ${cmrData.carrier_city}` : '', 300, 196);
+          .text(cmrData.carrier_city ? `${cmrData.carrier_postal_code} ${cmrData.carrier_city}` : '', 300, 196)
+          .text('Deutschland', 300, 209);
 
         // Box 17: Successive Carriers
         this.drawBox(doc, 295, 235, 270, 40);

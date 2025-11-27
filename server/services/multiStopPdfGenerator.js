@@ -148,6 +148,7 @@ class MultiStopPdfGenerator {
     if (cmr.carrier_address) {
       doc.text(`${cmr.carrier_address}`);
       doc.text(`${cmr.carrier_postal_code} ${cmr.carrier_city}`);
+      doc.text('Deutschland');
     }
     doc.moveDown();
 
