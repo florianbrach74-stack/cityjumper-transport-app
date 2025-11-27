@@ -144,48 +144,44 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // Auto-fill "Bis" Zeit mit +30min wenn "Von" geändert wird
+    // Auto-fill "Bis" Zeit mit +30min wenn "Von" geändert wird (nur Vorschlag)
     if (name === 'pickup_time_from' && value) {
       const suggestedPickupTo = addMinutesToTime(value, 30);
       const shouldUpdatePickupTo = !formData.pickup_time_to || formData.pickup_time_to < value;
-      
-      // WICHTIG: Zustellzeit "Bis" MUSS MINDESTENS Abholzeit "Von" + 30min sein
-      const minDeliveryTimeTo = addMinutesToTime(value, 30);
-      
-      // Wenn Zustellzeit "Bis" kleiner als Minimum ist, aktualisiere sie
-      let newDeliveryTimeTo = formData.delivery_time_to;
-      if (!formData.delivery_time_to || formData.delivery_time_to < minDeliveryTimeTo) {
-        newDeliveryTimeTo = minDeliveryTimeTo;
-      }
       
       setFormData((prev) => ({
         ...prev,
         [name]: value,
         pickup_time_to: shouldUpdatePickupTo ? suggestedPickupTo : prev.pickup_time_to,
-        delivery_time_to: newDeliveryTimeTo
       }));
     } else if (name === 'pickup_time_to' && value) {
-      // Keine Auto-Anpassung bei Abholzeit Bis
+      // WICHTIG: Abholzeit Bis darf NIEMALS größer als Zustellzeit Bis sein
+      if (formData.delivery_time_to && value > formData.delivery_time_to) {
+        alert(`Abholzeit "Bis" (${value}) darf nicht nach Zustellzeit "Bis" (${formData.delivery_time_to}) liegen!`);
+        setFormData((prev) => ({
+          ...prev,
+          [name]: formData.delivery_time_to,
+        }));
+        return;
+      }
+      
       setFormData((prev) => ({
         ...prev,
         [name]: value,
       }));
     } else if (name === 'delivery_time_from' && value) {
-      // Zustellzeit Von und Bis können identisch sein (Punktzustellung)
-      // Setze einfach den Wert, keine Auto-Anpassung
+      // Zustellzeit Von ist komplett frei wählbar (kann auch vor Abholzeit sein)
       setFormData((prev) => ({
         ...prev,
         [name]: value,
       }));
     } else if (name === 'delivery_time_to' && value) {
-      // Zustellzeit "Bis" muss MINDESTENS Abholzeit "Von" + 30min sein
-      const minDeliveryTimeTo = addMinutesToTime(formData.pickup_time_from || '00:00', 30);
-      
-      if (value < minDeliveryTimeTo) {
-        alert(`Zustellzeit "Bis" muss mindestens Abholzeit "Von" + 30 Minuten sein (${minDeliveryTimeTo})!`);
+      // WICHTIG: Zustellzeit Bis muss >= Abholzeit Bis sein
+      if (formData.pickup_time_to && value < formData.pickup_time_to) {
+        alert(`Zustellzeit "Bis" (${value}) darf nicht vor Abholzeit "Bis" (${formData.pickup_time_to}) liegen!`);
         setFormData((prev) => ({
           ...prev,
-          [name]: minDeliveryTimeTo,
+          [name]: formData.pickup_time_to,
         }));
         return;
       }
