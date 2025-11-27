@@ -949,7 +949,7 @@ const confirmDelivery = async (req, res) => {
            consignee_photo = $4
        WHERE id = $3
        AND consignee_signature IS NULL 
-       AND delivery_photo_base64 IS NULL`,
+       AND consignee_photo IS NULL`,
       [receiverName, receiverSignature, cmr.id, deliveryPhoto || null]
     );
     console.log('✅ Receiver signature saved' + (deliveryPhoto ? ' with photo' : ''));
