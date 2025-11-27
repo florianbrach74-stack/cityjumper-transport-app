@@ -165,9 +165,23 @@ const ContractorDashboard = () => {
   };
 
   const handleDeliveryComplete = async (data) => {
+    console.log('🚀 [DASHBOARD] handleDeliveryComplete called');
+    console.log('📦 [DASHBOARD] Order ID:', selectedOrderForDelivery?.id);
+    console.log('📦 [DASHBOARD] Data:', {
+      cmrId: data.cmrId,
+      receiverName: data.receiverName,
+      hasSignature: !!data.receiverSignature,
+      hasPhoto: !!data.deliveryPhoto
+    });
+    
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/cmr/order/${selectedOrderForDelivery.id}/delivery`, {
+      const url = `${import.meta.env.VITE_API_URL}/api/cmr/order/${selectedOrderForDelivery.id}/delivery`;
+      
+      console.log('🌐 [DASHBOARD] Making API call to:', url);
+      console.log('📤 [DASHBOARD] Request body:', JSON.stringify(data, null, 2));
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -176,24 +190,30 @@ const ContractorDashboard = () => {
         body: JSON.stringify(data),
       });
 
+      console.log('📥 [DASHBOARD] Response status:', response.status);
       const result = await response.json();
+      console.log('📥 [DASHBOARD] Response data:', result);
 
       if (!response.ok) {
-        // Show specific error message from backend
+        console.error('❌ [DASHBOARD] API error:', result.error);
         throw new Error(result.error || 'Delivery confirmation failed');
       }
 
       // Check if all stops are completed
       if (result.allStopsCompleted) {
+        console.log('🎉 [DASHBOARD] All stops completed!');
         alert('Zustellung erfolgreich bestätigt! Der Kunde wurde benachrichtigt und das CMR-Dokument wurde versendet.');
       } else {
+        console.log('✅ [DASHBOARD] Stop completed, more stops remaining');
         alert('Stop erfolgreich abgeschlossen! Weitere Stops ausstehend.');
       }
       
       setSelectedOrderForDelivery(null);
       fetchOrders();
     } catch (error) {
-      console.error('Error confirming delivery:', error);
+      console.error('❌ [DASHBOARD] Error confirming delivery:', error);
+      console.error('❌ [DASHBOARD] Error message:', error.message);
+      console.error('❌ [DASHBOARD] Error stack:', error.stack);
       throw error;
     }
   };
