@@ -37,18 +37,19 @@ const SavedRoutesManager = ({ onSelectRoute }) => {
 
   const handleSelect = async (route) => {
     try {
-      // Increment usage count
-      await api.post(`/saved-routes/${route.id}/use`);
-      
-      // Call parent callback with route data
+      // Call parent callback with route data FIRST
       if (onSelectRoute) {
         onSelectRoute(route);
       }
       
-      // Reload to update usage count
-      loadRoutes();
+      // Then increment usage count (don't wait for it)
+      api.post(`/saved-routes/${route.id}/use`)
+        .then(() => loadRoutes())
+        .catch(err => console.error('Error incrementing usage:', err));
+        
     } catch (error) {
       console.error('Error using route:', error);
+      alert('Fehler beim Laden der Route');
     }
   };
 
