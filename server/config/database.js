@@ -39,8 +39,9 @@ pool.on('connect', (client) => {
 
 pool.on('error', (err, client) => {
   console.error('❌ Unexpected database pool error:', err.message);
+  console.error('   Error code:', err.code);
+  console.error('   Will attempt reconnection automatically');
   // Don't exit on pool errors - let the pool handle reconnection
-  // Only log the error
 });
 
 pool.on('remove', () => {
@@ -64,4 +65,32 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
+// Retry wrapper for queries
+const queryWithRetry = async (text, params, maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await pool.query(text, params);
+    } catch (error) {
+      console.error(`❌ Query failed (attempt ${attempt}/${maxRetries}):`, error.message);
+      
+      // Check if it's a connection error
+      const isConnectionError = 
+        error.message.includes('Connection terminated') ||
+        error.message.includes('connection timeout') ||
+        error.code === 'ECONNRESET' ||
+        error.code === '57P01'; // admin_shutdown
+      
+      if (isConnectionError && attempt < maxRetries) {
+        console.log(`   ⏳ Retrying in ${attempt}s...`);
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        continue;
+      }
+      
+      throw error;
+    }
+  }
+};
+
+// Export both pool and retry wrapper
 module.exports = pool;
+module.exports.queryWithRetry = queryWithRetry;
