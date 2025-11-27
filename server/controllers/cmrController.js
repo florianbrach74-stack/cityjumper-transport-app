@@ -604,51 +604,71 @@ const downloadCMRPdf = async (req, res) => {
 
     console.log('✅ Order found:', order.id);
     
-    // Check if this is a multi-stop order
-    const isMultiStop = !!cmr.cmr_group_id;
-    console.log('📊 Is multi-stop:', isMultiStop);
-    
-    let filepath, filename;
+    // Check if CMR has a pdf_url stored in database
     const fs = require('fs');
+    const path = require('path');
+    let filepath, filename;
     
-    if (isMultiStop) {
-      // For multi-stop orders, check if all stops are completed
-      const pool = require('../config/database');
-      const cmrsResult = await pool.query(
-        'SELECT * FROM cmr_documents WHERE cmr_group_id = $1 ORDER BY id',
-        [cmr.cmr_group_id]
-      );
-      const allCmrs = cmrsResult.rows;
+    if (cmr.pdf_url) {
+      // Use stored PDF URL (for completed multi-stop orders, this points to combined PDF)
+      console.log('📄 Using stored pdf_url:', cmr.pdf_url);
+      filename = path.basename(cmr.pdf_url);
+      filepath = path.join(__dirname, '../../uploads/cmr', filename);
       
-      const allCompleted = allCmrs.every(c => 
-        c.consignee_signature || c.delivery_photo_base64 || c.consignee_photo
-      );
-      
-      console.log(`📊 Multi-stop order: ${allCmrs.length} stops, all completed: ${allCompleted}`);
-      
-      if (allCompleted) {
-        // All stops completed - return combined PDF
-        console.log('🔄 Generating combined PDF for all stops...');
-        const MultiStopPdfGenerator = require('../services/multiStopPdfGenerator');
-        const result = await MultiStopPdfGenerator.generateCombinedPDF(order.id, cmr.cmr_group_id);
-        filepath = result.filepath;
-        filename = result.filename;
-        console.log('✅ Combined PDF generated:', filename);
+      // Check if file exists, if not regenerate
+      if (!fs.existsSync(filepath)) {
+        console.log('⚠️ Stored PDF not found, regenerating...');
+        cmr.pdf_url = null; // Force regeneration below
       } else {
-        // Not all stops completed - return individual CMR
-        console.log('🔄 Generating individual CMR (not all stops completed)...');
+        console.log('✅ Using existing PDF from database:', filename);
+      }
+    }
+    
+    // If no pdf_url or file doesn't exist, generate PDF
+    if (!cmr.pdf_url) {
+      // Check if this is a multi-stop order
+      const isMultiStop = !!cmr.cmr_group_id;
+      console.log('📊 Is multi-stop:', isMultiStop);
+      
+      if (isMultiStop) {
+        // For multi-stop orders, check if all stops are completed
+        const pool = require('../config/database');
+        const cmrsResult = await pool.query(
+          'SELECT * FROM cmr_documents WHERE cmr_group_id = $1 ORDER BY id',
+          [cmr.cmr_group_id]
+        );
+        const allCmrs = cmrsResult.rows;
+        
+        const allCompleted = allCmrs.every(c => 
+          c.consignee_signature || c.delivery_photo_base64 || c.consignee_photo
+        );
+        
+        console.log(`📊 Multi-stop order: ${allCmrs.length} stops, all completed: ${allCompleted}`);
+        
+        if (allCompleted) {
+          // All stops completed - return combined PDF
+          console.log('🔄 Generating combined PDF for all stops...');
+          const MultiStopPdfGenerator = require('../services/multiStopPdfGenerator');
+          const result = await MultiStopPdfGenerator.generateCombinedPDF(order.id, cmr.cmr_group_id);
+          filepath = result.filepath;
+          filename = result.filename;
+          console.log('✅ Combined PDF generated:', filename);
+        } else {
+          // Not all stops completed - return individual CMR
+          console.log('🔄 Generating individual CMR (not all stops completed)...');
+          const result = await CMRPdfGenerator.generateCMR(cmr, order);
+          filepath = result.filepath;
+          filename = result.filename;
+          console.log('✅ Individual CMR generated:', filename);
+        }
+      } else {
+        // Single stop - generate regular CMR PDF
+        console.log('🔄 Generating single-stop CMR PDF...');
         const result = await CMRPdfGenerator.generateCMR(cmr, order);
         filepath = result.filepath;
         filename = result.filename;
-        console.log('✅ Individual CMR generated:', filename);
+        console.log('✅ Single CMR generated:', filename);
       }
-    } else {
-      // Single stop - generate regular CMR PDF
-      console.log('🔄 Generating single-stop CMR PDF...');
-      const result = await CMRPdfGenerator.generateCMR(cmr, order);
-      filepath = result.filepath;
-      filename = result.filename;
-      console.log('✅ Single CMR generated:', filename);
     }
     
     console.log('✅ PDF generated:', filepath);
@@ -1154,13 +1174,35 @@ const confirmDelivery = async (req, res) => {
         pdfPath = filepath;
         console.log('✅ Combined PDF generated:', filename);
         pdfGenerated = true;
+        
+        // IMPORTANT: Update pdf_url for ALL CMRs in the group to point to combined PDF
+        // This ensures that when users download CMR from their accounts, they get the combined PDF
+        const pdfUrl = `/uploads/cmr/${filename}`;
+        console.log('💾 Updating pdf_url for all CMRs in group to:', pdfUrl);
+        await pool.query(
+          `UPDATE cmr_documents 
+           SET pdf_url = $1 
+           WHERE cmr_group_id = $2`,
+          [pdfUrl, cmrGroupId]
+        );
+        console.log('✅ All CMRs in group now point to combined PDF');
       } else {
         // Single stop - generate regular CMR PDF
         const updatedCmr = await CMR.findByOrderId(orderId);
-        await CMRPdfGenerator.generateCMR(updatedCmr, order);
-        pdfPath = require('path').join(__dirname, '../../uploads/cmr', `cmr_${orderId}.pdf`);
+        const { filepath, filename } = await CMRPdfGenerator.generateCMR(updatedCmr, order);
+        pdfPath = filepath;
         console.log('✅ CMR PDF generated');
         pdfGenerated = true;
+        
+        // Update pdf_url for single CMR
+        const pdfUrl = `/uploads/cmr/${filename}`;
+        await pool.query(
+          `UPDATE cmr_documents 
+           SET pdf_url = $1 
+           WHERE order_id = $2`,
+          [pdfUrl, orderId]
+        );
+        console.log('✅ CMR pdf_url updated:', pdfUrl);
       }
     } catch (pdfError) {
       console.error('⚠️ PDF generation failed:', pdfError);
