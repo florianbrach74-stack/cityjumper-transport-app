@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const SavedRoute = require('../models/SavedRoute');
-const auth = require('../middleware/auth');
+const { authenticateToken: auth } = require('../middleware/auth');
 
 // Get all saved routes for the authenticated customer
 router.get('/', auth, async (req, res) => {
