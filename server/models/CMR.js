@@ -302,7 +302,7 @@ class CMR {
     const query = `
       SELECT * FROM cmr_documents 
       WHERE cmr_group_id = $1 
-        AND receiver_signature IS NULL
+        AND consignee_signature IS NULL
       ORDER BY delivery_stop_index ASC
       LIMIT 1
     `;
@@ -314,7 +314,7 @@ class CMR {
   static async isGroupCompleted(cmrGroupId) {
     const query = `
       SELECT COUNT(*) as total,
-             COUNT(receiver_signature) as completed
+             COUNT(consignee_signature) as completed
       FROM cmr_documents 
       WHERE cmr_group_id = $1
     `;

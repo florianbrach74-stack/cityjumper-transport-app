@@ -119,10 +119,10 @@ const createCMRForOrder = async (orderId) => {
     const totalStops = totalDeliveries;
 
     // Helper function to create CMR data
-    const createCMRData = (deliveryInfo, stopIndex, pickupInfo = null, isMainDelivery = false) => {
+    const createCMRData = (deliveryInfo, stopIndex, isMainDelivery = false, pickupInfo = null) => {
       // Use provided pickup info or default to main pickup
       const senderInfo = pickupInfo || {
-        contact_name: order.pickup_contact_name,
+        contact_name: order.pickup_contact_name || `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim(),
         address: order.pickup_address,
         city: order.pickup_city,
         postal_code: order.pickup_postal_code,
