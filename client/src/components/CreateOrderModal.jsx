@@ -16,6 +16,14 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   // Hole heutiges Datum für Direktfahrt
   const today = new Date().toISOString().split('T')[0];
   const currentTime = new Date().toTimeString().slice(0, 5);
+  
+  // Calculate initial delivery time (pickup + 30min)
+  const calculateInitialDeliveryTime = (timeStr) => {
+    const [hours, mins] = timeStr.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, mins + 30, 0, 0);
+    return date.toTimeString().slice(0, 5);
+  };
 
   const [formData, setFormData] = useState({
     pickup_address: pendingOrder.pickupAddress || (user?.company_address || ''),
@@ -25,7 +33,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     pickup_company: user?.company_name || '',
     pickup_date: today,
     pickup_time_from: currentTime,
-    pickup_time_to: '',
+    pickup_time_to: calculateInitialDeliveryTime(currentTime),
     pickup_contact_name: user?.company_name ? `${user.first_name} ${user.last_name}` : '',
     pickup_contact_phone: user?.phone || '',
     delivery_address: pendingOrder.deliveryAddress || '',
@@ -34,7 +42,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     delivery_country: 'Deutschland',
     delivery_date: today, // Standard: Direktfahrt = gleiches Datum
     delivery_time_from: currentTime,
-    delivery_time_to: '',
+    delivery_time_to: calculateInitialDeliveryTime(currentTime), // WICHTIG: Abholzeit Von + 30min
     delivery_contact_name: '',
     delivery_contact_phone: '',
     vehicle_type: pendingOrder.vehicleType || 'Kleintransporter',
@@ -138,8 +146,11 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     
     // Auto-fill "Bis" Zeit mit +30min wenn "Von" geändert wird
     if (name === 'pickup_time_from' && value) {
-      const suggestedTo = addMinutesToTime(value, 30);
-      const shouldUpdateTo = !formData.pickup_time_to || formData.pickup_time_to <= value;
+      const suggestedPickupTo = addMinutesToTime(value, 30);
+      const shouldUpdatePickupTo = !formData.pickup_time_to || formData.pickup_time_to <= value;
+      
+      // WICHTIG: Zustellzeit "Bis" = Abholzeit "Von" + 30min
+      const deliveryTimeTo = addMinutesToTime(value, 30);
       
       // Wenn Lieferzeit "Von" kleiner als neue Abholzeit ist, aktualisiere sie
       let newDeliveryTimeFrom = formData.delivery_time_from;
@@ -150,9 +161,9 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       setFormData((prev) => ({
         ...prev,
         [name]: value,
-        pickup_time_to: shouldUpdateTo ? suggestedTo : prev.pickup_time_to,
+        pickup_time_to: shouldUpdatePickupTo ? suggestedPickupTo : prev.pickup_time_to,
         delivery_time_from: newDeliveryTimeFrom,
-        delivery_time_to: newDeliveryTimeFrom ? addMinutesToTime(newDeliveryTimeFrom, 30) : prev.delivery_time_to
+        delivery_time_to: deliveryTimeTo // IMMER Abholzeit Von + 30min
       }));
     } else if (name === 'pickup_time_to' && value) {
       // Wenn Lieferzeit "Von" kleiner als neue Abholzeit "Bis" ist, aktualisiere sie
@@ -317,6 +328,21 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     setShowSavedRoutes(false);
   };
   
+  // Auto-adjust delivery times when pickup times change
+  useEffect(() => {
+    if (formData.pickup_time_from && formData.delivery_time_from) {
+      // Ensure delivery_time_from is not before pickup_time_from
+      if (formData.delivery_time_from < formData.pickup_time_from) {
+        const minDeliveryTime = addMinutesToTime(formData.pickup_time_from, 30);
+        setFormData(prev => ({
+          ...prev,
+          delivery_time_from: formData.pickup_time_from,
+          delivery_time_to: minDeliveryTime
+        }));
+      }
+    }
+  }, [formData.pickup_time_from]);
+
   // Aktualisiere Preis und Extra-Stops-Gebühr wenn Stops sich ändern
   useEffect(() => {
     const PRICE_PER_KM = 0.50;
