@@ -522,23 +522,41 @@ const ContractorDashboard = () => {
           </div>
         )}
 
-        {/* Additional Details - Only for accepted orders */}
-        {!showAcceptButton && (order.weight || order.pallets || order.description) && (
-          <div className="pt-3 border-t">
-            <div className="text-sm space-y-1">
+        {/* Cargo Details - Show for ALL orders (available and accepted) */}
+        {(order.weight || order.length || order.width || order.height || order.pallets || order.description) && (
+          <div className="pt-3 border-t bg-gray-50 -mx-6 px-6 py-3">
+            <div className="font-medium text-gray-900 mb-2 flex items-center">
+              <span className="mr-2">📦</span> Ladegut
+            </div>
+            <div className="text-sm space-y-2">
+              {order.description && (
+                <div className="text-gray-700">
+                  <span className="font-medium">Art:</span> {order.description}
+                </div>
+              )}
               {order.weight && (
-                <div className="text-gray-600">Gewicht: {order.weight} kg</div>
+                <div className="text-gray-700">
+                  <span className="font-medium">Gewicht:</span> {order.weight} kg
+                </div>
+              )}
+              {(order.length || order.width || order.height) && (
+                <div className="text-gray-700">
+                  <span className="font-medium">Maße:</span>{' '}
+                  {order.length || '?'} cm × {order.width || '?'} cm × {order.height || '?'} cm
+                  {order.length && order.width && order.height && (
+                    <span className="text-gray-500 ml-1">
+                      (L × B × H)
+                    </span>
+                  )}
+                </div>
               )}
               {order.pallets && (
-                <div className="text-gray-600">Paletten: {order.pallets}</div>
-              )}
-              {order.description && (
-                <div className="text-gray-600">
-                  <span className="font-medium">Beschreibung:</span> {order.description}
+                <div className="text-gray-700">
+                  <span className="font-medium">Paletten:</span> {order.pallets}
                 </div>
               )}
               {order.special_requirements && (
-                <div className="text-gray-600">
+                <div className="text-gray-700">
                   <span className="font-medium">Besondere Anforderungen:</span>{' '}
                   {order.special_requirements}
                 </div>
