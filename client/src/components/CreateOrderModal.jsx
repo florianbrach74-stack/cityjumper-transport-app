@@ -150,16 +150,23 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
       const minDeliveryTimeTo = addMinutesToTime(value, 30);
       let newDeliveryTimeTo = formData.delivery_time_to;
       
-      // Wenn Zustellzeit Bis kleiner als Minimum, aktualisiere sie
+      // NUR aktualisieren wenn Zustellzeit Bis NICHT GESETZT ist oder KLEINER als Minimum
+      // NICHT überschreiben wenn User bereits eine spätere Zeit gewählt hat!
       if (!formData.delivery_time_to || formData.delivery_time_to < minDeliveryTimeTo) {
         newDeliveryTimeTo = minDeliveryTimeTo;
+        
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+          delivery_time_to: newDeliveryTimeTo,
+        }));
+      } else {
+        // Zustellzeit Bis ist bereits gesetzt und >= Minimum, nicht überschreiben
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
       }
-      
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-        delivery_time_to: newDeliveryTimeTo,
-      }));
     } else if (name === 'pickup_time_to' && value) {
       // WICHTIG: Abholzeit Bis darf NIEMALS größer als Zustellzeit Bis sein
       if (formData.delivery_time_to && value > formData.delivery_time_to) {
