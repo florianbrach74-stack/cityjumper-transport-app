@@ -1060,10 +1060,10 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
              .text('Bei Zahlung innerhalb von 7 Tagen ab Rechnungsdatum können Sie 2% Skonto abziehen.', 50, y, { width: 500 });
           y += 18;
           doc.fontSize(8)
-             .text(`Rechnungsbetrag: €${(totals.total + pdfTaxAmount).toFixed(2)}`, 50, y)
-             .text(`abzgl. 2% Skonto: -€${(skontoAmount + (includeMwst ? skontoAmount * 0.19 : 0)).toFixed(2)}`, 50, y + 10);
+             .text(`Rechnungsbetrag: € ${(totals.total + pdfTaxAmount).toFixed(2)}`, 50, y)
+             .text(`abzgl. 2% Skonto: -€ ${(skontoAmount + (includeMwst ? skontoAmount * 0.19 : 0)).toFixed(2)}`, 50, y + 10);
           doc.font('Helvetica-Bold')
-             .text(`Zahlbetrag bei Skonto: €${totalWithSkonto.toFixed(2)}`, 50, y + 20);
+             .text(`Zahlbetrag bei Skonto: € ${totalWithSkonto.toFixed(2)}`, 50, y + 20);
           doc.font('Helvetica').fillColor('#000000');
           y += 35;
         } else {
