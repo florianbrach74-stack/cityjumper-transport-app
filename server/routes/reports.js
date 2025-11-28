@@ -781,7 +781,15 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         const taxAmount = includeMwst ? totals.total * 0.19 : 0;
         const totalWithTax = totals.total + taxAmount;
         
+        // Calculate due date: invoice date + 15 days
+        const invoiceDateObj = customInvoiceDate ? new Date(customInvoiceDate) : new Date();
+        const calculatedDueDate = new Date(invoiceDateObj);
+        calculatedDueDate.setDate(calculatedDueDate.getDate() + 15);
+        const finalDueDate = dueDate || calculatedDueDate.toISOString().split('T')[0];
+        
         console.log('💾 Saving invoice to database...');
+        console.log('📅 Invoice date:', invoiceDateObj.toISOString().split('T')[0]);
+        console.log('📅 Due date:', finalDueDate);
         
         // Insert invoice with discount and skonto info
         await client.query(
@@ -790,11 +798,12 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
             subtotal, tax_amount, total_amount, created_by,
             discount_percentage, discount_amount, skonto_offered, skonto_percentage
           )
-           VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
           [
             invoiceNumber, 
-            orders[0].customer_id, 
-            dueDate || null, 
+            orders[0].customer_id,
+            customInvoiceDate || new Date().toISOString().split('T')[0],
+            finalDueDate, 
             totals.total, 
             taxAmount, 
             totalWithTax, 

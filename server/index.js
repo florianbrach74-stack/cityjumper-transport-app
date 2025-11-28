@@ -144,6 +144,20 @@ app.listen(PORT, async () => {
     console.error('   This is not critical, server will continue...');
   }
   
+  // Start payment reminder service (Cron-Job)
+  try {
+    const paymentReminderService = require('./services/paymentReminderService');
+    // Run daily at 9:00 AM
+    const cron = require('node-cron');
+    cron.schedule('0 9 * * *', () => {
+      console.log('🔔 Running daily payment reminder check...');
+      paymentReminderService.checkAndSendReminders();
+    });
+    console.log('✅ Payment Reminder Service started (runs daily at 9:00 AM)');
+  } catch (error) {
+    console.error('❌ Failed to start Payment Reminder Service:', error);
+  }
+  
   // Start database backup service (Cron-Job)
   try {
     const databaseBackupService = require('./services/databaseBackupService');
