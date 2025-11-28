@@ -65,15 +65,21 @@ async function autoMigrate() {
     }
     
     // Check if discount/skonto columns exist in sent_invoices
-    const checkDiscountSkonto = `
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'sent_invoices' 
-      AND column_name IN ('discount_percentage', 'discount_amount', 'skonto_offered', 'skonto_percentage');
-    `;
-    
-    const discountSkontoResult = await pool.query(checkDiscountSkonto);
-    const discountSkontoMigrated = discountSkontoResult.rows.length >= 4;
+    let discountSkontoMigrated = false;
+    try {
+      const checkDiscountSkonto = `
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'sent_invoices' 
+        AND column_name IN ('discount_percentage', 'discount_amount', 'skonto_offered', 'skonto_percentage');
+      `;
+      
+      const discountSkontoResult = await pool.query(checkDiscountSkonto);
+      discountSkontoMigrated = discountSkontoResult.rows.length >= 4;
+    } catch (e) {
+      // Table may not exist yet
+      discountSkontoMigrated = false;
+    }
     
     if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated && loadingHelpMigrated && emailTemplatesMigrated && discountSkontoMigrated) {
       console.log('✓ All migrations already applied, skipping...');
@@ -164,15 +170,19 @@ async function autoMigrate() {
     
     // Add discount and skonto columns to sent_invoices
     if (!discountSkontoMigrated) {
-      console.log('🔧 Adding discount and skonto columns to sent_invoices...');
-      await pool.query(`
-        ALTER TABLE sent_invoices 
-        ADD COLUMN IF NOT EXISTS discount_percentage DECIMAL(5, 2) DEFAULT 0,
-        ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10, 2) DEFAULT 0,
-        ADD COLUMN IF NOT EXISTS skonto_offered BOOLEAN DEFAULT FALSE,
-        ADD COLUMN IF NOT EXISTS skonto_percentage DECIMAL(5, 2) DEFAULT 0;
-      `);
-      console.log('  ✓ Discount and skonto columns added');
+      try {
+        console.log('🔧 Adding discount and skonto columns to sent_invoices...');
+        await pool.query(`
+          ALTER TABLE sent_invoices 
+          ADD COLUMN IF NOT EXISTS discount_percentage DECIMAL(5, 2) DEFAULT 0,
+          ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10, 2) DEFAULT 0,
+          ADD COLUMN IF NOT EXISTS skonto_offered BOOLEAN DEFAULT FALSE,
+          ADD COLUMN IF NOT EXISTS skonto_percentage DECIMAL(5, 2) DEFAULT 0;
+        `);
+        console.log('  ✓ Discount and skonto columns added');
+      } catch (e) {
+        console.log('  ⚠️  Could not add discount/skonto columns (table may not exist yet):', e.message);
+      }
     }
     
     console.log('✅ Migration completed successfully!');
