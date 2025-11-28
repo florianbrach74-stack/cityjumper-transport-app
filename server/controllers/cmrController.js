@@ -853,31 +853,38 @@ const confirmPickup = async (req, res) => {
     // Send email to customer
     try {
       const customer = await User.findById(order.customer_id);
-      await sendEmail(
-        customer.email,
-        '📦 Paket abgeholt - Auftrag in Bearbeitung',
-        `
+      console.log('📧 Sending pickup confirmation email to customer:', customer.email);
+      
+      await emailService.sendEmail({
+        to: customer.email,
+        subject: '📦 Paket abgeholt - Transport gestartet',
+        html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #2563eb;">Paket erfolgreich abgeholt</h2>
             <p>Hallo ${customer.first_name} ${customer.last_name},</p>
-            <p>Ihr Paket wurde vom Frachtführer abgeholt und ist nun unterwegs.</p>
+            <p>Ihr Paket wurde vom Frachtführer abgeholt und ist nun unterwegs zur Zustelladresse.</p>
             
-            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
               <h3 style="margin-top: 0;">Auftrags-Details:</h3>
               <p><strong>Auftrag:</strong> #${order.id}</p>
               <p><strong>Abholung:</strong> ${order.pickup_address}, ${order.pickup_city}</p>
               <p><strong>Zustellung:</strong> ${order.delivery_address}, ${order.delivery_city}</p>
               <p><strong>Frachtführer:</strong> ${contractor.company_name || contractor.first_name + ' ' + contractor.last_name}</p>
+              <p><strong>Abgeholt am:</strong> ${new Date().toLocaleString('de-DE')}</p>
             </div>
             
-            <p>Sie werden benachrichtigt, sobald das Paket zugestellt wurde.</p>
+            <p>Sie werden automatisch benachrichtigt, sobald das Paket zugestellt wurde.</p>
+            <p>Sie können den Status jederzeit in Ihrem Dashboard einsehen.</p>
             
-            <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
+            <p style="margin-top: 30px;">Vielen Dank für Ihr Vertrauen!<br>Ihr Courierly Team</p>
           </div>
         `
-      );
+      });
+      
+      console.log('✅ Pickup confirmation email sent to customer');
     } catch (emailError) {
       console.error('⚠️ Email notification failed (non-critical):', emailError.message);
+      console.error('   Email error stack:', emailError.stack);
     }
 
     res.json({
