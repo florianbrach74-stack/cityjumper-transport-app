@@ -558,7 +558,7 @@ const CMRSignatureMultiStop = ({ order, mode, onClose, onComplete }) => {
             />
             {waitingMinutes > 30 && (
               <p className="mt-1 text-sm text-orange-600">
-                Zusätzliche Kosten: €{((waitingMinutes - 30) / 5 * 3).toFixed(2)}
+                Vergütung: €{(Math.ceil((waitingMinutes - 30) / 5) * 3 * 0.85).toFixed(2)} (85% von €{(Math.ceil((waitingMinutes - 30) / 5) * 3).toFixed(2)})
               </p>
             )}
           </div>
