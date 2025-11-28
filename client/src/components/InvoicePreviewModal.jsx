@@ -14,7 +14,14 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
   const handleSend = async () => {
     setSending(true);
     try {
-      await onSend();
+      // Pass discount and skonto settings to backend
+      await onSend({
+        applyDiscount,
+        applySkonto,
+        includeMwst,
+        invoiceNumber,
+        invoiceDate
+      });
       onClose();
     } catch (error) {
       console.error('Error sending invoice:', error);

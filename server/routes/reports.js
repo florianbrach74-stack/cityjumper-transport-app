@@ -643,7 +643,18 @@ router.get('/invoice/:invoiceNumber/pdf', async (req, res) => {
 router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (req, res) => {
   try {
     console.log('Bulk invoice request:', req.body);
-    const { orderIds, customerId, sendEmail: shouldSendEmail, notes, dueDate } = req.body;
+    const { 
+      orderIds, 
+      customerId, 
+      sendEmail: shouldSendEmail, 
+      notes, 
+      dueDate,
+      applyDiscount = false,
+      applySkonto = false,
+      includeMwst = true,
+      invoiceNumber: customInvoiceNumber,
+      invoiceDate: customInvoiceDate
+    } = req.body;
 
     if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
       console.error('Invalid orderIds:', orderIds);
@@ -719,7 +730,17 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
       totals.waitingTimeFees += waitingTimeFee;
     });
 
-    totals.total = totals.subtotal + totals.waitingTimeFees;
+    const subtotalBeforeDiscounts = totals.subtotal + totals.waitingTimeFees;
+    
+    // Apply discount if requested (5%)
+    const discountAmount = applyDiscount ? subtotalBeforeDiscounts * 0.05 : 0;
+    const afterDiscount = subtotalBeforeDiscounts - discountAmount;
+    
+    // Skonto is NOT deducted - only shown as payment term
+    totals.total = afterDiscount;
+    totals.discountAmount = discountAmount;
+    totals.applyDiscount = applyDiscount;
+    totals.applySkonto = applySkonto;
 
     const invoiceDate = new Date().toLocaleDateString('de-DE');
     const dueDateFormatted = dueDate ? new Date(dueDate).toLocaleDateString('de-DE') : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE');
@@ -757,7 +778,7 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         console.log('📄 Reserved invoice number:', invoiceNumber);
         
         // CRITICAL: Save invoice to DB FIRST (within transaction)
-        const taxAmount = totals.total * 0.19;
+        const taxAmount = includeMwst ? totals.total * 0.19 : 0;
         const totalWithTax = totals.total + taxAmount;
         
         console.log('💾 Saving invoice to database...');
@@ -967,14 +988,30 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
           y += 15;
         }
         
+        // Show discount if applied
+        if (totals.applyDiscount && totals.discountAmount > 0) {
+          doc.fillColor('#16a34a')
+             .text('abzgl. Rabatt (5%):', 350, y)
+             .text(`-€ ${totals.discountAmount.toFixed(2)}`, 480, y, { align: 'right' });
+          doc.fillColor('#000000');
+          y += 15;
+        }
+        
         doc.text('Nettobetrag:', 350, y)
            .text(`€ ${totals.total.toFixed(2)}`, 480, y, { align: 'right' });
         y += 15;
         
-        const pdfTaxAmount = totals.total * 0.19;
-        doc.text('zzgl. 19% MwSt.:', 350, y)
-           .text(`€ ${pdfTaxAmount.toFixed(2)}`, 480, y, { align: 'right' });
-        y += 20;
+        const pdfTaxAmount = includeMwst ? totals.total * 0.19 : 0;
+        if (includeMwst) {
+          doc.text('zzgl. 19% MwSt.:', 350, y)
+             .text(`€ ${pdfTaxAmount.toFixed(2)}`, 480, y, { align: 'right' });
+          y += 20;
+        } else {
+          doc.fontSize(8).fillColor('#666666')
+             .text('Gemäß §19 UStG wird keine Umsatzsteuer berechnet.', 350, y, { width: 200 });
+          doc.fillColor('#000000').fontSize(10);
+          y += 20;
+        }
         
         doc.fontSize(12).fillColor('#16a34a')
            .text('Gesamtbetrag:', 350, y)
@@ -999,8 +1036,30 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
            .text('IBAN: DE92 1005 0000 1062 9152 80', 50, y + 15)
            .text('BIC: BELADEBEXXX', 50, y + 30);
         
+        y += 45;
+        
+        // Skonto notice if applicable
+        if (totals.applySkonto) {
+          const skontoAmount = totals.total * 0.02;
+          const amountWithSkonto = totals.total - skontoAmount;
+          const totalWithSkonto = amountWithSkonto + (includeMwst ? amountWithSkonto * 0.19 : 0);
+          
+          doc.fontSize(9).fillColor('#2563eb')
+             .text('⚡ Skonto-Bedingung:', 50, y);
+          y += 15;
+          doc.fontSize(8).fillColor('#1e40af')
+             .text('Bei Zahlung innerhalb von 7 Tagen ab Rechnungsdatum können Sie 2% Skonto abziehen.', 50, y, { width: 500 });
+          y += 25;
+          doc.fontSize(8)
+             .text(`Rechnungsbetrag: € ${(totals.total + pdfTaxAmount).toFixed(2)}`, 50, y)
+             .text(`abzgl. 2% Skonto: -€ ${(skontoAmount + (includeMwst ? skontoAmount * 0.19 : 0)).toFixed(2)}`, 50, y + 12)
+             .text(`Zahlbetrag bei Skonto: € ${totalWithSkonto.toFixed(2)}`, 50, y + 24, { underline: true });
+          doc.fillColor('#000000');
+          y += 40;
+        }
+        
         // Footer
-        y += 60;
+        y += 15;
         doc.fontSize(8).fillColor('#6b7280')
            .text('Vielen Dank für Ihr Vertrauen! | Courierly – eine Marke der FB Transporte', 50, y, { align: 'center', width: 500 })
            .text('Adolf-Menzel Straße 71 | 12621 Berlin | DE 92 1005 0000 1062 9152 80 | BELADEBEXXX', 50, y + 12, { align: 'center', width: 500 })

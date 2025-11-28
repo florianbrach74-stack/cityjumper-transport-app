@@ -98,12 +98,18 @@ export default function ReportsSummary({ userRole }) {
     }
   };
 
-  const sendInvoice = async () => {
+  const sendInvoice = async (settings = {}) => {
     try {
       const token = localStorage.getItem('token');
       const response = await api.post('/reports/bulk-invoice', { 
         orderIds: [invoicePreview.orders[0].id],
-        sendEmail: true
+        sendEmail: true,
+        // Pass discount and skonto settings
+        applyDiscount: settings.applyDiscount || false,
+        applySkonto: settings.applySkonto || false,
+        includeMwst: settings.includeMwst !== undefined ? settings.includeMwst : true,
+        invoiceNumber: settings.invoiceNumber,
+        invoiceDate: settings.invoiceDate
       });
       
       if (response.data.emailSent) {
@@ -134,12 +140,18 @@ export default function ReportsSummary({ userRole }) {
     }
   };
 
-  const sendBulkInvoice = async () => {
+  const sendBulkInvoice = async (settings = {}) => {
     try {
       const token = localStorage.getItem('token');
       const response = await api.post('/reports/bulk-invoice', { 
         orderIds: selectedOrders,
-        sendEmail: true
+        sendEmail: true,
+        // Pass discount and skonto settings
+        applyDiscount: settings.applyDiscount || false,
+        applySkonto: settings.applySkonto || false,
+        includeMwst: settings.includeMwst !== undefined ? settings.includeMwst : true,
+        invoiceNumber: settings.invoiceNumber,
+        invoiceDate: settings.invoiceDate
       });
       
       if (response.data.emailSent) {
