@@ -60,7 +60,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
     query += `
       GROUP BY i.id, u.email, u.first_name, u.last_name, u.company_name
-      ORDER BY i.invoice_date DESC, i.created_at DESC
+      ORDER BY i.invoice_date DESC, i.id DESC
       LIMIT $${paramIndex++} OFFSET $${paramIndex++}
     `;
 
