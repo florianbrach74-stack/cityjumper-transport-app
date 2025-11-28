@@ -118,8 +118,8 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Check if email is verified
-    if (!user.email_verified) {
+    // Check if email is verified (skip for employees - they are created by contractors)
+    if (!user.email_verified && user.role !== 'employee') {
       return res.status(403).json({ 
         error: 'Email nicht verifiziert. Bitte prüfen Sie Ihre Emails.',
         requiresVerification: true,
