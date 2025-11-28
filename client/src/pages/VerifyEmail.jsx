@@ -13,11 +13,7 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const email = location.state?.email;
 
-  useEffect(() => {
-    if (!email) {
-      navigate('/register');
-    }
-  }, [email, navigate]);
+  // No automatic redirect - show error message instead if no email
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -57,6 +53,33 @@ const VerifyEmail = () => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 6);
     setCode(value);
   };
+
+  // Show loading state while checking for email
+  if (!email) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center py-12 px-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="bg-yellow-100 rounded-full p-4">
+              <AlertCircle className="h-16 w-16 text-yellow-600" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Keine Email-Adresse gefunden
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Bitte registrieren Sie sich zuerst oder melden Sie sich an.
+          </p>
+          <Link
+            to="/register"
+            className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Zur Registrierung
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
