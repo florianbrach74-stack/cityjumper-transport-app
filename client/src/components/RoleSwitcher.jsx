@@ -124,26 +124,14 @@ const RoleSwitcher = () => {
         </button>
       </div>
 
-      {/* Mobile View */}
+      {/* Mobile View - Refresh Button */}
       <div className="mt-3 md:hidden">
         <button
-          onClick={handleRoleSwitch}
-          disabled={switching}
-          className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          onClick={() => window.location.reload()}
+          className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
         >
-          {switching ? (
-            <>
-              <RefreshCw className="h-5 w-5 animate-spin" />
-              <span className="font-medium">Wechsle...</span>
-            </>
-          ) : (
-            <>
-              <TargetIcon className="h-5 w-5" />
-              <span className="font-medium">
-                Zu {targetRoleInfo.label} wechseln
-              </span>
-            </>
-          )}
+          <RefreshCw className="h-5 w-5" />
+          <span className="font-medium">Seite aktualisieren</span>
         </button>
       </div>
     </div>
