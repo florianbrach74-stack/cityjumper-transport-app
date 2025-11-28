@@ -177,4 +177,5 @@ const queryWithRetry = async (text, params, maxRetries = null) => {
 
 // Export both pool and retry wrapper
 module.exports = pool;
+module.exports.pool = pool; // Also export as named export
 module.exports.queryWithRetry = queryWithRetry;
