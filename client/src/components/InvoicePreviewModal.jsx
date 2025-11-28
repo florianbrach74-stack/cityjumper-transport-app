@@ -31,15 +31,22 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
   const discountRate = 0.05; // 5%
   const skontoRate = 0.02; // 2%
   
+  // Apply discount if selected
   const discountAmount = applyDiscount ? subtotal * discountRate : 0;
   const afterDiscount = subtotal - discountAmount;
   
-  const skontoAmount = applySkonto ? afterDiscount * skontoRate : 0;
-  const netTotal = afterDiscount - skontoAmount;
+  // Skonto is NOT deducted from invoice amount - only shown as payment term!
+  // Customer can deduct it themselves if they pay within 7 days
+  const netTotal = afterDiscount;
+  
+  // Calculate potential skonto amount for display in payment terms
+  const potentialSkontoAmount = applySkonto ? netTotal * skontoRate : 0;
+  const amountWithSkonto = netTotal - potentialSkontoAmount;
   
   const mwstRate = 0.19;
   const mwstAmount = includeMwst ? netTotal * mwstRate : 0;
   const grossTotal = netTotal + mwstAmount;
+  const grossTotalWithSkonto = amountWithSkonto + (includeMwst ? amountWithSkonto * mwstRate : 0);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -245,12 +252,6 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
                       <span className="font-medium">-{formatPrice(discountAmount)}</span>
                     </div>
                   )}
-                  {applySkonto && (
-                    <div className="flex justify-between text-blue-600 mb-2">
-                      <span>abzgl. Skonto (2%):</span>
-                      <span className="font-medium">-{formatPrice(skontoAmount)}</span>
-                    </div>
-                  )}
                   <div className="flex justify-between text-gray-900 font-semibold mb-2 pt-2 border-t border-gray-200">
                     <span>Nettobetrag:</span>
                     <span>{formatPrice(netTotal)}</span>
@@ -291,11 +292,28 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
               
               {/* Skonto Notice */}
               {applySkonto && (
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <span className="font-semibold">⚡ Skonto-Bedingung:</span> Bei Zahlung innerhalb von 7 Tagen ab Rechnungsdatum 
-                    kann ein Skonto von 2% abgezogen werden. Zahlbetrag dann: <span className="font-bold">{formatPrice(grossTotal)}</span>
+                <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+                  <p className="text-sm text-blue-900 font-medium mb-2">
+                    ⚡ Skonto-Bedingung:
                   </p>
+                  <p className="text-sm text-blue-800">
+                    Bei Zahlung innerhalb von <span className="font-bold">7 Tagen</span> ab Rechnungsdatum 
+                    können Sie <span className="font-bold">2% Skonto</span> abziehen.
+                  </p>
+                  <div className="mt-3 pt-3 border-t border-blue-200">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-blue-700">Rechnungsbetrag:</span>
+                      <span className="font-bold text-blue-900">{formatPrice(grossTotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-1">
+                      <span className="text-blue-700">abzgl. 2% Skonto:</span>
+                      <span className="font-medium text-blue-800">-{formatPrice(potentialSkontoAmount + (includeMwst ? potentialSkontoAmount * mwstRate : 0))}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-2 pt-2 border-t border-blue-300">
+                      <span className="text-blue-900 font-semibold">Zahlbetrag bei Skonto:</span>
+                      <span className="font-bold text-blue-900 text-base">{formatPrice(grossTotalWithSkonto)}</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
