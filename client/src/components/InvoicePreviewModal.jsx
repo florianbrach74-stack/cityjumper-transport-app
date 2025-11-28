@@ -8,6 +8,8 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
   const [editingNumber, setEditingNumber] = useState(false);
   const [editingDate, setEditingDate] = useState(false);
   const [includeMwst, setIncludeMwst] = useState(true);
+  const [applyDiscount, setApplyDiscount] = useState(false);
+  const [applySkonto, setApplySkonto] = useState(false);
 
   const handleSend = async () => {
     setSending(true);
@@ -24,8 +26,17 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
   const formatPrice = (price) => `€${parseFloat(price || 0).toFixed(2)}`;
   const formatDate = (date) => new Date(date).toLocaleDateString('de-DE');
 
-  // Calculate totals with MwSt
-  const netTotal = invoice.totals.total;
+  // Calculate totals with discounts and MwSt
+  const subtotal = invoice.totals.total;
+  const discountRate = 0.05; // 5%
+  const skontoRate = 0.02; // 2%
+  
+  const discountAmount = applyDiscount ? subtotal * discountRate : 0;
+  const afterDiscount = subtotal - discountAmount;
+  
+  const skontoAmount = applySkonto ? afterDiscount * skontoRate : 0;
+  const netTotal = afterDiscount - skontoAmount;
+  
   const mwstRate = 0.19;
   const mwstAmount = includeMwst ? netTotal * mwstRate : 0;
   const grossTotal = netTotal + mwstAmount;
@@ -160,21 +171,54 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
               </table>
             </div>
 
-            {/* MwSt Toggle */}
-            <div className="mb-4 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <input
-                type="checkbox"
-                id="includeMwst"
-                checked={includeMwst}
-                onChange={(e) => setIncludeMwst(e.target.checked)}
-                className="rounded border-gray-300"
-              />
-              <label htmlFor="includeMwst" className="text-sm text-gray-700 cursor-pointer">
-                MwSt. (19%) ausweisen
-              </label>
-              {!includeMwst && (
-                <span className="text-xs text-gray-500">(Kleinunternehmerregelung §19 UStG)</span>
-              )}
+            {/* Discount, Skonto & MwSt Toggles */}
+            <div className="mb-4 space-y-2">
+              <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="applyDiscount"
+                  checked={applyDiscount}
+                  onChange={(e) => setApplyDiscount(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="applyDiscount" className="text-sm text-gray-700 cursor-pointer">
+                  💰 Rabatt (5%) gewähren
+                </label>
+              </div>
+              
+              <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="applySkonto"
+                  checked={applySkonto}
+                  onChange={(e) => setApplySkonto(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="applySkonto" className="text-sm text-gray-700 cursor-pointer">
+                  ⚡ Skonto (2%) gewähren
+                </label>
+                {applySkonto && (
+                  <span className="text-xs text-blue-600 font-medium">
+                    (Zahlung innerhalb 7 Tagen)
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="includeMwst"
+                  checked={includeMwst}
+                  onChange={(e) => setIncludeMwst(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="includeMwst" className="text-sm text-gray-700 cursor-pointer">
+                  MwSt. (19%) ausweisen
+                </label>
+                {!includeMwst && (
+                  <span className="text-xs text-gray-500">(Kleinunternehmerregelung §19 UStG)</span>
+                )}
+              </div>
             </div>
 
             {/* Totals */}
@@ -189,6 +233,22 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
                     <div className="flex justify-between text-orange-600 mb-2">
                       <span>Wartezeit-Gebühren:</span>
                       <span className="font-medium">{formatPrice(invoice.totals.waitingTimeFees)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-gray-900 font-semibold mb-2 pt-2 border-t border-gray-200">
+                    <span>Zwischensumme:</span>
+                    <span>{formatPrice(subtotal)}</span>
+                  </div>
+                  {applyDiscount && (
+                    <div className="flex justify-between text-green-600 mb-2">
+                      <span>abzgl. Rabatt (5%):</span>
+                      <span className="font-medium">-{formatPrice(discountAmount)}</span>
+                    </div>
+                  )}
+                  {applySkonto && (
+                    <div className="flex justify-between text-blue-600 mb-2">
+                      <span>abzgl. Skonto (2%):</span>
+                      <span className="font-medium">-{formatPrice(skontoAmount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-gray-900 font-semibold mb-2 pt-2 border-t border-gray-200">
@@ -228,6 +288,16 @@ export default function InvoicePreviewModal({ invoice, onClose, onSend }) {
                   <p className="text-gray-600"><span className="font-medium">Verwendungszweck:</span> {invoiceNumber}</p>
                 </div>
               </div>
+              
+              {/* Skonto Notice */}
+              {applySkonto && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-semibold">⚡ Skonto-Bedingung:</span> Bei Zahlung innerhalb von 7 Tagen ab Rechnungsdatum 
+                    kann ein Skonto von 2% abgezogen werden. Zahlbetrag dann: <span className="font-bold">{formatPrice(grossTotal)}</span>
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
