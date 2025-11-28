@@ -144,83 +144,12 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // Wenn Abholzeit Von geändert wird
-    if (name === 'pickup_time_from' && value) {
-      // WICHTIG: Zustellzeit Bis muss mindestens Abholzeit Von + 30min sein
-      const minDeliveryTimeTo = addMinutesToTime(value, 30);
-      let newDeliveryTimeTo = formData.delivery_time_to;
-      
-      // NUR aktualisieren wenn Zustellzeit Bis NICHT GESETZT ist oder KLEINER als Minimum
-      // NICHT überschreiben wenn User bereits eine spätere Zeit gewählt hat!
-      if (!formData.delivery_time_to || formData.delivery_time_to < minDeliveryTimeTo) {
-        newDeliveryTimeTo = minDeliveryTimeTo;
-        
-        setFormData((prev) => ({
-          ...prev,
-          [name]: value,
-          delivery_time_to: newDeliveryTimeTo,
-        }));
-      } else {
-        // Zustellzeit Bis ist bereits gesetzt und >= Minimum, nicht überschreiben
-        setFormData((prev) => ({
-          ...prev,
-          [name]: value,
-        }));
-      }
-    } else if (name === 'pickup_time_to' && value) {
-      // WICHTIG: Abholzeit Bis darf NIEMALS größer als Zustellzeit Bis sein
-      if (formData.delivery_time_to && value > formData.delivery_time_to) {
-        alert(`Abholzeit "Bis" (${value}) darf nicht nach Zustellzeit "Bis" (${formData.delivery_time_to}) liegen!`);
-        setFormData((prev) => ({
-          ...prev,
-          [name]: formData.delivery_time_to,
-        }));
-        return;
-      }
-      
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    } else if (name === 'delivery_time_from' && value) {
-      // Zustellzeit Von ist komplett frei wählbar (kann auch vor Abholzeit sein)
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    } else if (name === 'delivery_time_to' && value) {
-      // WICHTIG: Zustellzeit Bis muss >= Abholzeit Von + 30min sein (Mindestfahrzeit!)
-      const minDeliveryTimeTo = addMinutesToTime(formData.pickup_time_from || '00:00', 30);
-      
-      if (value < minDeliveryTimeTo) {
-        alert(`Zustellzeit "Bis" muss mindestens Abholzeit "Von" + 30min sein (${minDeliveryTimeTo})!`);
-        setFormData((prev) => ({
-          ...prev,
-          [name]: minDeliveryTimeTo,
-        }));
-        return;
-      }
-      
-      // ZUSÄTZLICH: Zustellzeit Bis muss >= Abholzeit Bis sein (falls Abholzeit Bis später ist)
-      if (formData.pickup_time_to && value < formData.pickup_time_to) {
-        alert(`Zustellzeit "Bis" (${value}) darf nicht vor Abholzeit "Bis" (${formData.pickup_time_to}) liegen!`);
-        setFormData((prev) => ({
-          ...prev,
-          [name]: formData.pickup_time_to,
-        }));
-        return;
-      }
-      
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    // KEINE Validierung während der Eingabe - User kann chronologisch eingeben!
+    // Validierung erfolgt erst beim Absenden des Formulars
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
     
     // Validiere Preis bei Änderung
     if (name === 'price') {
@@ -464,6 +393,16 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     if (user?.role === 'customer' && !user?.company_name && !withdrawalConsent) {
       setError('Bitte bestätigen Sie die Widerrufsbelehrung, um fortzufahren.');
       return;
+    }
+    
+    // ZEITFENSTER-VALIDIERUNG: Prüfe ob Zustellzeit Bis >= Abholzeit Von + 30min
+    if (formData.pickup_time_from && formData.delivery_time_to) {
+      const minDeliveryTimeTo = addMinutesToTime(formData.pickup_time_from, 30);
+      
+      if (formData.delivery_time_to < minDeliveryTimeTo) {
+        setError(`❌ Zeitfenster zu klein! Zustellzeit "Bis" (${formData.delivery_time_to}) muss mindestens Abholzeit "Von" + 30 Minuten sein (${minDeliveryTimeTo}). Bitte passen Sie die Zeiten an.`);
+        return;
+      }
     }
     
     // Prüfe Mindestlohn - zeige Beiladungs-Dialog wenn unterschritten
