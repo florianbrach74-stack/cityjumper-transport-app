@@ -251,36 +251,65 @@ const withdrawBid = async (req, res) => {
 
 // Update existing bid (contractor only, pending bids only)
 const updateBid = async (req, res) => {
+  console.log('🔧 ========== UPDATE BID START ==========');
+  console.log('📥 Request params:', req.params);
+  console.log('📥 Request body:', req.body);
+  console.log('👤 User:', { id: req.user?.id, role: req.user?.role });
+  
   try {
     const { bidId } = req.params;
     const { bidAmount, message } = req.body;
     const contractorId = req.user.id;
 
+    console.log('✅ Step 1: Extracted data');
+    console.log('   bidId:', bidId);
+    console.log('   bidAmount:', bidAmount);
+    console.log('   message:', message);
+    console.log('   contractorId:', contractorId);
+
+    // Check if pool is available
+    if (!pool) {
+      console.error('❌ CRITICAL: pool is undefined!');
+      console.error('   typeof pool:', typeof pool);
+      console.error('   pool value:', pool);
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
+    console.log('✅ Step 2: Pool is available');
+
     // Get the bid
+    console.log('🔍 Step 3: Querying bid from database...');
     const bidResult = await pool.query(
       'SELECT * FROM order_bids WHERE id = $1',
       [bidId]
     );
+    console.log('✅ Step 3: Query successful, rows:', bidResult.rows.length);
 
     if (bidResult.rows.length === 0) {
+      console.log('❌ Bid not found');
       return res.status(404).json({ error: 'Gebot nicht gefunden' });
     }
 
     const bid = bidResult.rows[0];
+    console.log('✅ Step 4: Bid found:', { id: bid.id, status: bid.status, contractor_id: bid.contractor_id });
 
     // Check if bid belongs to this contractor
     if (bid.contractor_id !== contractorId) {
+      console.log('❌ Authorization failed: bid.contractor_id !== contractorId');
       return res.status(403).json({ error: 'Nicht autorisiert' });
     }
+    console.log('✅ Step 5: Authorization passed');
 
     // Check if bid is still pending
     if (bid.status !== 'pending') {
+      console.log('❌ Bid status is not pending:', bid.status);
       return res.status(400).json({ 
         error: 'Nur ausstehende Gebote können bearbeitet werden' 
       });
     }
+    console.log('✅ Step 6: Status check passed');
 
     // Update bid
+    console.log('💾 Step 7: Updating bid...');
     const updateResult = await pool.query(
       `UPDATE order_bids 
        SET bid_amount = $1, message = $2, updated_at = CURRENT_TIMESTAMP
@@ -288,8 +317,10 @@ const updateBid = async (req, res) => {
        RETURNING *`,
       [bidAmount, message || null, bidId]
     );
+    console.log('✅ Step 7: Update successful');
 
     const updatedBid = updateResult.rows[0];
+    console.log('✅ Step 8: Updated bid:', { id: updatedBid.id, bid_amount: updatedBid.bid_amount });
 
     // Send notification to admin
     try {
@@ -331,13 +362,28 @@ const updateBid = async (req, res) => {
       console.error('⚠️ Email notification failed (non-critical):', emailError.message);
     }
 
+    console.log('✅ Step 9: Email notifications sent (or skipped)');
+    console.log('📤 Sending success response...');
+    
     res.json({
       message: 'Gebot erfolgreich aktualisiert',
       bid: updatedBid,
     });
+    
+    console.log('🎉 ========== UPDATE BID SUCCESS ==========');
   } catch (error) {
-    console.error('Update bid error:', error);
-    res.status(500).json({ error: 'Server error while updating bid' });
+    console.error('❌❌❌ ========== UPDATE BID ERROR ==========');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error code:', error.code);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
+    console.error('❌❌❌ ==========================================');
+    
+    res.status(500).json({ 
+      error: 'Server error while updating bid',
+      details: error.message 
+    });
   }
 };
 
