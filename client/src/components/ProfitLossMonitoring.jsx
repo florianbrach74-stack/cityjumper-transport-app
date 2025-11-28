@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Calendar, Filter } from 'lucide-react';
-import api from '../utils/api';
+import api from '../services/api';
 
 export default function ProfitLossMonitoring() {
   const [data, setData] = useState(null);
