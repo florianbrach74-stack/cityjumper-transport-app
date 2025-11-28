@@ -430,4 +430,166 @@ router.post('/:invoiceNumber/send-reminder', authenticateToken, authorizeRole('a
   }
 });
 
+/**
+ * POST /api/invoices/test/payment-reminders
+ * TEST ENDPOINT: Manually trigger payment reminder check (admin only)
+ */
+router.post('/test/payment-reminders', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  try {
+    console.log('🧪 TEST: Manual payment reminder check triggered by admin');
+    
+    const paymentReminderService = require('../services/paymentReminderService');
+    await paymentReminderService.checkAndSendReminders();
+    
+    res.json({
+      success: true,
+      message: 'Payment reminder check completed. Check server logs and Resend dashboard for results.'
+    });
+    
+  } catch (error) {
+    console.error('Error in test payment reminders:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/invoices/:invoiceNumber/test-reminder
+ * TEST ENDPOINT: Send test reminder for specific invoice (admin only)
+ */
+router.post('/:invoiceNumber/test-reminder', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  try {
+    const { invoiceNumber } = req.params;
+    const { reminder_type = 'friendly' } = req.body;
+    
+    console.log(`🧪 TEST: Sending ${reminder_type} reminder for invoice ${invoiceNumber}`);
+    
+    // Get invoice details
+    const invoiceResult = await pool.query(
+      `SELECT 
+        i.*,
+        u.email as customer_email,
+        u.billing_email as customer_billing_email,
+        u.first_name as customer_first_name,
+        u.last_name as customer_last_name,
+        u.company_name as customer_company,
+        CURRENT_DATE - i.due_date as days_overdue
+      FROM sent_invoices i
+      LEFT JOIN users u ON i.customer_id = u.id
+      WHERE i.invoice_number = $1`,
+      [invoiceNumber]
+    );
+    
+    if (invoiceResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Invoice not found'
+      });
+    }
+    
+    const invoice = invoiceResult.rows[0];
+    const recipientEmail = invoice.customer_billing_email || invoice.customer_email;
+    
+    // Send test reminder
+    const { sendEmail } = require('../config/email');
+    
+    const reminderTemplates = {
+      friendly: {
+        subject: `🧪 TEST - Freundliche Zahlungserinnerung - Rechnung ${invoiceNumber}`,
+        message: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f59e0b;">
+              <p style="margin: 0; font-weight: bold;">🧪 DIES IST EINE TEST-EMAIL</p>
+              <p style="margin: 5px 0 0 0;">Diese Email wurde zu Testzwecken versendet.</p>
+            </div>
+            
+            <h2 style="color: #2563eb;">Zahlungserinnerung</h2>
+            <p>Sehr geehrte/r ${invoice.customer_first_name} ${invoice.customer_last_name},</p>
+            <p>wir möchten Sie freundlich an die ausstehende Zahlung für folgende Rechnung erinnern:</p>
+            
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Rechnungsnummer:</strong> ${invoiceNumber}</p>
+              <p style="margin: 5px 0;"><strong>Rechnungsdatum:</strong> ${new Date(invoice.invoice_date).toLocaleDateString('de-DE')}</p>
+              <p style="margin: 5px 0;"><strong>Fälligkeitsdatum:</strong> ${new Date(invoice.due_date).toLocaleDateString('de-DE')}</p>
+              <p style="margin: 5px 0;"><strong>Betrag:</strong> <span style="font-size: 18px; color: #2563eb;">€${parseFloat(invoice.total_amount).toFixed(2)}</span></p>
+            </div>
+            
+            <p>Mit freundlichen Grüßen<br>Ihr Courierly Team</p>
+          </div>
+        `
+      },
+      urgent: {
+        subject: `🧪 TEST - Dringende Zahlungserinnerung - Rechnung ${invoiceNumber}`,
+        message: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f59e0b;">
+              <p style="margin: 0; font-weight: bold;">🧪 DIES IST EINE TEST-EMAIL</p>
+            </div>
+            
+            <h2 style="color: #f59e0b;">⚠️ Dringende Zahlungserinnerung</h2>
+            <p>Sehr geehrte/r ${invoice.customer_first_name} ${invoice.customer_last_name},</p>
+            
+            <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+              <p style="margin: 5px 0;"><strong>Rechnungsnummer:</strong> ${invoiceNumber}</p>
+              <p style="margin: 5px 0;"><strong>Betrag:</strong> <span style="font-size: 18px; color: #f59e0b;">€${parseFloat(invoice.total_amount).toFixed(2)}</span></p>
+            </div>
+            
+            <p>Mit freundlichen Grüßen<br>Ihr Courierly Team</p>
+          </div>
+        `
+      },
+      final: {
+        subject: `🧪 TEST - LETZTE MAHNUNG - Rechnung ${invoiceNumber}`,
+        message: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f59e0b;">
+              <p style="margin: 0; font-weight: bold;">🧪 DIES IST EINE TEST-EMAIL</p>
+            </div>
+            
+            <h2 style="color: #dc2626;">🚨 LETZTE MAHNUNG</h2>
+            <p>Sehr geehrte/r ${invoice.customer_first_name} ${invoice.customer_last_name},</p>
+            
+            <div style="background: #fee2e2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+              <p style="margin: 5px 0;"><strong>Rechnungsnummer:</strong> ${invoiceNumber}</p>
+              <p style="margin: 5px 0;"><strong>Betrag:</strong> <span style="font-size: 20px; color: #dc2626; font-weight: bold;">€${parseFloat(invoice.total_amount).toFixed(2)}</span></p>
+            </div>
+            
+            <p>Mit freundlichen Grüßen<br>Ihr Courierly Team</p>
+          </div>
+        `
+      }
+    };
+    
+    const template = reminderTemplates[reminder_type];
+    
+    await sendEmail(
+      recipientEmail,
+      template.subject,
+      template.message
+    );
+    
+    console.log(`✅ TEST: ${reminder_type} reminder sent to ${recipientEmail}`);
+    
+    res.json({
+      success: true,
+      message: `Test ${reminder_type} reminder sent to ${recipientEmail}. Check Resend dashboard!`,
+      invoice: {
+        invoice_number: invoiceNumber,
+        recipient: recipientEmail,
+        reminder_type: reminder_type,
+        amount: invoice.total_amount
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error sending test reminder:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
