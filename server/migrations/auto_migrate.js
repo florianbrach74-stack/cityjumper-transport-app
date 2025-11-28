@@ -64,7 +64,18 @@ async function autoMigrate() {
       emailTemplatesMigrated = false;
     }
     
-    if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated && loadingHelpMigrated && emailTemplatesMigrated) {
+    // Check if discount/skonto columns exist in sent_invoices
+    const checkDiscountSkonto = `
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'sent_invoices' 
+      AND column_name IN ('discount_percentage', 'discount_amount', 'skonto_offered', 'skonto_percentage');
+    `;
+    
+    const discountSkontoResult = await pool.query(checkDiscountSkonto);
+    const discountSkontoMigrated = discountSkontoResult.rows.length >= 4;
+    
+    if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated && loadingHelpMigrated && emailTemplatesMigrated && discountSkontoMigrated) {
       console.log('✓ All migrations already applied, skipping...');
       return;
     }
@@ -151,6 +162,19 @@ async function autoMigrate() {
       console.log('  ✓ Email templates added');
     }
     
+    // Add discount and skonto columns to sent_invoices
+    if (!discountSkontoMigrated) {
+      console.log('🔧 Adding discount and skonto columns to sent_invoices...');
+      await pool.query(`
+        ALTER TABLE sent_invoices 
+        ADD COLUMN IF NOT EXISTS discount_percentage DECIMAL(5, 2) DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10, 2) DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS skonto_offered BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS skonto_percentage DECIMAL(5, 2) DEFAULT 0;
+      `);
+      console.log('  ✓ Discount and skonto columns added');
+    }
+    
     console.log('✅ Migration completed successfully!');
     console.log('📦 New features are now available:');
     console.log('  ✓ Multi-stop orders (multiple pickups/deliveries)');
@@ -162,6 +186,7 @@ async function autoMigrate() {
     console.log('  ✓ Loading/Unloading help (+€6 each)');
     console.log('  ✓ Legal delivery with content verification');
     console.log('  ✓ Email templates (12 customizable templates)');
+    console.log('  ✓ Invoice discount and skonto tracking');
     
   } catch (error) {
     console.error('⚠️  Migration error (may be safe to ignore if already applied):', error.message);
