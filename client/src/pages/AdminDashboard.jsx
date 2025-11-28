@@ -17,6 +17,7 @@ import InvoiceHistory from './InvoiceHistory';
 import EmailTemplatesManager from '../components/EmailTemplatesManager';
 import SystemMonitoring from '../components/SystemMonitoring';
 import InitiateReturnModal from '../components/InitiateReturnModal';
+import ProfitLossMonitoring from '../components/ProfitLossMonitoring';
 import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
@@ -500,6 +501,12 @@ export default function AdminDashboard() {
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       ✉️ Email-Templates
+                    </button>
+                    <button
+                      onClick={() => { setActiveTab('profit-loss'); setShowMoreMenu(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      💰 Gewinn/Verlust
                     </button>
                     <button
                       onClick={() => { setActiveTab('monitoring'); setShowMoreMenu(false); }}
@@ -1351,6 +1358,11 @@ export default function AdminDashboard() {
         {/* Email Templates Tab */}
         {activeTab === 'email-templates' && (
           <EmailTemplatesManager />
+        )}
+
+        {/* Profit/Loss Monitoring Tab */}
+        {activeTab === 'profit-loss' && (
+          <ProfitLossMonitoring />
         )}
 
         {/* System Monitoring Tab */}

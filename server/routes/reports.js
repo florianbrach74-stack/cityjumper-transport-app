@@ -783,13 +783,29 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         
         console.log('💾 Saving invoice to database...');
         
-        // Insert invoice
+        // Insert invoice with discount and skonto info
         await client.query(
-          `INSERT INTO sent_invoices (invoice_number, customer_id, invoice_date, due_date, subtotal, tax_amount, total_amount, created_by)
-           VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7)`,
-          [invoiceNumber, orders[0].customer_id, dueDate || null, totals.total, taxAmount, totalWithTax, req.user.id]
+          `INSERT INTO sent_invoices (
+            invoice_number, customer_id, invoice_date, due_date, 
+            subtotal, tax_amount, total_amount, created_by,
+            discount_percentage, discount_amount, skonto_offered, skonto_percentage
+          )
+           VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          [
+            invoiceNumber, 
+            orders[0].customer_id, 
+            dueDate || null, 
+            totals.total, 
+            taxAmount, 
+            totalWithTax, 
+            req.user.id,
+            applyDiscount ? 5 : 0,
+            totals.discountAmount || 0,
+            applySkonto,
+            applySkonto ? 2 : 0
+          ]
         );
-        console.log('✅ Invoice saved');
+        console.log('✅ Invoice saved with discount/skonto info');
         
         // Link orders to invoice and mark as invoiced
         for (const order of orders) {
@@ -1155,6 +1171,141 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
       error: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
+  }
+});
+
+// Get profit/loss analysis for invoices
+router.get('/profit-loss', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    console.log('📊 Profit/Loss analysis request:', { startDate, endDate });
+    
+    // Get all invoiced orders with their details
+    const query = `
+      SELECT 
+        o.id as order_id,
+        o.invoice_number,
+        o.price as customer_price,
+        o.contractor_price,
+        o.waiting_time_fee,
+        o.waiting_time_approved,
+        o.created_at,
+        o.pickup_address,
+        o.delivery_address,
+        i.discount_percentage,
+        i.discount_amount,
+        i.skonto_offered,
+        i.skonto_percentage,
+        i.total_amount as invoice_total,
+        i.invoice_date,
+        c.first_name as customer_first_name,
+        c.last_name as customer_last_name,
+        c.company_name as customer_company,
+        con.first_name as contractor_first_name,
+        con.last_name as contractor_last_name,
+        con.company_name as contractor_company
+      FROM transport_orders o
+      LEFT JOIN sent_invoices i ON o.invoice_number = i.invoice_number
+      LEFT JOIN users c ON o.customer_id = c.id
+      LEFT JOIN users con ON o.contractor_id = con.id
+      WHERE o.invoiced_at IS NOT NULL
+        AND o.status != 'cancelled'
+        ${startDate ? 'AND i.invoice_date >= $1' : ''}
+        ${endDate ? `AND i.invoice_date <= $${startDate ? '2' : '1'}` : ''}
+      ORDER BY i.invoice_date DESC, o.id DESC
+    `;
+    
+    const params = [];
+    if (startDate) params.push(startDate);
+    if (endDate) params.push(endDate);
+    
+    const result = await pool.query(query, params);
+    
+    // Calculate profit/loss for each order
+    const analysis = result.rows.map(order => {
+      const customerPrice = parseFloat(order.customer_price) || 0;
+      const contractorPrice = parseFloat(order.contractor_price) || 0;
+      const waitingFee = order.waiting_time_approved ? (parseFloat(order.waiting_time_fee) || 0) : 0;
+      
+      // Revenue (what we charged the customer)
+      const revenue = customerPrice + waitingFee;
+      
+      // Apply discount if applicable
+      const discountAmount = parseFloat(order.discount_amount) || 0;
+      const revenueAfterDiscount = revenue - discountAmount;
+      
+      // Costs (what we pay the contractor)
+      const costs = contractorPrice;
+      
+      // Profit/Loss
+      const profitLoss = revenueAfterDiscount - costs;
+      const profitMargin = revenue > 0 ? ((profitLoss / revenue) * 100) : 0;
+      
+      return {
+        orderId: order.order_id,
+        invoiceNumber: order.invoice_number,
+        invoiceDate: order.invoice_date,
+        customer: order.customer_company || `${order.customer_first_name} ${order.customer_last_name}`,
+        contractor: order.contractor_company || `${order.contractor_first_name} ${order.contractor_last_name}`,
+        route: `${order.pickup_address} → ${order.delivery_address}`,
+        revenue: revenue.toFixed(2),
+        discountPercentage: parseFloat(order.discount_percentage) || 0,
+        discountAmount: discountAmount.toFixed(2),
+        skontoOffered: order.skonto_offered || false,
+        skontoPercentage: parseFloat(order.skonto_percentage) || 0,
+        revenueAfterDiscount: revenueAfterDiscount.toFixed(2),
+        costs: costs.toFixed(2),
+        profitLoss: profitLoss.toFixed(2),
+        profitMargin: profitMargin.toFixed(2),
+        isProfitable: profitLoss >= 0
+      };
+    });
+    
+    // Calculate totals
+    const totals = analysis.reduce((acc, item) => {
+      acc.totalRevenue += parseFloat(item.revenue);
+      acc.totalDiscounts += parseFloat(item.discountAmount);
+      acc.totalRevenueAfterDiscount += parseFloat(item.revenueAfterDiscount);
+      acc.totalCosts += parseFloat(item.costs);
+      acc.totalProfit += parseFloat(item.profitLoss);
+      if (parseFloat(item.profitLoss) >= 0) {
+        acc.profitableOrders++;
+      } else {
+        acc.lossOrders++;
+      }
+      return acc;
+    }, {
+      totalRevenue: 0,
+      totalDiscounts: 0,
+      totalRevenueAfterDiscount: 0,
+      totalCosts: 0,
+      totalProfit: 0,
+      profitableOrders: 0,
+      lossOrders: 0
+    });
+    
+    const overallMargin = totals.totalRevenue > 0 
+      ? ((totals.totalProfit / totals.totalRevenue) * 100) 
+      : 0;
+    
+    res.json({
+      orders: analysis,
+      totals: {
+        ...totals,
+        totalRevenue: totals.totalRevenue.toFixed(2),
+        totalDiscounts: totals.totalDiscounts.toFixed(2),
+        totalRevenueAfterDiscount: totals.totalRevenueAfterDiscount.toFixed(2),
+        totalCosts: totals.totalCosts.toFixed(2),
+        totalProfit: totals.totalProfit.toFixed(2),
+        overallMargin: overallMargin.toFixed(2),
+        totalOrders: analysis.length
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error in profit/loss analysis:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
