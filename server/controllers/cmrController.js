@@ -1071,14 +1071,29 @@ const confirmDelivery = async (req, res) => {
     if (deliveryWaitingMinutes && deliveryWaitingMinutes > 0) {
       console.log('⏱️ Saving delivery waiting time...');
       try {
+        // For multi-stop orders, ADD to existing waiting time instead of overwriting
+        const currentWaitingTime = order.delivery_waiting_minutes || 0;
+        const newTotalWaitingTime = currentWaitingTime + parseInt(deliveryWaitingMinutes);
+        
+        // Concatenate notes if there are existing notes
+        const currentNotes = order.delivery_waiting_notes || '';
+        const stopNumber = cmr.delivery_stop_index !== undefined ? cmr.delivery_stop_index + 1 : 1;
+        const newNotes = waitingNotes ? 
+          (currentNotes ? `${currentNotes}\n---\nStop ${stopNumber}: ${waitingNotes}` : `Stop ${stopNumber}: ${waitingNotes}`) 
+          : currentNotes;
+        
+        console.log(`   Current delivery waiting time: ${currentWaitingTime} min`);
+        console.log(`   Adding: ${deliveryWaitingMinutes} min`);
+        console.log(`   New total: ${newTotalWaitingTime} min`);
+        
         await pool.query(
           `UPDATE transport_orders 
            SET delivery_waiting_minutes = $1,
                delivery_waiting_notes = $2
            WHERE id = $3`,
-          [deliveryWaitingMinutes, waitingNotes || null, orderId]
+          [newTotalWaitingTime, newNotes || null, orderId]
         );
-        console.log(`✅ Delivery waiting time saved: ${deliveryWaitingMinutes} minutes`);
+        console.log(`✅ Delivery waiting time updated: ${newTotalWaitingTime} minutes total`);
       } catch (waitingTimeError) {
         console.error('⚠️ Failed to save waiting time (non-critical):', waitingTimeError.message);
       }
@@ -1087,8 +1102,12 @@ const confirmDelivery = async (req, res) => {
     console.log('📊 [BACKEND] Calculating waiting time fee...');
     // Calculate total waiting time and fee
     // IMPORTANT: The 30 minutes free allowance applies to the TOTAL waiting time, not per location
+    // For multi-stop: delivery_waiting_minutes is already the cumulative total from all stops
     const totalPickupWaiting = order.pickup_waiting_minutes || 0;
-    const totalDeliveryWaiting = parseInt(deliveryWaitingMinutes) || 0;
+    
+    // Reload order to get updated delivery_waiting_minutes (cumulative for multi-stop)
+    const updatedOrder = await Order.findById(orderId);
+    const totalDeliveryWaiting = updatedOrder.delivery_waiting_minutes || 0;
     const totalWaitingMinutes = totalPickupWaiting + totalDeliveryWaiting;
     
     let waitingTimeFee = 0;
