@@ -8,6 +8,8 @@ export default function ProfitLossMonitoring() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [filterType, setFilterType] = useState('all'); // all, profit, loss
+  const [selectedCustomer, setSelectedCustomer] = useState('all');
+  const [selectedContractor, setSelectedContractor] = useState('all');
 
   useEffect(() => {
     // Set default date range (last 30 days)
@@ -25,6 +27,15 @@ export default function ProfitLossMonitoring() {
     }
   }, [startDate, endDate]);
 
+  const setQuickDateRange = (days) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - days);
+    
+    setStartDate(start.toISOString().split('T')[0]);
+    setEndDate(end.toISOString().split('T')[0]);
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -41,10 +52,22 @@ export default function ProfitLossMonitoring() {
   };
 
   const filteredOrders = data?.orders.filter(order => {
-    if (filterType === 'profit') return order.isProfitable;
-    if (filterType === 'loss') return !order.isProfitable;
+    // Filter by profit/loss
+    if (filterType === 'profit' && !order.isProfitable) return false;
+    if (filterType === 'loss' && order.isProfitable) return false;
+    
+    // Filter by customer
+    if (selectedCustomer !== 'all' && order.customer !== selectedCustomer) return false;
+    
+    // Filter by contractor
+    if (selectedContractor !== 'all' && order.contractor !== selectedContractor) return false;
+    
     return true;
   }) || [];
+
+  // Get unique customers and contractors
+  const customers = [...new Set(data?.orders.map(o => o.customer) || [])];
+  const contractors = [...new Set(data?.orders.map(o => o.contractor) || [])];
 
   if (loading) {
     return (
@@ -67,25 +90,44 @@ export default function ProfitLossMonitoring() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">📊 Gewinn/Verlust Monitoring</h2>
-        
-        {/* Date Range Filter */}
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5 text-gray-400" />
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2 text-sm"
-            />
-            <span className="text-gray-500">bis</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2 text-sm"
-            />
-          </div>
+      </div>
+
+      {/* Quick Date Filters */}
+      <div className="flex items-center space-x-3">
+        <span className="text-sm text-gray-600 font-medium">Zeitraum:</span>
+        <button
+          onClick={() => setQuickDateRange(7)}
+          className="px-4 py-2 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-700"
+        >
+          7 Tage
+        </button>
+        <button
+          onClick={() => setQuickDateRange(14)}
+          className="px-4 py-2 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-700"
+        >
+          14 Tage
+        </button>
+        <button
+          onClick={() => setQuickDateRange(30)}
+          className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          30 Tage
+        </button>
+        <div className="flex items-center space-x-2 ml-4">
+          <Calendar className="h-5 w-5 text-gray-400" />
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 text-sm"
+          />
+          <span className="text-gray-500">bis</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 text-sm"
+          />
         </div>
       </div>
 
@@ -157,27 +199,71 @@ export default function ProfitLossMonitoring() {
         </div>
       </div>
 
-      {/* Filter */}
-      <div className="flex items-center space-x-4">
-        <Filter className="h-5 w-5 text-gray-400" />
-        <button
-          onClick={() => setFilterType('all')}
-          className={`px-4 py-2 rounded ${filterType === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-        >
-          Alle ({data.orders.length})
-        </button>
-        <button
-          onClick={() => setFilterType('profit')}
-          className={`px-4 py-2 rounded ${filterType === 'profit' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-        >
-          Gewinn ({data.totals.profitableOrders})
-        </button>
-        <button
-          onClick={() => setFilterType('loss')}
-          className={`px-4 py-2 rounded ${filterType === 'loss' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-        >
-          Verlust ({data.totals.lossOrders})
-        </button>
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow p-4 space-y-4">
+        {/* Profit/Loss Filter */}
+        <div className="flex items-center space-x-4">
+          <Filter className="h-5 w-5 text-gray-400" />
+          <span className="text-sm text-gray-600 font-medium">Typ:</span>
+          <button
+            onClick={() => setFilterType('all')}
+            className={`px-4 py-2 rounded text-sm ${filterType === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+          >
+            Alle ({data.orders.length})
+          </button>
+          <button
+            onClick={() => setFilterType('profit')}
+            className={`px-4 py-2 rounded text-sm ${filterType === 'profit' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+          >
+            Gewinn ({data.totals.profitableOrders})
+          </button>
+          <button
+            onClick={() => setFilterType('loss')}
+            className={`px-4 py-2 rounded text-sm ${filterType === 'loss' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+          >
+            Verlust ({data.totals.lossOrders})
+          </button>
+        </div>
+
+        {/* Customer & Contractor Filters */}
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-gray-600 font-medium">Filter:</span>
+          
+          {/* Customer Filter */}
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-gray-600">Kunde:</label>
+            <select
+              value={selectedCustomer}
+              onChange={(e) => setSelectedCustomer(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-2 text-sm"
+            >
+              <option value="all">Alle Kunden</option>
+              {customers.map(customer => (
+                <option key={customer} value={customer}>{customer}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Contractor Filter */}
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-gray-600">Auftragnehmer:</label>
+            <select
+              value={selectedContractor}
+              onChange={(e) => setSelectedContractor(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-2 text-sm"
+            >
+              <option value="all">Alle Auftragnehmer</option>
+              {contractors.map(contractor => (
+                <option key={contractor} value={contractor}>{contractor}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Results Count */}
+          <span className="text-sm text-gray-500 ml-auto">
+            {filteredOrders.length} von {data.orders.length} Aufträgen
+          </span>
+        </div>
       </div>
 
       {/* Orders Table */}
