@@ -3,11 +3,14 @@ import { bidsAPI } from '../services/api';
 import { X, DollarSign, MessageSquare, Shield } from 'lucide-react';
 
 const BidModal = ({ order, onClose, onSuccess }) => {
-  const [bidAmount, setBidAmount] = useState('');
-  const [message, setMessage] = useState('');
+  const existingBid = order?.existingBid;
+  const isEditing = !!existingBid;
+  
+  const [bidAmount, setBidAmount] = useState(existingBid?.bid_amount || '');
+  const [message, setMessage] = useState(existingBid?.message || '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [customerProtectionConsent, setCustomerProtectionConsent] = useState(false);
+  const [customerProtectionConsent, setCustomerProtectionConsent] = useState(isEditing); // Auto-accept if editing
 
   // Safety check
   if (!order) {
@@ -37,13 +40,22 @@ const BidModal = ({ order, onClose, onSuccess }) => {
 
     setSubmitting(true);
     try {
-      await bidsAPI.createBid(order.id, {
-        bidAmount: bidValue,
-        message: message.trim() || null,
-      });
+      if (isEditing) {
+        // Update existing bid
+        await bidsAPI.updateBid(existingBid.id, {
+          bidAmount: bidValue,
+          message: message.trim() || null,
+        });
+      } else {
+        // Create new bid
+        await bidsAPI.createBid(order.id, {
+          bidAmount: bidValue,
+          message: message.trim() || null,
+        });
+      }
       onSuccess();
     } catch (err) {
-      setError(err.response?.data?.error || 'Fehler beim Senden der Bewerbung');
+      setError(err.response?.data?.error || `Fehler beim ${isEditing ? 'Aktualisieren' : 'Senden'} der Bewerbung`);
     } finally {
       setSubmitting(false);
     }
@@ -55,7 +67,7 @@ const BidModal = ({ order, onClose, onSuccess }) => {
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
           <h3 className="text-lg font-semibold text-gray-900">
-            Auf Auftrag bewerben
+            {isEditing ? 'Gebot bearbeiten' : 'Auf Auftrag bewerben'}
           </h3>
           <button
             onClick={onClose}

@@ -249,8 +249,102 @@ const withdrawBid = async (req, res) => {
   }
 };
 
+// Update existing bid (contractor only, pending bids only)
+const updateBid = async (req, res) => {
+  try {
+    const { bidId } = req.params;
+    const { bidAmount, message } = req.body;
+    const contractorId = req.user.id;
+
+    // Get the bid
+    const { pool } = require('../config/database');
+    const bidResult = await pool.query(
+      'SELECT * FROM order_bids WHERE id = $1',
+      [bidId]
+    );
+
+    if (bidResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Gebot nicht gefunden' });
+    }
+
+    const bid = bidResult.rows[0];
+
+    // Check if bid belongs to this contractor
+    if (bid.contractor_id !== contractorId) {
+      return res.status(403).json({ error: 'Nicht autorisiert' });
+    }
+
+    // Check if bid is still pending
+    if (bid.status !== 'pending') {
+      return res.status(400).json({ 
+        error: 'Nur ausstehende Gebote können bearbeitet werden' 
+      });
+    }
+
+    // Update bid
+    const updateResult = await pool.query(
+      `UPDATE order_bids 
+       SET bid_amount = $1, message = $2, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3
+       RETURNING *`,
+      [bidAmount, message || null, bidId]
+    );
+
+    const updatedBid = updateResult.rows[0];
+
+    // Send notification to admin
+    try {
+      const adminResult = await pool.query("SELECT * FROM users WHERE role = 'admin'");
+      const admins = adminResult.rows;
+      const contractor = await User.findById(contractorId);
+      const order = await Order.findById(bid.order_id);
+      
+      for (const admin of admins) {
+        await sendEmail(
+          admin.email,
+          '✏️ Gebot aktualisiert',
+          `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563eb;">Gebot wurde aktualisiert</h2>
+              <p>Hallo ${admin.first_name},</p>
+              <p>Ein Auftragnehmer hat sein Gebot aktualisiert.</p>
+              
+              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Aktualisierte Bewerbung:</h3>
+                <p><strong>Auftrag:</strong> #${order.id}</p>
+                <p><strong>Route:</strong> ${order.pickup_city} → ${order.delivery_city}</p>
+                <p><strong>Auftragnehmer:</strong> ${contractor.company_name || contractor.first_name + ' ' + contractor.last_name}</p>
+                <p><strong>Alter Preis:</strong> €${bid.bid_amount}</p>
+                <p><strong>Neuer Preis:</strong> €${bidAmount}</p>
+                <p><strong>Kundenpreis:</strong> €${order.price}</p>
+                <p><strong>Ihre Marge:</strong> €${(order.price - bidAmount).toFixed(2)}</p>
+                ${message ? `<p><strong>Nachricht:</strong> ${message}</p>` : ''}
+              </div>
+              
+              <p>Bitte prüfen Sie die aktualisierte Bewerbung im Admin-Dashboard.</p>
+              
+              <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>Ihr Courierly Team</p>
+            </div>
+          `
+        );
+      }
+    } catch (emailError) {
+      console.error('⚠️ Email notification failed (non-critical):', emailError.message);
+    }
+
+    res.json({
+      message: 'Gebot erfolgreich aktualisiert',
+      bid: updatedBid,
+    });
+  } catch (error) {
+    console.error('Update bid error:', error);
+    res.status(500).json({ error: 'Server error while updating bid' });
+  }
+};
+
 module.exports = {
   createBid,
+  updateBid,
   getBidsForOrder,
   getMyBids,
   acceptBid,

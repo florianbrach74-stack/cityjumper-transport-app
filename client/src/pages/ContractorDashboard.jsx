@@ -14,7 +14,7 @@ import MobileMenuModal from '../components/MobileMenuModal';
 import MobileOrderCard from '../components/MobileOrderCard';
 import RoleSwitcher from '../components/RoleSwitcher';
 import { formatPrice } from '../utils/formatPrice';
-import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell, BarChart3 } from 'lucide-react';
+import { Package, Clock, CheckCircle, Truck, Calendar, MapPin, AlertCircle, FileText, Bell, BarChart3, Edit } from 'lucide-react';
 
 // API helpers
 const ordersAPI = {
@@ -1041,6 +1041,28 @@ const ContractorDashboard = () => {
                         </p>
                       )}
                     </div>
+                    
+                    {/* Edit Button for Pending Bids */}
+                    {bid.status === 'pending' && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <button
+                          onClick={() => {
+                            // Find the order for this bid and open edit modal
+                            const order = availableOrders.find(o => o.id === bid.order_id) || 
+                                         myOrders.find(o => o.id === bid.order_id);
+                            if (order) {
+                              setSelectedOrderForBid({ ...order, existingBid: bid });
+                            } else {
+                              alert('Auftrag nicht mehr verfügbar');
+                            }
+                          }}
+                          className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span>Gebot bearbeiten</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const {
   createBid,
+  updateBid,
   getBidsForOrder,
   getMyBids,
   acceptBid,
@@ -15,6 +16,7 @@ router.use(authenticateToken);
 
 // Contractor routes
 router.post('/orders/:orderId/bid', authorizeRole('contractor'), createBid);
+router.patch('/:bidId', authorizeRole('contractor'), updateBid);
 router.get('/my-bids', authorizeRole('contractor'), getMyBids);
 router.delete('/:bidId/withdraw', authorizeRole('contractor'), withdrawBid);
 

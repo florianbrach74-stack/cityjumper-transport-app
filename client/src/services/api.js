@@ -69,6 +69,7 @@ export const ordersAPI = {
 // Bids API
 export const bidsAPI = {
   createBid: (orderId, data) => api.post(`/bids/orders/${orderId}/bid`, data),
+  updateBid: (bidId, data) => api.patch(`/bids/${bidId}`, data),
   getMyBids: () => api.get('/bids/my-bids'),
   getBidsForOrder: (orderId) => api.get(`/bids/orders/${orderId}`),
   acceptBid: (bidId) => api.post(`/bids/${bidId}/accept`),
