@@ -2,6 +2,7 @@ const OrderBid = require('../models/OrderBid');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const { sendEmail } = require('../config/email');
+const { pool } = require('../config/database');
 
 // Contractor applies for an order
 const createBid = async (req, res) => {
@@ -46,7 +47,6 @@ const createBid = async (req, res) => {
     // Send notification to admin (optional)
     try {
       // Get all admin users from database directly
-      const { pool } = require('../config/database');
       const adminResult = await pool.query("SELECT * FROM users WHERE role = 'admin'");
       const admins = adminResult.rows;
       const contractor = await User.findById(contractorId);
@@ -257,7 +257,6 @@ const updateBid = async (req, res) => {
     const contractorId = req.user.id;
 
     // Get the bid
-    const { pool } = require('../config/database');
     const bidResult = await pool.query(
       'SELECT * FROM order_bids WHERE id = $1',
       [bidId]
