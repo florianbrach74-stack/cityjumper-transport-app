@@ -865,57 +865,50 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
            .text(`Datum: ${invoiceDate}`, 350, 110, { align: 'right' })
            .text(`Fällig: ${dueDateFormatted}`, 350, 130, { align: 'right' });
         
-        // Customer info
-        doc.fontSize(11).text('Rechnungsempfänger:', 50, 270);
-        let customerY = 290;
+        // Customer info (more compact)
+        doc.fontSize(10).text('Rechnungsempfänger:', 50, 250);
+        let customerY = 265;
         
         // Company name (if available)
         if (orders[0].customer_company) {
-          doc.fontSize(10).text(orders[0].customer_company, 50, customerY);
-          customerY += 10;
+          doc.fontSize(9).text(orders[0].customer_company, 50, customerY);
+          customerY += 12;
         }
         
         // Name
-        doc.fontSize(10).text(`${orders[0].customer_first_name || ''} ${orders[0].customer_last_name || ''}`.trim(), 50, customerY);
-        customerY += 10;
+        doc.fontSize(9).text(`${orders[0].customer_first_name || ''} ${orders[0].customer_last_name || ''}`.trim(), 50, customerY);
+        customerY += 12;
         
         // Street
         if (orders[0].customer_street) {
           doc.text(orders[0].customer_street, 50, customerY);
-          customerY += 10;
+          customerY += 12;
         }
         
         // Postal code + City
         if (orders[0].customer_postal_code || orders[0].customer_city) {
           doc.text(`${orders[0].customer_postal_code || ''} ${orders[0].customer_city || ''}`.trim(), 50, customerY);
-          customerY += 10;
+          customerY += 12;
         }
         
         // Email
         if (orders[0].customer_email) {
           doc.text(orders[0].customer_email, 50, customerY);
-          customerY += 10;
         }
         
-        // Phone (if available)
-        if (orders[0].customer_phone) {
-          doc.text(orders[0].customer_phone, 50, customerY);
-          customerY += 15;
-        }
+        // Table header (more compact)
+        doc.fontSize(10).text('Leistungen:', 50, 340);
+        doc.moveTo(50, 355).lineTo(550, 355).stroke();
         
-        // Table header
-        doc.fontSize(11).text('Leistungen:', 50, 350);
-        doc.moveTo(50, 370).lineTo(550, 370).stroke();
-        
-        // Table columns
-        let y = 385;
+        // Table columns (more compact)
+        let y = 365;
         doc.fontSize(9).fillColor('#6b7280')
            .text('Auftrag', 50, y)
            .text('Route', 150, y)
            .text('Datum', 350, y)
            .text('Betrag', 480, y, { align: 'right' });
         doc.fillColor('#000000');
-        y += 20;
+        y += 18;
         
         // Orders
         orders.forEach((order, idx) => {
@@ -959,33 +952,33 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
              .text(new Date(order.created_at).toLocaleDateString('de-DE'), 350, y)
              .text(`€ ${price.toFixed(2)}`, 480, y, { align: 'right' });
           
-          y += 15;
+          y += 12;
           
           if (waitingFee > 0) {
             doc.fontSize(8).fillColor('#f59e0b')
                .text(`zzgl. € ${waitingFee.toFixed(2)} Wartezeit`, 480, y, { align: 'right' });
             doc.fillColor('#000000').fontSize(10);
-            y += 15;
+            y += 12;
           }
         });
         
-        y += 20;
+        y += 15;
         
         // Totals
         doc.moveTo(50, y).lineTo(550, y).stroke();
-        y += 15;
+        y += 12;
         
         doc.fontSize(10)
            .text('Zwischensumme (Fahrten):', 350, y)
            .text(`€ ${totals.subtotal.toFixed(2)}`, 480, y, { align: 'right' });
-        y += 15;
+        y += 12;
         
         if (totals.waitingTimeFees > 0) {
           doc.fillColor('#f59e0b')
              .text('Wartezeit-Gebühren:', 350, y)
              .text(`€ ${totals.waitingTimeFees.toFixed(2)}`, 480, y, { align: 'right' });
           doc.fillColor('#000000');
-          y += 15;
+          y += 12;
         }
         
         // Show discount if applied
@@ -994,23 +987,23 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
              .text('abzgl. Rabatt (5%):', 350, y)
              .text(`-€ ${totals.discountAmount.toFixed(2)}`, 480, y, { align: 'right' });
           doc.fillColor('#000000');
-          y += 15;
+          y += 12;
         }
         
         doc.text('Nettobetrag:', 350, y)
            .text(`€ ${totals.total.toFixed(2)}`, 480, y, { align: 'right' });
-        y += 15;
+        y += 12;
         
         const pdfTaxAmount = includeMwst ? totals.total * 0.19 : 0;
         if (includeMwst) {
           doc.text('zzgl. 19% MwSt.:', 350, y)
              .text(`€ ${pdfTaxAmount.toFixed(2)}`, 480, y, { align: 'right' });
-          y += 20;
+          y += 15;
         } else {
           doc.fontSize(8).fillColor('#666666')
              .text('Gemäß §19 UStG wird keine Umsatzsteuer berechnet.', 350, y, { width: 200 });
           doc.fillColor('#000000').fontSize(10);
-          y += 20;
+          y += 15;
         }
         
         doc.fontSize(12).fillColor('#16a34a')
@@ -1019,47 +1012,49 @@ router.post('/bulk-invoice', authenticateToken, authorizeRole('admin'), async (r
         doc.fillColor('#000000').fontSize(10);
         
         if (notes) {
-          y += 30;
+          y += 20;
           doc.fontSize(10).text('Anmerkungen:', 50, y);
-          y += 15;
+          y += 12;
           doc.fontSize(9).text(notes, 50, y);
-          y += 30;
+          y += 20;
         } else {
-          y += 30;
+          y += 20;
         }
         
         // Bank details
         doc.fontSize(10).text('Zahlungsinformationen:', 50, y);
-        y += 15;
+        y += 12;
         doc.fontSize(9)
            .text('Bank: Berliner Sparkasse', 50, y)
-           .text('IBAN: DE92 1005 0000 1062 9152 80', 50, y + 15)
-           .text('BIC: BELADEBEXXX', 50, y + 30);
+           .text('IBAN: DE92 1005 0000 1062 9152 80', 50, y + 12)
+           .text('BIC: BELADEBEXXX', 50, y + 24);
         
-        y += 45;
-        
-        // Skonto notice if applicable
+        // Skonto notice if applicable (on same page, compact)
         if (totals.applySkonto) {
           const skontoAmount = totals.total * 0.02;
           const amountWithSkonto = totals.total - skontoAmount;
           const totalWithSkonto = amountWithSkonto + (includeMwst ? amountWithSkonto * 0.19 : 0);
           
-          doc.fontSize(9).fillColor('#2563eb')
-             .text('⚡ Skonto-Bedingung:', 50, y);
-          y += 15;
-          doc.fontSize(8).fillColor('#1e40af')
+          y += 40;
+          doc.fontSize(9).fillColor('#000000').font('Helvetica-Bold')
+             .text('Skonto-Bedingung:', 50, y);
+          doc.font('Helvetica');
+          y += 12;
+          doc.fontSize(8).fillColor('#000000')
              .text('Bei Zahlung innerhalb von 7 Tagen ab Rechnungsdatum können Sie 2% Skonto abziehen.', 50, y, { width: 500 });
-          y += 25;
+          y += 18;
           doc.fontSize(8)
-             .text(`Rechnungsbetrag: € ${(totals.total + pdfTaxAmount).toFixed(2)}`, 50, y)
-             .text(`abzgl. 2% Skonto: -€ ${(skontoAmount + (includeMwst ? skontoAmount * 0.19 : 0)).toFixed(2)}`, 50, y + 12)
-             .text(`Zahlbetrag bei Skonto: € ${totalWithSkonto.toFixed(2)}`, 50, y + 24, { underline: true });
-          doc.fillColor('#000000');
+             .text(`Rechnungsbetrag: €${(totals.total + pdfTaxAmount).toFixed(2)}`, 50, y)
+             .text(`abzgl. 2% Skonto: -€${(skontoAmount + (includeMwst ? skontoAmount * 0.19 : 0)).toFixed(2)}`, 50, y + 10);
+          doc.font('Helvetica-Bold')
+             .text(`Zahlbetrag bei Skonto: €${totalWithSkonto.toFixed(2)}`, 50, y + 20);
+          doc.font('Helvetica').fillColor('#000000');
+          y += 35;
+        } else {
           y += 40;
         }
         
-        // Footer
-        y += 15;
+        // Footer (compact)
         doc.fontSize(8).fillColor('#6b7280')
            .text('Vielen Dank für Ihr Vertrauen! | Courierly – eine Marke der FB Transporte', 50, y, { align: 'center', width: 500 })
            .text('Adolf-Menzel Straße 71 | 12621 Berlin | DE 92 1005 0000 1062 9152 80 | BELADEBEXXX', 50, y + 12, { align: 'center', width: 500 })
