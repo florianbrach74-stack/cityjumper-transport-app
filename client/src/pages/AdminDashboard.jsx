@@ -88,36 +88,73 @@ export default function AdminDashboard() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ordersRes, usersRes, statsRes, pendingApprovalRes] = await Promise.all([
+      
+      // Load main data with individual error handling
+      const results = await Promise.allSettled([
         api.get('/admin/orders'),
         api.get('/admin/users'),
         api.get('/admin/stats'),
         api.get('/admin/orders/pending-approval')
       ]);
-      setOrders(ordersRes.data.orders);
-      setUsers(usersRes.data.users);
-      setStats(statsRes.data);
-      setPendingApprovalOrders(pendingApprovalRes.data.orders);
       
-      // Load bid counts for pending orders
-      const pendingOrders = ordersRes.data.orders.filter(o => o.status === 'pending');
-      const counts = {};
-      await Promise.all(
-        pendingOrders.map(async (order) => {
-          try {
-            const response = await bidsAPI.getBidsForOrder(order.id);
-            counts[order.id] = response.data.bids.length;
-          } catch (error) {
-            counts[order.id] = 0;
-          }
-        })
-      );
-      setBidCounts(counts);
+      // Handle orders
+      if (results[0].status === 'fulfilled') {
+        setOrders(results[0].value.data.orders);
+      } else {
+        console.error('Error loading orders:', results[0].reason);
+        setOrders([]);
+      }
+      
+      // Handle users
+      if (results[1].status === 'fulfilled') {
+        setUsers(results[1].value.data.users);
+      } else {
+        console.error('Error loading users:', results[1].reason);
+        setUsers([]);
+      }
+      
+      // Handle stats
+      if (results[2].status === 'fulfilled') {
+        setStats(results[2].value.data);
+      } else {
+        console.error('Error loading stats:', results[2].reason);
+        setStats(null);
+      }
+      
+      // Handle pending approval orders
+      if (results[3].status === 'fulfilled') {
+        setPendingApprovalOrders(results[3].value.data.orders);
+      } else {
+        console.error('Error loading pending approvals:', results[3].reason);
+        setPendingApprovalOrders([]);
+      }
+      
+      // Load bid counts in background (non-blocking)
+      if (results[0].status === 'fulfilled') {
+        const pendingOrders = results[0].value.data.orders.filter(o => o.status === 'pending');
+        loadBidCounts(pendingOrders);
+      }
+      
     } catch (error) {
       console.error('Error loading admin data:', error);
-      alert('Fehler beim Laden der Daten');
+      // Don't show alert on every error, just log it
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const loadBidCounts = async (pendingOrders) => {
+    const counts = {};
+    // Load bid counts in background without blocking
+    for (const order of pendingOrders) {
+      try {
+        const response = await bidsAPI.getBidsForOrder(order.id);
+        counts[order.id] = response.data.bids.length;
+        setBidCounts(prev => ({ ...prev, [order.id]: response.data.bids.length }));
+      } catch (error) {
+        counts[order.id] = 0;
+        setBidCounts(prev => ({ ...prev, [order.id]: 0 }));
+      }
     }
   };
 
