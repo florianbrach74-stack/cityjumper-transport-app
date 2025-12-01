@@ -245,41 +245,41 @@ const InvoiceHistory = () => {
         </div>
 
         {/* Invoices Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Rechnung
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Kunde
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Datum
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Fällig
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                   Betrag
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                   Status
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase" title="Auftragnehmer-Rechnung erhalten">
                   <div className="flex flex-col items-center">
-                    <Package className="h-4 w-4 mb-1" />
-                    <span>AN-Rechnung erhalten</span>
+                    <Package className="h-4 w-4" />
+                    <span className="text-[10px] leading-tight mt-0.5">AN-Rech.<br/>erhalten</span>
                   </div>
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase" title="Auftragnehmer-Rechnung bezahlt">
                   <div className="flex flex-col items-center">
-                    <DollarSign className="h-4 w-4 mb-1" />
-                    <span>AN-Rechnung bezahlt</span>
+                    <DollarSign className="h-4 w-4" />
+                    <span className="text-[10px] leading-tight mt-0.5">AN-Rech.<br/>bezahlt</span>
                   </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                   Aktionen
                 </th>
               </tr>
@@ -300,40 +300,40 @@ const InvoiceHistory = () => {
               ) : (
                 filteredInvoices.map((invoice) => (
                   <tr key={invoice.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-3 whitespace-nowrap">
                       <div className="flex items-center">
-                        <FileText className="h-5 w-5 text-gray-400 mr-2" />
+                        <FileText className="h-4 w-4 text-gray-400 mr-1.5" />
                         <div>
                           <div className="text-sm font-medium text-gray-900">
                             {invoice.invoice_number}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-xs text-gray-500">
                             {invoice.order_count} Auftrag{invoice.order_count > 1 ? 'e' : ''}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                    <td className="px-3 py-3">
+                      <div className="text-sm text-gray-900 max-w-[150px] truncate" title={invoice.customer_company || `${invoice.customer_first_name} ${invoice.customer_last_name}`}>
                         {invoice.customer_company || `${invoice.customer_first_name} ${invoice.customer_last_name}`}
                       </div>
-                      <div className="text-sm text-gray-500">{invoice.customer_email}</div>
+                      <div className="text-xs text-gray-500 max-w-[150px] truncate" title={invoice.customer_email}>{invoice.customer_email}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(invoice.invoice_date).toLocaleDateString('de-DE')}
+                    <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-500">
+                      {new Date(invoice.invoice_date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(invoice.due_date).toLocaleDateString('de-DE')}
+                    <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-500">
+                      {new Date(invoice.due_date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-3 whitespace-nowrap text-right">
                       <div className="text-sm font-medium text-gray-900">
                         €{parseFloat(invoice.total_amount).toFixed(2)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-3 whitespace-nowrap text-center">
                       {getStatusBadge(invoice.payment_status)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-2 py-3 whitespace-nowrap text-center">
                       <input
                         type="checkbox"
                         checked={invoice.contractor_invoice_received || false}
@@ -342,18 +342,18 @@ const InvoiceHistory = () => {
                           'contractor_invoice_received',
                           e.target.checked
                         )}
-                        className="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                        className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
                         title={invoice.contractor_invoice_received_date 
                           ? `Erhalten am: ${new Date(invoice.contractor_invoice_received_date).toLocaleDateString('de-DE')}` 
                           : 'Auftragnehmer-Rechnung erhalten?'}
                       />
                       {invoice.contractor_invoice_received_date && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(invoice.contractor_invoice_received_date).toLocaleDateString('de-DE')}
+                        <div className="text-[10px] text-gray-500 mt-0.5">
+                          {new Date(invoice.contractor_invoice_received_date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-2 py-3 whitespace-nowrap text-center">
                       <input
                         type="checkbox"
                         checked={invoice.contractor_invoice_paid || false}
@@ -362,19 +362,19 @@ const InvoiceHistory = () => {
                           'contractor_invoice_paid',
                           e.target.checked
                         )}
-                        className="h-5 w-5 text-green-600 rounded border-gray-300 focus:ring-green-500 cursor-pointer"
+                        className="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500 cursor-pointer"
                         title={invoice.contractor_invoice_paid_date 
                           ? `Bezahlt am: ${new Date(invoice.contractor_invoice_paid_date).toLocaleDateString('de-DE')}` 
                           : 'Auftragnehmer-Rechnung bezahlt?'}
                         disabled={!invoice.contractor_invoice_received}
                       />
                       {invoice.contractor_invoice_paid_date && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(invoice.contractor_invoice_paid_date).toLocaleDateString('de-DE')}
+                        <div className="text-[10px] text-gray-500 mt-0.5">
+                          {new Date(invoice.contractor_invoice_paid_date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-3 py-3 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         {invoice.payment_status !== 'paid' && (
                           <>
