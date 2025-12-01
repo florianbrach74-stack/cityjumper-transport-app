@@ -204,7 +204,7 @@ export default function AdminDashboard() {
 
   const updateBidPrice = async (bidId, newAmount) => {
     try {
-      await api.patch(`/admin/bids/${bidId}/price`, {
+      await api.patch(`/bids/${bidId}/price`, {
         bid_amount: parseFloat(newAmount)
       });
       
