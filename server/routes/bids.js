@@ -35,9 +35,12 @@ router.patch('/:bidId/price', authorizeRole('admin'), async (req, res) => {
     
     const pool = require('../config/database');
     
-    // Check if bid exists and is pending
+    // Check if bid exists and is pending, AND check if order is still pending
     const bidCheck = await pool.query(
-      'SELECT * FROM order_bids WHERE id = $1',
+      `SELECT ob.*, o.status as order_status 
+       FROM order_bids ob
+       JOIN transport_orders o ON ob.order_id = o.id
+       WHERE ob.id = $1`,
       [bidId]
     );
     
@@ -45,8 +48,17 @@ router.patch('/:bidId/price', authorizeRole('admin'), async (req, res) => {
       return res.status(404).json({ error: 'Bewerbung nicht gefunden' });
     }
     
-    if (bidCheck.rows[0].status !== 'pending') {
+    const bid = bidCheck.rows[0];
+    
+    if (bid.status !== 'pending') {
       return res.status(400).json({ error: 'Nur ausstehende Bewerbungen können bearbeitet werden' });
+    }
+    
+    // WICHTIG: Nur für unvermittelte Aufträge!
+    if (bid.order_status !== 'pending') {
+      return res.status(400).json({ 
+        error: 'Dieser Auftrag wurde bereits vergeben. Preise können nur für unvermittelte Aufträge angepasst werden.' 
+      });
     }
     
     // Update bid amount

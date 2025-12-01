@@ -1529,14 +1529,14 @@ export default function AdminDashboard() {
                           ) : (
                             <div className="flex items-center space-x-2">
                               <p className="text-lg font-bold text-primary-600">€{bid.bid_amount}</p>
-                              {bid.status === 'pending' && (
+                              {bid.status === 'pending' && selectedOrderForBids.status === 'pending' && (
                                 <button
                                   onClick={() => {
                                     setEditingBidId(bid.id);
                                     setEditingBidAmount(bid.bid_amount);
                                   }}
                                   className="text-blue-600 hover:text-blue-800 text-xs"
-                                  title="Preis bearbeiten"
+                                  title="Preis bearbeiten (nur für unvermittelte Aufträge)"
                                 >
                                   ✏️
                                 </button>
