@@ -96,9 +96,10 @@ class OrderBid {
          SET contractor_id = $1, 
              status = 'accepted', 
              price = $2,
+             contractor_price = $3,
              accepted_at = CURRENT_TIMESTAMP 
-         WHERE id = $3 AND status = 'pending'`,
-        [bid.contractor_id, currentCustomerPrice, bid.order_id]
+         WHERE id = $4 AND status = 'pending'`,
+        [bid.contractor_id, currentCustomerPrice, bid.bid_amount, bid.order_id]
       );
 
       await client.query('COMMIT');
