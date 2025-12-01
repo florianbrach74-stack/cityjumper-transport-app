@@ -26,6 +26,7 @@ import ContractorOrdersWithAssignment from './pages/ContractorOrdersWithAssignme
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
+import VerifyEmailToken from './pages/VerifyEmailToken';
 import ChatBot from './components/ChatBot';
 
 const DashboardRouter = () => {
@@ -67,6 +68,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/verify-email/:token" element={<VerifyEmailToken />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/agb" element={<AGBNew />} />

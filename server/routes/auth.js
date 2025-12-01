@@ -63,25 +63,42 @@ router.get('/verify-email/:token', async (req, res) => {
   try {
     const { token } = req.params;
     
+    console.log('🔍 [Token Verification] Received token:', token.substring(0, 10) + '...');
+    
     if (!token) {
       return res.status(400).json({ error: 'Token ist erforderlich' });
     }
     
     const result = await verifyEmailWithToken(token);
     
+    console.log('📧 [Token Verification] Result:', result);
+    
     if (result.success) {
-      // Redirect to login with success message
-      res.redirect('/login?verified=true');
+      return res.json({ 
+        success: true, 
+        message: 'Email erfolgreich verifiziert!',
+        email: result.email
+      });
     } else if (result.alreadyVerified) {
-      res.redirect('/login?already_verified=true');
+      return res.status(400).json({ 
+        error: 'Email bereits verifiziert',
+        alreadyVerified: true
+      });
     } else if (result.expired) {
-      res.redirect('/login?expired=true');
+      return res.status(400).json({ 
+        error: 'Verifizierungs-Link abgelaufen',
+        expired: true
+      });
     } else {
-      res.redirect('/login?error=invalid_token');
+      return res.status(400).json({ 
+        error: result.error || 'Ungültiger Verifizierungs-Link'
+      });
     }
   } catch (error) {
-    console.error('Token verification error:', error);
-    res.redirect('/login?error=server_error');
+    console.error('❌ [Token Verification] Error:', error);
+    return res.status(500).json({ 
+      error: 'Serverfehler bei der Verifizierung'
+    });
   }
 });
 
