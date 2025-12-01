@@ -14,12 +14,20 @@ function generateVerificationToken() {
  */
 async function sendVerificationEmailWithLink(userId, email, firstName) {
   try {
+    console.log('📧 [Verification] Starting email verification process...');
+    console.log('   User ID:', userId);
+    console.log('   Email:', email);
+    console.log('   First Name:', firstName);
+    
     // Generiere Token
     const token = generateVerificationToken();
+    console.log('   Token generated:', token.substring(0, 10) + '...');
     
     // Speichere Token in Datenbank (gültig für 2 Stunden)
     const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 Stunden
+    console.log('   Expires at:', expiresAt);
     
+    console.log('   Updating database...');
     await pool.query(
       `UPDATE users 
        SET email_verification_token = $1,
@@ -27,6 +35,7 @@ async function sendVerificationEmailWithLink(userId, email, firstName) {
        WHERE id = $3`,
       [token, expiresAt, userId]
     );
+    console.log('   ✅ Database updated successfully');
     
     // Erstelle Verifizierungs-Link
     const verificationLink = `https://courierly.de/verify-email/${token}`;
@@ -96,12 +105,23 @@ async function sendVerificationEmailWithLink(userId, email, firstName) {
       </html>
     `;
     
+    console.log('   Sending email...');
+    console.log('   To:', email);
+    console.log('   Subject:', subject);
+    console.log('   Link:', verificationLink);
+    
     await sendEmail(email, subject, html);
     
     console.log(`✅ Verifizierungs-Email mit Link gesendet an ${email}`);
     return { success: true, token };
   } catch (error) {
-    console.error('❌ Fehler beim Senden der Verifizierungs-Email:', error);
+    console.error('❌❌❌ FEHLER beim Senden der Verifizierungs-Email:');
+    console.error('   Error name:', error.name);
+    console.error('   Error message:', error.message);
+    console.error('   Error code:', error.code);
+    console.error('   Error detail:', error.detail);
+    console.error('   Error hint:', error.hint);
+    console.error('   Full error:', error);
     throw error;
   }
 }
