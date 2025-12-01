@@ -37,7 +37,7 @@ router.patch('/:bidId/price', authorizeRole('admin'), async (req, res) => {
     
     // Check if bid exists and is pending
     const bidCheck = await pool.query(
-      'SELECT * FROM bids WHERE id = $1',
+      'SELECT * FROM order_bids WHERE id = $1',
       [bidId]
     );
     
@@ -51,7 +51,7 @@ router.patch('/:bidId/price', authorizeRole('admin'), async (req, res) => {
     
     // Update bid amount
     await pool.query(
-      'UPDATE bids SET bid_amount = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      'UPDATE order_bids SET bid_amount = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
       [bid_amount, bidId]
     );
     
