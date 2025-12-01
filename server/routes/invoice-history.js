@@ -592,4 +592,101 @@ router.post('/:invoiceNumber/test-reminder', authenticateToken, authorizeRole('a
   }
 });
 
+/**
+ * PATCH /api/invoices/:invoiceNumber/contractor-invoice-status
+ * Update contractor invoice received/paid status (admin only)
+ */
+router.patch('/:invoiceNumber/contractor-invoice-status', authenticateToken, authorizeRole('admin'), async (req, res) => {
+  try {
+    const { invoiceNumber } = req.params;
+    const { 
+      contractor_invoice_received, 
+      contractor_invoice_paid,
+      contractor_invoice_notes 
+    } = req.body;
+    
+    console.log('📋 Updating contractor invoice status:', { 
+      invoiceNumber, 
+      received: contractor_invoice_received, 
+      paid: contractor_invoice_paid 
+    });
+    
+    // Build dynamic update query
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+    
+    if (contractor_invoice_received !== undefined) {
+      updates.push(`contractor_invoice_received = $${paramIndex++}`);
+      values.push(contractor_invoice_received);
+      
+      if (contractor_invoice_received) {
+        updates.push(`contractor_invoice_received_date = CURRENT_TIMESTAMP`);
+      } else {
+        updates.push(`contractor_invoice_received_date = NULL`);
+      }
+    }
+    
+    if (contractor_invoice_paid !== undefined) {
+      updates.push(`contractor_invoice_paid = $${paramIndex++}`);
+      values.push(contractor_invoice_paid);
+      
+      if (contractor_invoice_paid) {
+        updates.push(`contractor_invoice_paid_date = CURRENT_TIMESTAMP`);
+      } else {
+        updates.push(`contractor_invoice_paid_date = NULL`);
+      }
+    }
+    
+    if (contractor_invoice_notes !== undefined) {
+      updates.push(`contractor_invoice_notes = $${paramIndex++}`);
+      values.push(contractor_invoice_notes);
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No updates provided'
+      });
+    }
+    
+    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(invoiceNumber);
+    
+    const query = `
+      UPDATE sent_invoices 
+      SET ${updates.join(', ')}
+      WHERE invoice_number = $${paramIndex}
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Invoice not found'
+      });
+    }
+    
+    console.log('✅ Contractor invoice status updated:', { 
+      invoiceNumber,
+      received: result.rows[0].contractor_invoice_received,
+      paid: result.rows[0].contractor_invoice_paid
+    });
+    
+    res.json({
+      success: true,
+      invoice: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Error updating contractor invoice status:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

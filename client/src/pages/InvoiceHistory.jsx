@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, Download, Mail, Check, X, Clock, AlertCircle,
-  Filter, Search, Calendar, Euro, TrendingUp, TrendingDown
+  Filter, Search, Calendar, Euro, TrendingUp, TrendingDown,
+  Package, DollarSign
 } from 'lucide-react';
 import api from '../services/api';
 
@@ -60,6 +61,25 @@ const InvoiceHistory = () => {
       alert(`Zahlungsstatus auf "${status}" aktualisiert`);
     } catch (error) {
       console.error('Error updating payment status:', error);
+      alert('Fehler beim Aktualisieren des Status');
+    }
+  };
+
+  const updateContractorInvoiceStatus = async (invoiceNumber, field, value) => {
+    try {
+      await api.patch(`/invoices/${invoiceNumber}/contractor-invoice-status`, {
+        [field]: value
+      });
+      fetchInvoices();
+      
+      const labels = {
+        contractor_invoice_received: value ? 'Auftragnehmer-Rechnung als erhalten markiert' : 'Auftragnehmer-Rechnung als nicht erhalten markiert',
+        contractor_invoice_paid: value ? 'Auftragnehmer-Rechnung als bezahlt markiert' : 'Auftragnehmer-Rechnung als nicht bezahlt markiert'
+      };
+      
+      alert(labels[field]);
+    } catch (error) {
+      console.error('Error updating contractor invoice status:', error);
       alert('Fehler beim Aktualisieren des Status');
     }
   };
@@ -247,6 +267,18 @@ const InvoiceHistory = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col items-center">
+                    <Package className="h-4 w-4 mb-1" />
+                    <span>AN-Rechnung erhalten</span>
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex flex-col items-center">
+                    <DollarSign className="h-4 w-4 mb-1" />
+                    <span>AN-Rechnung bezahlt</span>
+                  </div>
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Aktionen
                 </th>
@@ -255,13 +287,13 @@ const InvoiceHistory = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="9" className="px-6 py-4 text-center text-gray-500">
                     Lade Rechnungen...
                   </td>
                 </tr>
               ) : filteredInvoices.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="9" className="px-6 py-4 text-center text-gray-500">
                     Keine Rechnungen gefunden
                   </td>
                 </tr>
@@ -300,6 +332,47 @@ const InvoiceHistory = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(invoice.payment_status)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <input
+                        type="checkbox"
+                        checked={invoice.contractor_invoice_received || false}
+                        onChange={(e) => updateContractorInvoiceStatus(
+                          invoice.invoice_number,
+                          'contractor_invoice_received',
+                          e.target.checked
+                        )}
+                        className="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                        title={invoice.contractor_invoice_received_date 
+                          ? `Erhalten am: ${new Date(invoice.contractor_invoice_received_date).toLocaleDateString('de-DE')}` 
+                          : 'Auftragnehmer-Rechnung erhalten?'}
+                      />
+                      {invoice.contractor_invoice_received_date && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(invoice.contractor_invoice_received_date).toLocaleDateString('de-DE')}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <input
+                        type="checkbox"
+                        checked={invoice.contractor_invoice_paid || false}
+                        onChange={(e) => updateContractorInvoiceStatus(
+                          invoice.invoice_number,
+                          'contractor_invoice_paid',
+                          e.target.checked
+                        )}
+                        className="h-5 w-5 text-green-600 rounded border-gray-300 focus:ring-green-500 cursor-pointer"
+                        title={invoice.contractor_invoice_paid_date 
+                          ? `Bezahlt am: ${new Date(invoice.contractor_invoice_paid_date).toLocaleDateString('de-DE')}` 
+                          : 'Auftragnehmer-Rechnung bezahlt?'}
+                        disabled={!invoice.contractor_invoice_received}
+                      />
+                      {invoice.contractor_invoice_paid_date && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(invoice.contractor_invoice_paid_date).toLocaleDateString('de-DE')}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">

@@ -81,7 +81,24 @@ async function autoMigrate() {
       discountSkontoMigrated = false;
     }
     
-    if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated && loadingHelpMigrated && emailTemplatesMigrated && discountSkontoMigrated) {
+    // Check if contractor invoice tracking columns exist in sent_invoices
+    let contractorInvoiceTrackingMigrated = false;
+    try {
+      const checkContractorInvoiceTracking = `
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'sent_invoices' 
+        AND column_name IN ('contractor_invoice_received', 'contractor_invoice_paid');
+      `;
+      
+      const contractorInvoiceResult = await pool.query(checkContractorInvoiceTracking);
+      contractorInvoiceTrackingMigrated = contractorInvoiceResult.rows.length >= 2;
+    } catch (e) {
+      // Table may not exist yet
+      contractorInvoiceTrackingMigrated = false;
+    }
+    
+    if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated && loadingHelpMigrated && emailTemplatesMigrated && discountSkontoMigrated && contractorInvoiceTrackingMigrated) {
       console.log('✓ All migrations already applied, skipping...');
       return;
     }
@@ -185,6 +202,24 @@ async function autoMigrate() {
       }
     }
     
+    // Add contractor invoice tracking columns to sent_invoices
+    if (!contractorInvoiceTrackingMigrated) {
+      try {
+        console.log('🔧 Adding contractor invoice tracking columns to sent_invoices...');
+        await pool.query(`
+          ALTER TABLE sent_invoices 
+          ADD COLUMN IF NOT EXISTS contractor_invoice_received BOOLEAN DEFAULT FALSE,
+          ADD COLUMN IF NOT EXISTS contractor_invoice_received_date TIMESTAMP,
+          ADD COLUMN IF NOT EXISTS contractor_invoice_paid BOOLEAN DEFAULT FALSE,
+          ADD COLUMN IF NOT EXISTS contractor_invoice_paid_date TIMESTAMP,
+          ADD COLUMN IF NOT EXISTS contractor_invoice_notes TEXT;
+        `);
+        console.log('  ✓ Contractor invoice tracking columns added');
+      } catch (e) {
+        console.log('  ⚠️  Could not add contractor invoice tracking columns (table may not exist yet):', e.message);
+      }
+    }
+    
     console.log('✅ Migration completed successfully!');
     console.log('📦 New features are now available:');
     console.log('  ✓ Multi-stop orders (multiple pickups/deliveries)');
@@ -192,6 +227,7 @@ async function autoMigrate() {
     console.log('  ✓ Additional stops during execution');
     console.log('  ✓ Automatic pricing: +6€ per extra stop');
     console.log('  ✓ Employee-Contractor relationship (contractor_id)');
+    console.log('  ✓ Contractor invoice tracking (prevent double payments)');
     console.log('  ✓ Employee assignment mode (all_access / manual_assignment)');
     console.log('  ✓ Loading/Unloading help (+€6 each)');
     console.log('  ✓ Legal delivery with content verification');
