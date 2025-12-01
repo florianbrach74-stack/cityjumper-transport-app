@@ -664,13 +664,13 @@ export default function AdminDashboard() {
                         className="rounded border-gray-300"
                       />
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kunde</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Auftragnehmer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Route</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Preis</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aktionen</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kunde</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Auftragnehmer</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Route</th>
+                    <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Preis</th>
+                    <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aktionen</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -687,7 +687,7 @@ export default function AdminDashboard() {
                     })
                     .map((order) => (
                     <tr key={order.id} className={selectedOrdersForInvoice.includes(order.id) ? 'bg-blue-50' : ''}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm">
                         {order.status === 'completed' && (
                           <input
                             type="checkbox"
@@ -703,7 +703,7 @@ export default function AdminDashboard() {
                           />
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex items-center gap-2">
                           <span>#{order.id}</span>
                           {order.legal_delivery && (
@@ -723,13 +723,17 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order.customer_first_name} {order.customer_last_name}
+                      <td className="px-3 py-3 text-sm text-gray-900">
+                        <div className="max-w-[120px] truncate" title={`${order.customer_first_name} ${order.customer_last_name}`}>
+                          {order.customer_first_name} {order.customer_last_name}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order.contractor_first_name ? `${order.contractor_first_name} ${order.contractor_last_name}` : '-'}
+                      <td className="px-3 py-3 text-sm text-gray-900">
+                        <div className="max-w-[120px] truncate" title={order.contractor_first_name ? `${order.contractor_first_name} ${order.contractor_last_name}` : '-'}>
+                          {order.contractor_first_name ? `${order.contractor_first_name} ${order.contractor_last_name}` : '-'}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                      <td className="px-3 py-3 text-sm text-gray-900">
                         {order.pickup_city} → {order.delivery_city}
                         {(() => {
                           const deliveryStops = order.delivery_stops 
@@ -749,7 +753,7 @@ export default function AdminDashboard() {
                           );
                         })()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-3 whitespace-nowrap text-center">
                         <select
                           value={order.status}
                           onChange={(e) => updateOrderStatus(order.id, e.target.value)}
@@ -762,7 +766,7 @@ export default function AdminDashboard() {
                           <option value="cancelled">Storniert</option>
                         </select>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex flex-col space-y-1">
                           <div className="flex items-center space-x-2">
                             <div className="font-semibold text-blue-600" title="Kundenpreis">
@@ -807,8 +811,8 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex flex-col space-y-1">
+                      <td className="px-3 py-3 text-sm">
+                        <div className="flex flex-col space-y-1 min-w-[140px]">
                           <button
                             onClick={() => setSelectedOrderForDetails(order.id)}
                             className="text-primary-600 hover:text-primary-900 font-medium text-left"
