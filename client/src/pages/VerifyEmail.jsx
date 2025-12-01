@@ -11,7 +11,18 @@ const VerifyEmail = () => {
   const [resending, setResending] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const email = location.state?.email;
+  
+  // Email aus location.state ODER localStorage
+  const emailFromState = location.state?.email;
+  const emailFromStorage = localStorage.getItem('pendingVerificationEmail');
+  const email = emailFromState || emailFromStorage;
+  
+  // Speichere Email im localStorage wenn vorhanden
+  useEffect(() => {
+    if (emailFromState) {
+      localStorage.setItem('pendingVerificationEmail', emailFromState);
+    }
+  }, [emailFromState]);
 
   // No automatic redirect - show error message instead if no email
 
@@ -24,10 +35,16 @@ const VerifyEmail = () => {
       await api.post('/auth/verify-email', { email, code });
       setSuccess(true);
       
-      // Nach 2 Sekunden zum Login weiterleiten
+      // Lösche pendingVerificationEmail aus localStorage
+      localStorage.removeItem('pendingVerificationEmail');
+      
+      // Nach 3 Sekunden zum Login weiterleiten (mehr Zeit zum Lesen)
       setTimeout(() => {
-        navigate('/login', { state: { message: 'Email erfolgreich verifiziert! Sie können sich jetzt anmelden.' } });
-      }, 2000);
+        navigate('/login', { 
+          state: { message: 'Email erfolgreich verifiziert! Sie können sich jetzt anmelden.' },
+          replace: true
+        });
+      }, 3000);
     } catch (err) {
       setError(err.response?.data?.error || 'Verifizierung fehlgeschlagen');
     } finally {
