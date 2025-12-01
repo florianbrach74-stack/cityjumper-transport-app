@@ -220,6 +220,23 @@ async function autoMigrate() {
       }
     }
     
+    // Check if email_verification_token column exists
+    const tokenColumnCheck = await pool.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' 
+      AND column_name = 'email_verification_token'
+    `);
+    
+    if (tokenColumnCheck.rows.length === 0) {
+      console.log('🔧 Adding email_verification_token column...');
+      await pool.query(`
+        ALTER TABLE users ADD COLUMN email_verification_token VARCHAR(255);
+        CREATE INDEX IF NOT EXISTS idx_users_verification_token ON users(email_verification_token);
+      `);
+      console.log('✅ email_verification_token column added');
+    }
+    
     console.log('✅ Migration completed successfully!');
     console.log('📦 New features are now available:');
     console.log('  ✓ Multi-stop orders (multiple pickups/deliveries)');
