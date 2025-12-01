@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Truck, Mail, Lock, User, Building, Phone, AlertCircle, Home } from 'lucide-react';
+import { Truck, Mail, Lock, User, Building, Phone, AlertCircle, Home, CheckCircle } from 'lucide-react';
 import PasswordStrength from '../components/PasswordStrength';
 
 const Register = () => {
@@ -23,6 +23,7 @@ const Register = () => {
   });
   const [showCompanyDetails, setShowCompanyDetails] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -54,16 +55,22 @@ const Register = () => {
       const { confirmPassword, ...registerData } = formData;
       const response = await register(registerData);
       
-      // Prüfe ob Email-Verifizierung erforderlich ist
-      if (response?.requiresVerification) {
-        // Zur Verifizierungs-Seite weiterleiten
-        navigate('/verify-email', { 
-          state: { email: formData.email } 
-        });
-      } else {
-        // Direkt zum Dashboard (sollte nicht passieren bei neuen Benutzern)
-        navigate('/dashboard');
-      }
+      // Zeige Erfolgs-Meldung
+      setSuccess(true);
+      
+      // Warte 3 Sekunden, dann weiterleiten
+      setTimeout(() => {
+        // Prüfe ob Email-Verifizierung erforderlich ist
+        if (response?.requiresVerification) {
+          // Zur Verifizierungs-Seite weiterleiten
+          navigate('/verify-email', { 
+            state: { email: formData.email } 
+          });
+        } else {
+          // Direkt zum Dashboard (sollte nicht passieren bei neuen Benutzern)
+          navigate('/dashboard');
+        }
+      }, 3000);
     } catch (err) {
       const errorMsg = err.response?.data?.error || 'Registrierung fehlgeschlagen';
       const details = err.response?.data?.details;
@@ -107,6 +114,37 @@ const Register = () => {
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center space-x-2">
                 <AlertCircle className="h-5 w-5" />
                 <span className="text-sm">{error}</span>
+              </div>
+            )}
+
+            {success && (
+              <div className="bg-green-50 border-2 border-green-200 text-green-800 px-6 py-4 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg mb-2">✅ Registrierung erfolgreich!</h3>
+                    <p className="text-sm mb-3">
+                      Wir haben Ihnen eine <strong>Verifizierungs-Email</strong> an <strong>{formData.email}</strong> gesendet.
+                    </p>
+                    <div className="bg-white border border-green-200 rounded-lg p-3 text-sm space-y-2">
+                      <p className="flex items-center space-x-2">
+                        <span className="text-green-600">📧</span>
+                        <span>Bitte prüfen Sie Ihr Email-Postfach</span>
+                      </p>
+                      <p className="flex items-center space-x-2">
+                        <span className="text-green-600">🔗</span>
+                        <span>Klicken Sie auf den Verifizierungs-Link in der Email</span>
+                      </p>
+                      <p className="flex items-center space-x-2">
+                        <span className="text-green-600">✅</span>
+                        <span>Nach der Verifizierung können Sie sich einloggen</span>
+                      </p>
+                    </div>
+                    <p className="text-xs text-green-600 mt-3 italic">
+                      Sie werden in 3 Sekunden weitergeleitet...
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
