@@ -1245,7 +1245,9 @@ router.get('/profit-loss', authenticateToken, authorizeRole('admin'), async (req
       const revenueAfterDiscount = revenue - discountAmount;
       
       // Costs (what we pay the contractor)
-      const costs = contractorPrice;
+      // WICHTIG: Wartezeit-Kosten für Auftragnehmer = 85% der Wartezeit-Gebühr
+      const contractorWaitingFee = order.waiting_time_approved ? (waitingFee * 0.85) : 0;
+      const costs = contractorPrice + contractorWaitingFee;
       
       // Profit/Loss
       const profitLoss = revenueAfterDiscount - costs;
