@@ -47,6 +47,8 @@ export default function AdminDashboard() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [selectedOrderForReturn, setSelectedOrderForReturn] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [editingBidId, setEditingBidId] = useState(null);
+  const [editingBidAmount, setEditingBidAmount] = useState('');
   const moreMenuRef = useRef(null);
   const [editingContractor, setEditingContractor] = useState(null);
   const [contractorEditData, setContractorEditData] = useState({});
@@ -197,6 +199,27 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error rejecting bid:', error);
       alert('Fehler beim Ablehnen der Bewerbung');
+    }
+  };
+
+  const updateBidPrice = async (bidId, newAmount) => {
+    try {
+      await api.patch(`/admin/bids/${bidId}/price`, {
+        bid_amount: parseFloat(newAmount)
+      });
+      
+      // Reload bids
+      if (selectedOrderForBids) {
+        const bidsResponse = await bidsAPI.getBidsForOrder(selectedOrderForBids.id);
+        setBidsForOrder(bidsResponse.data.bids);
+      }
+      
+      setEditingBidId(null);
+      setEditingBidAmount('');
+      alert('Preis erfolgreich aktualisiert!');
+    } catch (error) {
+      console.error('Error updating bid price:', error);
+      alert('Fehler beim Aktualisieren des Preises');
     }
   };
 
@@ -1436,19 +1459,64 @@ export default function AdminDashboard() {
 
                       <div className="grid grid-cols-3 gap-4 mb-3">
                         <div>
-                          <p className="text-xs text-gray-500">Gebotener Preis</p>
-                          <p className="text-lg font-bold text-primary-600">€{bid.bid_amount}</p>
+                          <p className="text-xs text-gray-500 mb-1">Gebotener Preis</p>
+                          {editingBidId === bid.id ? (
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={editingBidAmount}
+                                onChange={(e) => setEditingBidAmount(e.target.value)}
+                                className="w-24 px-2 py-1 border rounded text-sm"
+                                placeholder="Preis"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => updateBidPrice(bid.id, editingBidAmount)}
+                                className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
+                                title="Speichern"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingBidId(null);
+                                  setEditingBidAmount('');
+                                }}
+                                className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500"
+                                title="Abbrechen"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2">
+                              <p className="text-lg font-bold text-primary-600">€{bid.bid_amount}</p>
+                              {bid.status === 'pending' && (
+                                <button
+                                  onClick={() => {
+                                    setEditingBidId(bid.id);
+                                    setEditingBidAmount(bid.bid_amount);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-800 text-xs"
+                                  title="Preis bearbeiten"
+                                >
+                                  ✏️
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div>
                           <p className="text-xs text-gray-500">Ihre Marge</p>
                           <p className="text-lg font-bold text-green-600">
-                            €{(selectedOrderForBids.price - bid.bid_amount).toFixed(2)}
+                            €{(selectedOrderForBids.price - (editingBidId === bid.id && editingBidAmount ? parseFloat(editingBidAmount) : bid.bid_amount)).toFixed(2)}
                           </p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-500">Marge %</p>
                           <p className="text-lg font-bold text-gray-700">
-                            {((selectedOrderForBids.price - bid.bid_amount) / selectedOrderForBids.price * 100).toFixed(1)}%
+                            {((selectedOrderForBids.price - (editingBidId === bid.id && editingBidAmount ? parseFloat(editingBidAmount) : bid.bid_amount)) / selectedOrderForBids.price * 100).toFixed(1)}%
                           </p>
                         </div>
                       </div>
