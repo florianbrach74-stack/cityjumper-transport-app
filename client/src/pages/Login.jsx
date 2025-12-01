@@ -24,15 +24,16 @@ const Login = () => {
       
       // Prüfe ob Email-Verifizierung erforderlich ist
       if (errorData?.requiresVerification) {
+        // WICHTIG: setLoading NICHT auf false setzen, damit der User nicht zurück kann
         navigate('/verify-email', { 
-          state: { email: errorData.email || email } 
+          state: { email: errorData.email || email },
+          replace: true // Verhindert zurück-Navigation
         });
-        return;
+        return; // WICHTIG: Kein finally Block ausführen!
       }
       
       setError(errorData?.error || 'Login fehlgeschlagen');
-    } finally {
-      setLoading(false);
+      setLoading(false); // Nur bei echtem Fehler
     }
   };
 
