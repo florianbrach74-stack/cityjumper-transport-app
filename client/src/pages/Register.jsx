@@ -53,24 +53,12 @@ const Register = () => {
 
     try {
       const { confirmPassword, ...registerData } = formData;
-      const response = await register(registerData);
+      await register(registerData);
       
-      // Zeige Erfolgs-Meldung
+      // Zeige Erfolgs-Meldung (bleibt auf der Seite)
       setSuccess(true);
       
-      // Warte 3 Sekunden, dann weiterleiten
-      setTimeout(() => {
-        // Prüfe ob Email-Verifizierung erforderlich ist
-        if (response?.requiresVerification) {
-          // Zur Verifizierungs-Seite weiterleiten
-          navigate('/verify-email', { 
-            state: { email: formData.email } 
-          });
-        } else {
-          // Direkt zum Dashboard (sollte nicht passieren bei neuen Benutzern)
-          navigate('/dashboard');
-        }
-      }, 3000);
+      // KEINE Weiterleitung - User soll Email öffnen und Link klicken
     } catch (err) {
       const errorMsg = err.response?.data?.error || 'Registrierung fehlgeschlagen';
       const details = err.response?.data?.details;
@@ -129,20 +117,29 @@ const Register = () => {
                     <div className="bg-white border border-green-200 rounded-lg p-3 text-sm space-y-2">
                       <p className="flex items-center space-x-2">
                         <span className="text-green-600">📧</span>
-                        <span>Bitte prüfen Sie Ihr Email-Postfach</span>
+                        <span><strong>Schritt 1:</strong> Öffnen Sie Ihr Email-Postfach</span>
                       </p>
                       <p className="flex items-center space-x-2">
                         <span className="text-green-600">🔗</span>
-                        <span>Klicken Sie auf den Verifizierungs-Link in der Email</span>
+                        <span><strong>Schritt 2:</strong> Klicken Sie auf den Verifizierungs-Link</span>
                       </p>
                       <p className="flex items-center space-x-2">
                         <span className="text-green-600">✅</span>
-                        <span>Nach der Verifizierung können Sie sich einloggen</span>
+                        <span><strong>Schritt 3:</strong> Sie werden automatisch verifiziert</span>
+                      </p>
+                      <p className="flex items-center space-x-2">
+                        <span className="text-green-600">🚀</span>
+                        <span><strong>Schritt 4:</strong> Danach können Sie sich einloggen</span>
                       </p>
                     </div>
-                    <p className="text-xs text-green-600 mt-3 italic">
-                      Sie werden in 3 Sekunden weitergeleitet...
-                    </p>
+                    <div className="mt-4 pt-3 border-t border-green-200">
+                      <Link
+                        to="/login"
+                        className="inline-flex items-center justify-center w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                      >
+                        Zum Login
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
