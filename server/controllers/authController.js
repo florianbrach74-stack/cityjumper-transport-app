@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { validatePassword } = require('../utils/passwordValidator');
 const { sendVerificationEmail } = require('../services/emailVerificationService');
+const { sendVerificationEmailWithLink } = require('../services/emailVerificationTokenService');
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -69,13 +70,13 @@ const register = async (req, res) => {
       vat_id,
     });
 
-    // Send verification email
+    // Send verification email with link (NEW TOKEN SYSTEM)
     try {
-      await sendVerificationEmail(user.id, user.email, user.first_name);
-      console.log('✅ Verification email sent to:', user.email);
+      await sendVerificationEmailWithLink(user.id, user.email, user.first_name);
+      console.log('✅ Verification email with link sent to:', user.email);
     } catch (emailError) {
       console.error('❌ Failed to send verification email:', emailError);
-      // Continue anyway - user can request new code
+      // Continue anyway - user can request new link
     }
 
     // Return success without token - user must verify email first

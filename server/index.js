@@ -144,6 +144,15 @@ app.listen(PORT, async () => {
     console.error('   This is not critical, server will continue...');
   }
   
+  // Start unverified accounts cleanup service (Cron-Job)
+  try {
+    const cleanupService = require('./services/cleanupService');
+    cleanupService.startCleanupService();
+    console.log('✅ Unverified Accounts Cleanup Service started');
+  } catch (error) {
+    console.error('❌ Failed to start Cleanup Service:', error);
+  }
+  
   // Start payment reminder service (Cron-Job)
   try {
     const paymentReminderService = require('./services/paymentReminderService');
