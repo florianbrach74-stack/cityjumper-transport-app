@@ -98,8 +98,40 @@ async function autoMigrate() {
       contractorInvoiceTrackingMigrated = false;
     }
     
+    // WICHTIG: email_verification_token Migration IMMER prüfen (auch wenn andere Migrationen fertig sind)
+    console.log('🔍 Checking for email_verification_token column...');
+    const tokenColumnCheck = await pool.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' 
+      AND column_name = 'email_verification_token'
+    `);
+    
+    console.log(`   Found ${tokenColumnCheck.rows.length} matching columns`);
+    
+    if (tokenColumnCheck.rows.length === 0) {
+      console.log('🔧 Adding email_verification_token column...');
+      try {
+        await pool.query(`ALTER TABLE users ADD COLUMN email_verification_token VARCHAR(255)`);
+        console.log('   ✅ Column added');
+      } catch (e) {
+        console.log('   ⚠️  Column add error:', e.message);
+      }
+      
+      try {
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_verification_token ON users(email_verification_token)`);
+        console.log('   ✅ Index created');
+      } catch (e) {
+        console.log('   ⚠️  Index error:', e.message);
+      }
+      
+      console.log('✅ email_verification_token migration completed');
+    } else {
+      console.log('✅ email_verification_token column already exists');
+    }
+    
     if (transportOrdersMigrated && employeeAssignmentMigrated && contractorIdMigrated && loadingHelpMigrated && emailTemplatesMigrated && discountSkontoMigrated && contractorInvoiceTrackingMigrated) {
-      console.log('✓ All migrations already applied, skipping...');
+      console.log('✓ All other migrations already applied, skipping...');
       return;
     }
     
@@ -220,22 +252,7 @@ async function autoMigrate() {
       }
     }
     
-    // Check if email_verification_token column exists
-    const tokenColumnCheck = await pool.query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'users' 
-      AND column_name = 'email_verification_token'
-    `);
-    
-    if (tokenColumnCheck.rows.length === 0) {
-      console.log('🔧 Adding email_verification_token column...');
-      await pool.query(`
-        ALTER TABLE users ADD COLUMN email_verification_token VARCHAR(255);
-        CREATE INDEX IF NOT EXISTS idx_users_verification_token ON users(email_verification_token);
-      `);
-      console.log('✅ email_verification_token column added');
-    }
+    // Duplicate check removed - already done above before early return
     
     console.log('✅ Migration completed successfully!');
     console.log('📦 New features are now available:');
