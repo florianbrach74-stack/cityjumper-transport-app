@@ -12,11 +12,11 @@ const isBusinessHours = () => {
 // Conservative settings for Railway PostgreSQL (22 connection limit on shared plan)
 const getPoolConfig = () => {
   return {
-    max: 5, // Conservative - Railway shared plan has 22 connection limit
-    min: 1, // Minimal idle connections
-    idleTimeoutMillis: 10000, // 10 seconds - release quickly
-    connectionTimeoutMillis: 15000, // 15 seconds to connect
-    acquireTimeoutMillis: 30000, // 30 seconds to acquire connection
+    max: 3, // Very conservative - Railway shared plan has 22 connection limit
+    min: 0, // No minimum idle connections
+    idleTimeoutMillis: 5000, // 5 seconds - release very quickly
+    connectionTimeoutMillis: 30000, // 30 seconds to connect (Railway can be slow)
+    acquireTimeoutMillis: 60000, // 60 seconds to acquire connection
     allowExitOnIdle: true, // Allow pool to shrink when idle
     keepAlive: true,
     keepAliveInitialDelayMillis: 10000,
@@ -62,14 +62,14 @@ setTimeout(async () => {
   try {
     const result = await Promise.race([
       pool.query('SELECT NOW()'),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Connection test timeout')), 5000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Connection test timeout')), 15000))
     ]);
     console.log('✅ Database connection test successful');
   } catch (err) {
     console.error('⚠️  Database connection test failed:', err.message);
     console.log('ℹ️  Server will continue - connections will retry automatically');
   }
-}, 2000); // Wait 2 seconds before testing
+}, 5000); // Wait 5 seconds before testing to let Railway DB fully start
 
 // Connection warming - DISABLED to reduce load
 // Railway PostgreSQL handles connection pooling internally
