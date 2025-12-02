@@ -5,7 +5,7 @@ const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const pool = require('../config/database');
 const { calculateDistanceAndDuration } = require('../services/distanceService');
 
-// Calculate route (distance and duration) between two addresses
+// Calculate route (distance and duration) between addresses (supports multistop)
 router.post('/calculate-route', async (req, res) => {
   try {
     const { 
@@ -14,7 +14,9 @@ router.post('/calculate-route', async (req, res) => {
       pickupCity,
       deliveryAddress,
       deliveryPostalCode,
-      deliveryCity
+      deliveryCity,
+      pickupStops = [],  // Optional: additional pickup stops
+      deliveryStops = [] // Optional: additional delivery stops
     } = req.body;
 
     if (!pickupAddress || !pickupPostalCode || !pickupCity || 
@@ -24,7 +26,33 @@ router.post('/calculate-route', async (req, res) => {
       });
     }
 
-    const routeData = await calculateDistanceAndDuration(
+    // For simple routes (no multistop), use existing service
+    if (pickupStops.length === 0 && deliveryStops.length === 0) {
+      const routeData = await calculateDistanceAndDuration(
+        pickupAddress,
+        pickupPostalCode,
+        pickupCity,
+        deliveryAddress,
+        deliveryPostalCode,
+        deliveryCity
+      );
+
+      return res.json({
+        success: true,
+        distance_km: routeData.distance_km,
+        duration_minutes: routeData.duration_minutes,
+        route_geometry: routeData.route_geometry
+      });
+    }
+
+    // For multistop routes, calculate total distance
+    console.log(`📍 Calculating multistop route: ${pickupStops.length} pickup stops, ${deliveryStops.length} delivery stops`);
+    
+    let totalDistance = 0;
+    let totalDuration = 0;
+
+    // Calculate main route (pickup to delivery)
+    const mainRoute = await calculateDistanceAndDuration(
       pickupAddress,
       pickupPostalCode,
       pickupCity,
@@ -32,12 +60,28 @@ router.post('/calculate-route', async (req, res) => {
       deliveryPostalCode,
       deliveryCity
     );
+    
+    totalDistance += mainRoute.distance_km || 0;
+    totalDuration += mainRoute.duration_minutes || 0;
+
+    // Add pickup stops (estimate: +5km and +10min per stop)
+    totalDistance += pickupStops.length * 5;
+    totalDuration += pickupStops.length * 10;
+
+    // Add delivery stops (estimate: +5km and +10min per stop)
+    totalDistance += deliveryStops.length * 5;
+    totalDuration += deliveryStops.length * 10;
+
+    console.log(`✅ Multistop route calculated: ${totalDistance}km, ${totalDuration}min`);
 
     res.json({
       success: true,
-      distance_km: routeData.distance_km,
-      duration_minutes: routeData.duration_minutes,
-      route_geometry: routeData.route_geometry
+      distance_km: totalDistance,
+      duration_minutes: totalDuration,
+      route_geometry: mainRoute.route_geometry,
+      is_multistop: true,
+      pickup_stops_count: pickupStops.length,
+      delivery_stops_count: deliveryStops.length
     });
   } catch (error) {
     console.error('Route calculation error:', error);
