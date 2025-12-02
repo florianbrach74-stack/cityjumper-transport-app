@@ -16,8 +16,8 @@ const getPoolConfig = () => {
     max: isBusiness ? 30 : 20, // More connections during business hours
     min: isBusiness ? 10 : 5, // Keep more connections warm
     idleTimeoutMillis: isBusiness ? 60000 : 30000, // Keep alive longer (60s vs 30s)
-    connectionTimeoutMillis: isBusiness ? 15000 : 10000, // More time to connect
-    acquireTimeoutMillis: isBusiness ? 30000 : 20000, // More time to acquire
+    connectionTimeoutMillis: isBusiness ? 30000 : 20000, // More time to connect (increased)
+    acquireTimeoutMillis: isBusiness ? 60000 : 40000, // More time to acquire (increased)
     allowExitOnIdle: false,
     keepAlive: true,
     keepAliveInitialDelayMillis: isBusiness ? 5000 : 10000, // Faster keepalive
