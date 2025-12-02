@@ -5,6 +5,60 @@ const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const pool = require('../config/database');
 const { calculateDistanceAndDuration } = require('../services/distanceService');
 
+// Geocode a single address (to avoid CORS issues in browser)
+router.post('/geocode', async (req, res) => {
+  try {
+    const { address, postalCode, city, country = 'Deutschland' } = req.body;
+
+    if (!address || !postalCode || !city) {
+      return res.status(400).json({ 
+        error: 'Adresse, PLZ und Stadt sind erforderlich' 
+      });
+    }
+
+    // Use the geocoding from distanceService
+    const axios = require('axios');
+    const fullAddress = `${address}, ${postalCode} ${city}, ${country}`;
+    
+    console.log(`🔍 Geocoding: ${fullAddress}`);
+    
+    const response = await axios.get('https://nominatim.openstreetmap.org/search', {
+      params: {
+        q: fullAddress,
+        format: 'json',
+        limit: 1,
+        countrycodes: 'de',
+        addressdetails: 1
+      },
+      headers: {
+        'User-Agent': 'Courierly-Transport-App/1.0'
+      },
+      timeout: 10000
+    });
+
+    if (response.data && response.data.length > 0) {
+      const result = response.data[0];
+      console.log(`✅ Geocoded: ${result.display_name}`);
+      
+      res.json({
+        success: true,
+        lat: parseFloat(result.lat),
+        lon: parseFloat(result.lon),
+        display_name: result.display_name
+      });
+    } else {
+      res.status(404).json({ 
+        error: 'Adresse konnte nicht gefunden werden' 
+      });
+    }
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    res.status(500).json({ 
+      error: error.message || 'Fehler beim Geocoding' 
+    });
+  }
+});
+
 // Calculate route (distance and duration) between addresses (supports multistop)
 router.post('/calculate-route', async (req, res) => {
   try {
