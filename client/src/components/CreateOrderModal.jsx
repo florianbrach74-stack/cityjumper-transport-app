@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ordersAPI } from '../services/api';
+import api, { ordersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { X, MapPin, Calendar, Truck, Package, AlertCircle, Star } from 'lucide-react';
 import AddressSearch from './AddressSearch';
