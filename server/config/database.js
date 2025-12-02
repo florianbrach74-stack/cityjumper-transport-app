@@ -9,18 +9,17 @@ const isBusinessHours = () => {
   return hour >= 6 && hour < 20;
 };
 
-// Optimized settings for Railway PostgreSQL
+// Conservative settings for Railway PostgreSQL (22 connection limit on shared plan)
 const getPoolConfig = () => {
-  const isBusiness = isBusinessHours();
   return {
-    max: 10, // Increased from 5 to handle more concurrent requests
-    min: 2, // Keep minimum connections ready
-    idleTimeoutMillis: 30000, // 30 seconds idle timeout
-    connectionTimeoutMillis: 10000, // 10 seconds to connect
-    acquireTimeoutMillis: 20000, // 20 seconds to acquire connection
-    allowExitOnIdle: false,
+    max: 5, // Conservative - Railway shared plan has 22 connection limit
+    min: 1, // Minimal idle connections
+    idleTimeoutMillis: 10000, // 10 seconds - release quickly
+    connectionTimeoutMillis: 15000, // 15 seconds to connect
+    acquireTimeoutMillis: 30000, // 30 seconds to acquire connection
+    allowExitOnIdle: true, // Allow pool to shrink when idle
     keepAlive: true,
-    keepAliveInitialDelayMillis: 10000, // 10 seconds keepalive
+    keepAliveInitialDelayMillis: 10000,
   };
 };
 
@@ -58,14 +57,19 @@ pool.on('remove', () => {
   console.log('🔄 Database connection removed from pool');
 });
 
-// Test connection on startup
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('❌ Database connection test failed:', err.message);
-  } else {
+// Test connection on startup - non-blocking with timeout
+setTimeout(async () => {
+  try {
+    const result = await Promise.race([
+      pool.query('SELECT NOW()'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Connection test timeout')), 5000))
+    ]);
     console.log('✅ Database connection test successful');
+  } catch (err) {
+    console.error('⚠️  Database connection test failed:', err.message);
+    console.log('ℹ️  Server will continue - connections will retry automatically');
   }
-});
+}, 2000); // Wait 2 seconds before testing
 
 // Connection warming - DISABLED to reduce load
 // Railway PostgreSQL handles connection pooling internally
