@@ -13,8 +13,8 @@ const isBusinessHours = () => {
 const getPoolConfig = () => {
   const isBusiness = isBusinessHours();
   return {
-    max: isBusiness ? 30 : 20, // More connections during business hours
-    min: isBusiness ? 10 : 5, // Keep more connections warm
+    max: isBusiness ? 10 : 5, // Reduced max connections to avoid overwhelming DB
+    min: isBusiness ? 2 : 1, // Reduced min connections
     idleTimeoutMillis: isBusiness ? 60000 : 30000, // Keep alive longer (60s vs 30s)
     connectionTimeoutMillis: isBusiness ? 30000 : 20000, // More time to connect (increased)
     acquireTimeoutMillis: isBusiness ? 60000 : 40000, // More time to acquire (increased)
