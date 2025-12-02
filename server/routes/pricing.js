@@ -5,98 +5,60 @@ const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const pool = require('../config/database');
 const { calculateDistanceAndDuration } = require('../services/distanceService');
 
-// Geocode a single address (to avoid CORS issues in browser)
+// Geocode a single address using Google Maps API (more reliable than OpenStreetMap)
 router.post('/geocode', async (req, res) => {
   try {
-    const { address, postalCode, city, country = 'Deutschland' } = req.body;
+    const { fullAddress } = req.body;
 
-    if (!city) {
+    if (!fullAddress) {
       return res.status(400).json({ 
-        error: 'Stadt ist erforderlich' 
+        error: 'Adresse ist erforderlich' 
       });
     }
 
     const axios = require('axios');
+    const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
     
-    console.log(`🔍 Geocoding: ${address}, ${postalCode} ${city}`);
+    if (!GOOGLE_MAPS_API_KEY) {
+      console.error('❌ GOOGLE_MAPS_API_KEY not configured');
+      return res.status(500).json({ 
+        error: 'Geocoding service not configured' 
+      });
+    }
     
-    // Use structured query for more accurate results
-    const params = {
-      format: 'json',
-      limit: 5,
-      countrycodes: 'de',
-      addressdetails: 1
-    };
+    console.log(`🔍 Geocoding with Google Maps: ${fullAddress}`);
     
-    // Add available address components
-    if (address) params.street = address;
-    if (city) params.city = city;
-    if (postalCode) params.postalcode = postalCode;
-    
-    const response = await axios.get('https://nominatim.openstreetmap.org/search', {
-      params,
-      headers: {
-        'User-Agent': 'Courierly-Transport-App/1.0'
+    const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+      params: {
+        address: fullAddress,
+        key: GOOGLE_MAPS_API_KEY,
+        region: 'de',
+        language: 'de'
       },
       timeout: 10000
     });
 
-    if (response.data && response.data.length > 0) {
-      // Find best match - prefer results with matching postal code
-      let bestMatch = response.data[0];
+    if (response.data.status === 'OK' && response.data.results.length > 0) {
+      const result = response.data.results[0];
+      const location = result.geometry.location;
       
-      if (postalCode) {
-        const exactMatch = response.data.find(r => 
-          r.address?.postcode === postalCode
-        );
-        if (exactMatch) bestMatch = exactMatch;
-      }
-      
-      console.log(`✅ Geocoded: ${bestMatch.display_name}`);
+      console.log(`✅ Geocoded: ${result.formatted_address}`);
       
       return res.json({
         success: true,
-        lat: parseFloat(bestMatch.lat),
-        lon: parseFloat(bestMatch.lon),
-        display_name: bestMatch.display_name
+        lat: location.lat,
+        lon: location.lng,
+        display_name: result.formatted_address
       });
     }
     
-    // If structured query failed, try simple query as fallback
-    const fallbackQuery = `${address}, ${postalCode} ${city}, ${country}`;
-    console.log(`🔄 Trying fallback: ${fallbackQuery}`);
-    
-    const fallbackResponse = await axios.get('https://nominatim.openstreetmap.org/search', {
-      params: {
-        q: fallbackQuery,
-        format: 'json',
-        limit: 1,
-        countrycodes: 'de',
-        addressdetails: 1
-      },
-      headers: {
-        'User-Agent': 'Courierly-Transport-App/1.0'
-      },
-      timeout: 10000
-    });
-    
-    if (fallbackResponse.data && fallbackResponse.data.length > 0) {
-      const result = fallbackResponse.data[0];
-      console.log(`✅ Geocoded (fallback): ${result.display_name}`);
-      
-      return res.json({
-        success: true,
-        lat: parseFloat(result.lat),
-        lon: parseFloat(result.lon),
-        display_name: result.display_name
-      });
-    }
-    
+    console.warn(`⚠️ Google Maps API returned: ${response.data.status}`);
     res.status(404).json({ 
-      error: 'Adresse konnte nicht gefunden werden' 
+      error: 'Adresse konnte nicht gefunden werden',
+      details: response.data.status
     });
   } catch (error) {
-    console.error('Geocoding error:', error);
+    console.error('Geocoding error:', error.message);
     res.status(500).json({ 
       error: error.message || 'Fehler beim Geocoding' 
     });

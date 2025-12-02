@@ -222,39 +222,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
   // Geocode helper function - uses backend API to avoid CORS
   const geocodeAddress = async (fullAddress) => {
     try {
-      // Parse: "Address, PLZ City, Country"
-      const parts = fullAddress.split(',').map(s => s.trim());
-      let address, postalCode, city, country = 'Deutschland';
-      
-      if (parts.length >= 2) {
-        address = parts[0];
-        const plzMatch = parts[1].match(/(\d{5})\s+(.+)/);
-        if (plzMatch) {
-          postalCode = plzMatch[1];
-          city = plzMatch[2];
-        } else {
-          city = parts[1];
-          postalCode = '';
-        }
-        if (parts.length >= 3) country = parts[2];
-      } else {
-        address = fullAddress;
-        const plzMatch = fullAddress.match(/(\d{5})\s+([^,]+)/);
-        if (plzMatch) {
-          postalCode = plzMatch[1];
-          city = plzMatch[2];
-        } else {
-          postalCode = '';
-          city = fullAddress;
-        }
-      }
-      
-      const response = await api.post('/pricing/geocode', { 
-        address, 
-        postalCode, 
-        city, 
-        country 
-      });
+      const response = await api.post('/pricing/geocode', { fullAddress });
       
       if (response.data?.success && response.data.lat && response.data.lon) {
         return {
