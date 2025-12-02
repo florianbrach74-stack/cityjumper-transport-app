@@ -1,0 +1,12 @@
+# robots.txt für Courierly
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://courierly.de/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1
