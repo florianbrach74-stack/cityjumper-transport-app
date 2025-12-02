@@ -10,7 +10,8 @@ const geocodeCache = new Map();
 const CACHE_MAX_SIZE = 1000; // Store max 1000 addresses
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-// Geocode a single address using Google Maps API (more reliable than OpenStreetMap)
+// Geocode using LocationIQ (OpenStreetMap-based, free tier with hard limits)
+// FREE: 10,000 requests/day - NO credit card needed, CANNOT become expensive
 router.post('/geocode', async (req, res) => {
   try {
     const { fullAddress } = req.body;
@@ -32,36 +33,37 @@ router.post('/geocode', async (req, res) => {
     }
 
     const axios = require('axios');
-    const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+    const LOCATIONIQ_API_KEY = process.env.LOCATIONIQ_API_KEY;
     
-    if (!GOOGLE_MAPS_API_KEY) {
-      console.error('❌ GOOGLE_MAPS_API_KEY not configured');
+    if (!LOCATIONIQ_API_KEY) {
+      console.error('❌ LOCATIONIQ_API_KEY not configured');
       return res.status(500).json({ 
         error: 'Geocoding service not configured' 
       });
     }
     
-    console.log(`🔍 Geocoding with Google Maps: ${fullAddress}`);
+    console.log(`🔍 Geocoding with LocationIQ: ${fullAddress}`);
     
-    const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+    const response = await axios.get('https://us1.locationiq.com/v1/search', {
       params: {
-        address: fullAddress,
-        key: GOOGLE_MAPS_API_KEY,
-        region: 'de',
-        language: 'de'
+        q: fullAddress,
+        key: LOCATIONIQ_API_KEY,
+        format: 'json',
+        countrycodes: 'de',
+        limit: 1,
+        addressdetails: 1
       },
       timeout: 10000
     });
 
-    if (response.data.status === 'OK' && response.data.results.length > 0) {
-      const result = response.data.results[0];
-      const location = result.geometry.location;
+    if (response.data && response.data.length > 0) {
+      const result = response.data[0];
       
       const responseData = {
         success: true,
-        lat: location.lat,
-        lon: location.lng,
-        display_name: result.formatted_address
+        lat: parseFloat(result.lat),
+        lon: parseFloat(result.lon),
+        display_name: result.display_name
       };
       
       // Store in cache (limit size)
@@ -74,14 +76,12 @@ router.post('/geocode', async (req, res) => {
         timestamp: Date.now()
       });
       
-      console.log(`✅ Geocoded: ${result.formatted_address} (cached)`);
+      console.log(`✅ Geocoded: ${result.display_name} (cached)`);
       return res.json(responseData);
     }
     
-    console.warn(`⚠️ Google Maps API returned: ${response.data.status}`);
     res.status(404).json({ 
-      error: 'Adresse konnte nicht gefunden werden',
-      details: response.data.status
+      error: 'Adresse konnte nicht gefunden werden'
     });
   } catch (error) {
     console.error('Geocoding error:', error.message);
