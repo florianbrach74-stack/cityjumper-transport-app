@@ -9,11 +9,11 @@ const isBusinessHours = () => {
   return hour >= 6 && hour < 20;
 };
 
-// Balanced settings for Railway PostgreSQL (22 connection limit on shared plan)
-// Note: Many services use pool.connect() which holds connections, so we need more than 3
+// Optimized settings for Railway PostgreSQL (22 connection limit on shared plan)
+// Note: Many services use pool.connect() which holds connections, so we need sufficient pool size
 const getPoolConfig = () => {
   return {
-    max: 10, // Balanced - enough for services that use pool.connect()
+    max: 15, // Sufficient for all services that use pool.connect()
     min: 2, // Keep 2 connections ready
     idleTimeoutMillis: 30000, // 30 seconds
     connectionTimeoutMillis: 30000, // 30 seconds to connect (Railway can be slow)
@@ -85,12 +85,12 @@ const startConnectionWarming = () => {
   console.log('ℹ️  Connection warming disabled (Railway handles pooling)');
 };
 
-// Health check - reduced frequency
+// Health check - minimal frequency to reduce load
 let healthCheckInterval = null;
 const startHealthCheck = () => {
   if (healthCheckInterval) return;
   
-  // Wait 30 seconds before starting to let DB initialize
+  // Wait 60 seconds before starting to let DB initialize
   setTimeout(() => {
     healthCheckInterval = setInterval(async () => {
       try {
@@ -104,8 +104,8 @@ const startHealthCheck = () => {
       } catch (error) {
         console.error('❌ Health check failed:', error.message);
       }
-    }, 300000); // Every 5 minutes only
-  }, 30000);
+    }, 600000); // Every 10 minutes only
+  }, 60000);
 };
 
 // Start monitoring (delayed to allow DB to initialize)

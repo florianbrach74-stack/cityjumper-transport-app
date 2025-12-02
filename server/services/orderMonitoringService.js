@@ -318,22 +318,22 @@ class OrderMonitoringService {
   }
   
   /**
-   * Startet den Cron-Job (alle 5 Minuten)
+   * Startet den Cron-Job (alle 10 Minuten)
    */
   startMonitoring() {
-    console.log('🚀 [Order Monitoring] Service started - checking every 5 minutes');
+    console.log('🚀 [Order Monitoring] Service started - checking every 10 minutes');
     
-    // NICHT sofort ausführen - warte 1 Minute nach Server-Start
+    // NICHT sofort ausführen - warte 2 Minuten nach Server-Start
     setTimeout(() => {
       this.checkUnassignedOrders();
       
-      // Dann alle 5 Minuten
+      // Dann alle 10 Minuten
       setInterval(() => {
         this.checkUnassignedOrders();
-      }, 5 * 60 * 1000); // 5 Minuten
-    }, 60 * 1000); // 1 Minute Verzögerung
+      }, 10 * 60 * 1000); // 10 Minuten
+    }, 120 * 1000); // 2 Minuten Verzögerung
     
-    console.log('⏰ First check will run in 1 minute');
+    console.log('⏰ First check will run in 2 minutes');
   }
 }
 
