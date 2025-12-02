@@ -219,53 +219,27 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     }
   };
 
-  // Geocode helper function - using backend API
-  const geocodeAddress = async (fullAddress) => {
+  // Geocode helper function
+  const geocodeAddress = async (address) => {
     try {
-      // Parse the full address string
-      // Format: "Address, PLZ City, Country"
-      const parts = fullAddress.split(',').map(s => s.trim());
-      
-      let address, postalCode, city, country = 'Deutschland';
-      
-      if (parts.length >= 2) {
-        address = parts[0];
-        const plzCityMatch = parts[1].match(/(\d{5})\s+(.+)/);
-        if (plzCityMatch) {
-          postalCode = plzCityMatch[1];
-          city = plzCityMatch[2];
-        } else {
-          city = parts[1];
-          postalCode = '';
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=de`,
+        {
+          headers: {
+            'User-Agent': 'CityJumper-Transport-App/1.0',
+            'Accept': 'application/json'
+          }
         }
-        if (parts.length >= 3) {
-          country = parts[2];
-        }
-      } else {
-        // Fallback: try to extract from single string
-        address = fullAddress;
-        const plzMatch = fullAddress.match(/(\d{5})\s+([^,]+)/);
-        if (plzMatch) {
-          postalCode = plzMatch[1];
-          city = plzMatch[2];
-        } else {
-          postalCode = '';
-          city = fullAddress;
-        }
-      }
+      );
       
-      const response = await api.post('/pricing/geocode', { 
-        address, 
-        postalCode, 
-        city, 
-        country 
-      });
-      
-      if (response.data && response.data.success && response.data.lat && response.data.lon) {
-        return {
-          lat: response.data.lat,
-          lon: response.data.lon
-        };
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          return {
+            lat: parseFloat(data[0].lat),
+            lon: parseFloat(data[0].lon)
+          };
+        }
       }
     } catch (error) {
       console.error('Geocoding error:', error);
