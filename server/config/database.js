@@ -9,12 +9,13 @@ const isBusinessHours = () => {
   return hour >= 6 && hour < 20;
 };
 
-// Conservative settings for Railway PostgreSQL (22 connection limit on shared plan)
+// Balanced settings for Railway PostgreSQL (22 connection limit on shared plan)
+// Note: Many services use pool.connect() which holds connections, so we need more than 3
 const getPoolConfig = () => {
   return {
-    max: 3, // Very conservative - Railway shared plan has 22 connection limit
-    min: 0, // No minimum idle connections
-    idleTimeoutMillis: 5000, // 5 seconds - release very quickly
+    max: 10, // Balanced - enough for services that use pool.connect()
+    min: 2, // Keep 2 connections ready
+    idleTimeoutMillis: 30000, // 30 seconds
     connectionTimeoutMillis: 30000, // 30 seconds to connect (Railway can be slow)
     acquireTimeoutMillis: 60000, // 60 seconds to acquire connection
     allowExitOnIdle: true, // Allow pool to shrink when idle
