@@ -223,6 +223,13 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
       }
     } catch (err) {
       console.error('Route calculation error:', err);
+      console.error('Error details:', {
+        message: err.message,
+        pickup: pickup,
+        delivery: delivery,
+        pickupStops: pickupStops,
+        deliveryStops: deliveryStops
+      });
       
       // Provide user-friendly error message
       let errorMessage = 'Fehler beim Berechnen der Route';
@@ -232,6 +239,8 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
         errorMessage = 'Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.';
       } else if (err.message.includes('geocod')) {
         errorMessage = 'Adresse konnte nicht gefunden werden. Bitte überprüfen Sie die Eingabe.';
+      } else if (err.message.includes('Keine Route gefunden')) {
+        errorMessage = 'Route konnte nicht berechnet werden. Auftrag wird trotzdem erstellt.';
       }
       
       setError(errorMessage);
