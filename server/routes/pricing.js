@@ -3,6 +3,49 @@ const router = express.Router();
 const { calculatePriceBreakdown, validatePrice } = require('../utils/priceCalculator');
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const pool = require('../config/database');
+const { calculateDistanceAndDuration } = require('../services/distanceService');
+
+// Calculate route (distance and duration) between two addresses
+router.post('/calculate-route', async (req, res) => {
+  try {
+    const { 
+      pickupAddress, 
+      pickupPostalCode, 
+      pickupCity,
+      deliveryAddress,
+      deliveryPostalCode,
+      deliveryCity
+    } = req.body;
+
+    if (!pickupAddress || !pickupPostalCode || !pickupCity || 
+        !deliveryAddress || !deliveryPostalCode || !deliveryCity) {
+      return res.status(400).json({ 
+        error: 'Alle Adressdaten sind erforderlich' 
+      });
+    }
+
+    const routeData = await calculateDistanceAndDuration(
+      pickupAddress,
+      pickupPostalCode,
+      pickupCity,
+      deliveryAddress,
+      deliveryPostalCode,
+      deliveryCity
+    );
+
+    res.json({
+      success: true,
+      distance_km: routeData.distance_km,
+      duration_minutes: routeData.duration_minutes,
+      route_geometry: routeData.route_geometry
+    });
+  } catch (error) {
+    console.error('Route calculation error:', error);
+    res.status(400).json({ 
+      error: error.message || 'Fehler bei der Routenberechnung' 
+    });
+  }
+});
 
 // Calculate price based on route
 router.post('/calculate', async (req, res) => {
