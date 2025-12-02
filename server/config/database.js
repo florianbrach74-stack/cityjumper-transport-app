@@ -9,18 +9,17 @@ const isBusinessHours = () => {
   return hour >= 6 && hour < 20;
 };
 
-// ULTRA conservative settings for Railway PostgreSQL Shared Plan (22 connection limit)
-// Railway shared plan is extremely limited - we must be very careful
+// Reasonable settings for Railway PostgreSQL (22 connection limit on shared plan)
 const getPoolConfig = () => {
   return {
-    max: 5, // Absolute minimum - Railway shared plan is very limited
-    min: 0, // No idle connections - create only when needed
-    idleTimeoutMillis: 1000, // 1 second - release immediately
-    connectionTimeoutMillis: 60000, // 60 seconds - Railway can be very slow
-    acquireTimeoutMillis: 60000, // 60 seconds to acquire
-    allowExitOnIdle: true, // Critical - allow pool to shrink
-    keepAlive: false, // Disable keep-alive to reduce load
-    statement_timeout: 30000, // 30 second query timeout
+    max: 10, // Reasonable for Railway shared plan
+    min: 2, // Keep 2 ready
+    idleTimeoutMillis: 10000, // 10 seconds
+    connectionTimeoutMillis: 30000, // 30 seconds
+    acquireTimeoutMillis: 30000, // 30 seconds
+    allowExitOnIdle: true,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000,
   };
 };
 

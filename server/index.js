@@ -125,33 +125,36 @@ app.listen(PORT, async () => {
     console.error('❌ Failed to start Order Monitoring Service:', error);
   }
   
-  // Start invoice reminder service (Cron-Job)
-  try {
-    const invoiceReminderService = require('./services/invoiceReminderService');
-    invoiceReminderService.startReminderService();
-    console.log('✅ Invoice Reminder Service started');
-  } catch (error) {
-    console.error('❌ Failed to start Invoice Reminder Service:', error);
-  }
+  // DISABLED: Invoice reminder service (reduces DB load)
+  // try {
+  //   const invoiceReminderService = require('./services/invoiceReminderService');
+  //   invoiceReminderService.startReminderService();
+  //   console.log('✅ Invoice Reminder Service started');
+  // } catch (error) {
+  //   console.error('❌ Failed to start Invoice Reminder Service:', error);
+  // }
+  console.log('⏸️  Invoice Reminder Service DISABLED to reduce DB load');
   
-  // Start order cleanup service (Cron-Job)
-  try {
-    const orderCleanupService = require('./services/orderCleanupService');
-    orderCleanupService.startOrderCleanupService();
-    console.log('✅ Order Cleanup Service started');
-  } catch (error) {
-    console.error('❌ Failed to start Order Cleanup Service:', error);
-    console.error('   This is not critical, server will continue...');
-  }
+  // DISABLED: Order cleanup service (reduces DB load)
+  // try {
+  //   const orderCleanupService = require('./services/orderCleanupService');
+  //   orderCleanupService.startOrderCleanupService();
+  //   console.log('✅ Order Cleanup Service started');
+  // } catch (error) {
+  //   console.error('❌ Failed to start Order Cleanup Service:', error);
+  //   console.error('   This is not critical, server will continue...');
+  // }
+  console.log('⏸️  Order Cleanup Service DISABLED to reduce DB load');
   
-  // Start unverified accounts cleanup service (Cron-Job)
-  try {
-    const cleanupService = require('./services/cleanupService');
-    cleanupService.startCleanupService();
-    console.log('✅ Unverified Accounts Cleanup Service started');
-  } catch (error) {
-    console.error('❌ Failed to start Cleanup Service:', error);
-  }
+  // DISABLED: Unverified accounts cleanup service (reduces DB load)
+  // try {
+  //   const cleanupService = require('./services/cleanupService');
+  //   cleanupService.startCleanupService();
+  //   console.log('✅ Unverified Accounts Cleanup Service started');
+  // } catch (error) {
+  //   console.error('❌ Failed to start Cleanup Service:', error);
+  // }
+  console.log('⏸️  Cleanup Service DISABLED to reduce DB load');
   
   // Start payment reminder service (Cron-Job)
   try {
