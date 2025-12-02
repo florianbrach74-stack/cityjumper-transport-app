@@ -119,55 +119,46 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
       setLoading(true);
       setError(null);
 
-      // Build waypoints: pickup -> pickupStops -> delivery -> deliveryStops
-      const waypoints = [];
+      console.log('🗺️ Calculating route via backend API...');
       
-      // Start with main pickup
-      waypoints.push(`${pickup.lon},${pickup.lat}`);
+      // Use backend API for route calculation
+      const response = await fetch('/api/pricing/calculate-route', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          pickupAddress: pickup.address,
+          pickupPostalCode: pickup.postalCode,
+          pickupCity: pickup.city,
+          deliveryAddress: delivery.address,
+          deliveryPostalCode: delivery.postalCode,
+          deliveryCity: delivery.city,
+          pickupStops: pickupStops.map(stop => ({
+            address: stop.address || '',
+            postal_code: stop.postal_code,
+            city: stop.city,
+            country: stop.country || 'Deutschland'
+          })),
+          deliveryStops: deliveryStops.map(stop => ({
+            address: stop.address || '',
+            postal_code: stop.postal_code,
+            city: stop.city,
+            country: stop.country || 'Deutschland'
+          }))
+        })
+      });
       
-      // Add additional pickup stops
-      for (const stop of pickupStops) {
-        if (stop.city && stop.postal_code) {
-          try {
-            const geocoded = await geocodeAddress(`${stop.postal_code} ${stop.city}, ${stop.country || 'Deutschland'}`);
-            if (geocoded) {
-              waypoints.push(`${geocoded.lon},${geocoded.lat}`);
-            }
-          } catch (e) {
-            console.warn('Could not geocode pickup stop:', stop);
-          }
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Route calculation failed');
       }
-      
-      // Add main delivery
-      waypoints.push(`${delivery.lon},${delivery.lat}`);
-      
-      // Add additional delivery stops
-      for (const stop of deliveryStops) {
-        if (stop.city && stop.postal_code) {
-          try {
-            const geocoded = await geocodeAddress(`${stop.postal_code} ${stop.city}, ${stop.country || 'Deutschland'}`);
-            if (geocoded) {
-              waypoints.push(`${geocoded.lon},${geocoded.lat}`);
-            }
-          } catch (e) {
-            console.warn('Could not geocode delivery stop:', stop);
-          }
-        }
-      }
-
-      // Use OSRM (OpenStreetMap Routing Machine) for real routing with all waypoints
-      const waypointsStr = waypoints.join(';');
-      const response = await fetch(
-        `https://router.project-osrm.org/route/v1/driving/${waypointsStr}?overview=full&geometries=geojson&steps=true`
-      );
       
       const data = await response.json();
       
-      if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-        const route = data.routes[0];
-        const distanceKm = Math.round(route.distance / 1000);
-        const durationMin = Math.round(route.duration / 60);
+      if (data.success && data.distance_km && data.duration_minutes) {
+        const distanceKm = Math.round(data.distance_km);
+        const durationMin = data.duration_minutes;
         
         // Add traffic estimation (10-20% extra time during business hours)
         const now = new Date();
@@ -186,10 +177,13 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
           distance: distanceKm,
           duration: durationText,
           durationMinutes: durationWithTraffic,
-          coordinates: route.geometry.coordinates.map(coord => [coord[1], coord[0]]), // Swap lon,lat to lat,lon
-          hasTraffic: isRushHour
+          coordinates: data.route_geometry || [], // Use geometry from backend if available
+          hasTraffic: isRushHour,
+          isMultistop: data.is_multistop || false,
+          segments: data.segments || []
         };
 
+        console.log('✅ Route calculated:', routeInfo);
         setRouteData(routeInfo);
         
         if (onRouteCalculated) {
