@@ -9,18 +9,18 @@ const isBusinessHours = () => {
   return hour >= 6 && hour < 20;
 };
 
-// Aggressive settings for business hours, relaxed for off-hours
+// Optimized settings for Railway PostgreSQL
 const getPoolConfig = () => {
   const isBusiness = isBusinessHours();
   return {
-    max: 5, // Very conservative max connections
-    min: 1, // Minimal connections
-    idleTimeoutMillis: isBusiness ? 60000 : 30000, // Keep alive longer (60s vs 30s)
-    connectionTimeoutMillis: isBusiness ? 30000 : 20000, // More time to connect (increased)
-    acquireTimeoutMillis: isBusiness ? 60000 : 40000, // More time to acquire (increased)
+    max: 10, // Increased from 5 to handle more concurrent requests
+    min: 2, // Keep minimum connections ready
+    idleTimeoutMillis: 30000, // 30 seconds idle timeout
+    connectionTimeoutMillis: 10000, // 10 seconds to connect
+    acquireTimeoutMillis: 20000, // 20 seconds to acquire connection
     allowExitOnIdle: false,
     keepAlive: true,
-    keepAliveInitialDelayMillis: isBusiness ? 5000 : 10000, // Faster keepalive
+    keepAliveInitialDelayMillis: 10000, // 10 seconds keepalive
   };
 };
 
@@ -67,50 +67,35 @@ pool.query('SELECT NOW()', (err, res) => {
   }
 });
 
-// Connection warming - keep connections alive during business hours
+// Connection warming - DISABLED to reduce load
+// Railway PostgreSQL handles connection pooling internally
 let warmupInterval = null;
 const startConnectionWarming = () => {
-  if (warmupInterval) return;
-  
-  // Wait 10 seconds before starting to let DB initialize
-  setTimeout(() => {
-    warmupInterval = setInterval(async () => {
-      if (isBusinessHours()) {
-        try {
-          // Simple query to keep connections warm with retry
-          await queryWithRetry('SELECT 1', [], 2);
-          console.log('🔥 Connection warmed (business hours)');
-        } catch (error) {
-          console.error('⚠️ Connection warming failed:', error.message);
-        }
-      }
-    }, 30000); // Every 30 seconds
-  }, 10000);
+  // Disabled - causing too many connections
+  console.log('ℹ️  Connection warming disabled (Railway handles pooling)');
 };
 
-// Health check - more aggressive during business hours
+// Health check - reduced frequency
 let healthCheckInterval = null;
 const startHealthCheck = () => {
   if (healthCheckInterval) return;
   
-  // Wait 15 seconds before starting to let DB initialize
+  // Wait 30 seconds before starting to let DB initialize
   setTimeout(() => {
     healthCheckInterval = setInterval(async () => {
       try {
         const start = Date.now();
-        await queryWithRetry('SELECT NOW()', [], 2);
+        await pool.query('SELECT 1'); // Direct query, no retry for health check
         const duration = Date.now() - start;
         
-        if (duration > 1000) {
+        if (duration > 2000) {
           console.warn(`⚠️ Slow DB response: ${duration}ms`);
-        } else {
-          console.log(`✅ Health check passed (${duration}ms)`);
         }
       } catch (error) {
         console.error('❌ Health check failed:', error.message);
       }
-    }, isBusinessHours() ? 60000 : 300000); // 1min vs 5min
-  }, 15000);
+    }, 300000); // Every 5 minutes only
+  }, 30000);
 };
 
 // Start monitoring (delayed to allow DB to initialize)
@@ -127,19 +112,17 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-// Retry wrapper for queries - more aggressive during business hours
-const queryWithRetry = async (text, params, maxRetries = null) => {
-  // More retries during business hours
-  const retries = maxRetries || (isBusinessHours() ? 5 : 3);
+// Retry wrapper for queries - reduced retries to prevent pool exhaustion
+const queryWithRetry = async (text, params, maxRetries = 2) => {
   let lastError;
   
-  for (let attempt = 1; attempt <= retries; attempt++) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const result = await pool.query(text, params);
       
       // Log successful retry
       if (attempt > 1) {
-        console.log(`✅ Query succeeded on attempt ${attempt}/${retries}`);
+        console.log(`✅ Query succeeded on attempt ${attempt}/${maxRetries}`);
       }
       
       return result;
@@ -150,25 +133,27 @@ const queryWithRetry = async (text, params, maxRetries = null) => {
       const isConnectionError = 
         error.message.includes('Connection terminated') ||
         error.message.includes('connection timeout') ||
+        error.message.includes('timeout exceeded') ||
         error.message.includes('ECONNREFUSED') ||
         error.code === 'ECONNRESET' ||
         error.code === 'ETIMEDOUT' ||
         error.code === 'ENOTFOUND' ||
         error.code === '57P01'; // admin_shutdown
       
-      if (isConnectionError && attempt < retries) {
-        // Faster retry during business hours
-        const delay = isBusinessHours() ? attempt * 500 : attempt * 1000;
-        console.log(`⚠️ Query failed (attempt ${attempt}/${retries}): ${error.message}`);
-        console.log(`   ⏳ Retrying in ${delay}ms... (Business hours: ${isBusinessHours()})`);
+      if (isConnectionError && attempt < maxRetries) {
+        const delay = attempt * 1000; // 1s, 2s
+        console.log(`⚠️ Query failed (attempt ${attempt}/${maxRetries}): ${error.message}`);
+        console.log(`   ⏳ Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
       
-      // Last attempt or non-connection error
-      if (attempt === retries) {
-        console.error(`❌ Query failed after ${retries} attempts:`, error.message);
+      // Last attempt or non-connection error - don't spam logs
+      if (attempt === maxRetries && isConnectionError) {
+        console.error(`❌ Query failed after ${maxRetries} attempts:`, error.message);
       }
+      
+      throw error;
     }
   }
   

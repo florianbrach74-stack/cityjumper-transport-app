@@ -42,7 +42,6 @@ class OrderMonitoringService {
    * Sendet Email: "Noch nicht vermittelt - Preis anpassen?"
    */
   async checkPickupWindowStart(now) {
-    let client;
     try {
       // Finde alle pending Aufträge, bei denen:
       // - pickup_date + pickup_time_from <= jetzt
@@ -65,8 +64,7 @@ class OrderMonitoringService {
         AND (o.pickup_date + o.pickup_time_from) <= $1
       `;
       
-      client = await pool.connect();
-      const result = await client.query(query, [now]);
+      const result = await pool.query(query, [now]);
       
       console.log(`📧 [Zeitfenster-Start] Found ${result.rows.length} orders to notify`);
       
@@ -81,8 +79,6 @@ class OrderMonitoringService {
       
     } catch (error) {
       console.error('❌ [Zeitfenster-Start] Error:', error.message);
-    } finally {
-      if (client) client.release();
     }
   }
   
@@ -167,7 +163,6 @@ class OrderMonitoringService {
    * Sendet Email und archiviert Auftrag
    */
   async checkExpiredOrders(now) {
-    let client;
     try {
       // Finde alle pending Aufträge, bei denen:
       // - pickup_date + pickup_time_to + 1h <= jetzt
@@ -197,8 +192,7 @@ class OrderMonitoringService {
         ) <= $1
       `;
       
-      client = await pool.connect();
-      const result = await client.query(query, [now]);
+      const result = await pool.query(query, [now]);
       
       console.log(`🗄️ [Ablauf] Found ${result.rows.length} expired orders to archive`);
       
@@ -213,8 +207,6 @@ class OrderMonitoringService {
       
     } catch (error) {
       console.error('❌ [Ablauf] Error:', error.message);
-    } finally {
-      if (client) client.release();
     }
   }
   
