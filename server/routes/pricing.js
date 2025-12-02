@@ -18,50 +18,80 @@ router.post('/geocode', async (req, res) => {
 
     const axios = require('axios');
     
-    // Try multiple address formats
-    const addressFormats = [
-      `${address}, ${postalCode} ${city}, ${country}`,
-      `${postalCode} ${city}, ${country}`,
-      `${address}, ${city}, ${country}`,
-      `${city}, ${country}`
-    ];
+    console.log(`🔍 Geocoding: ${address}, ${postalCode} ${city}`);
     
-    for (const fullAddress of addressFormats) {
-      try {
-        console.log(`🔍 Trying: ${fullAddress}`);
-        
-        const response = await axios.get('https://nominatim.openstreetmap.org/search', {
-          params: {
-            q: fullAddress,
-            format: 'json',
-            limit: 1,
-            countrycodes: 'de',
-            addressdetails: 1
-          },
-          headers: {
-            'User-Agent': 'Courierly-Transport-App/1.0'
-          },
-          timeout: 10000
-        });
+    // Use structured query for more accurate results
+    const params = {
+      format: 'json',
+      limit: 5,
+      countrycodes: 'de',
+      addressdetails: 1
+    };
+    
+    // Add available address components
+    if (address) params.street = address;
+    if (city) params.city = city;
+    if (postalCode) params.postalcode = postalCode;
+    
+    const response = await axios.get('https://nominatim.openstreetmap.org/search', {
+      params,
+      headers: {
+        'User-Agent': 'Courierly-Transport-App/1.0'
+      },
+      timeout: 10000
+    });
 
-        if (response.data && response.data.length > 0) {
-          const result = response.data[0];
-          console.log(`✅ Geocoded: ${result.display_name}`);
-          
-          return res.json({
-            success: true,
-            lat: parseFloat(result.lat),
-            lon: parseFloat(result.lon),
-            display_name: result.display_name
-          });
-        }
-      } catch (err) {
-        console.log(`❌ Failed: ${fullAddress}`);
-        continue;
+    if (response.data && response.data.length > 0) {
+      // Find best match - prefer results with matching postal code
+      let bestMatch = response.data[0];
+      
+      if (postalCode) {
+        const exactMatch = response.data.find(r => 
+          r.address?.postcode === postalCode
+        );
+        if (exactMatch) bestMatch = exactMatch;
       }
+      
+      console.log(`✅ Geocoded: ${bestMatch.display_name}`);
+      
+      return res.json({
+        success: true,
+        lat: parseFloat(bestMatch.lat),
+        lon: parseFloat(bestMatch.lon),
+        display_name: bestMatch.display_name
+      });
     }
     
-    // If all attempts failed
+    // If structured query failed, try simple query as fallback
+    const fallbackQuery = `${address}, ${postalCode} ${city}, ${country}`;
+    console.log(`🔄 Trying fallback: ${fallbackQuery}`);
+    
+    const fallbackResponse = await axios.get('https://nominatim.openstreetmap.org/search', {
+      params: {
+        q: fallbackQuery,
+        format: 'json',
+        limit: 1,
+        countrycodes: 'de',
+        addressdetails: 1
+      },
+      headers: {
+        'User-Agent': 'Courierly-Transport-App/1.0'
+      },
+      timeout: 10000
+    });
+    
+    if (fallbackResponse.data && fallbackResponse.data.length > 0) {
+      const result = fallbackResponse.data[0];
+      console.log(`✅ Geocoded (fallback): ${result.display_name}`);
+      
+      return res.json({
+        success: true,
+        lat: parseFloat(result.lat),
+        lon: parseFloat(result.lon),
+        display_name: result.display_name
+      });
+    }
+    
     res.status(404).json({ 
       error: 'Adresse konnte nicht gefunden werden' 
     });
