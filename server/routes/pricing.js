@@ -35,6 +35,9 @@ router.post('/geocode', async (req, res) => {
     
     console.log(`🔍 Geocoding with OpenStreetMap: ${fullAddress}`);
     
+    // Add small delay to respect OpenStreetMap rate limits (max 1 request/second)
+    await new Promise(resolve => setTimeout(resolve, 1100));
+    
     const response = await axios.get('https://nominatim.openstreetmap.org/search', {
       params: {
         q: fullAddress,
@@ -73,11 +76,17 @@ router.post('/geocode', async (req, res) => {
       return res.json(responseData);
     }
     
+    console.warn(`⚠️ OpenStreetMap returned no results for: ${fullAddress}`);
+    console.warn(`Response data:`, response.data);
     res.status(404).json({ 
       error: 'Adresse konnte nicht gefunden werden'
     });
   } catch (error) {
-    console.error('Geocoding error:', error.message);
+    console.error('❌ Geocoding error:', error.message);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
     res.status(500).json({ 
       error: error.message || 'Fehler beim Geocoding' 
     });
