@@ -5,6 +5,11 @@ const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const pool = require('../config/database');
 const { calculateDistanceAndDuration } = require('../services/distanceService');
 
+// In-memory cache for geocoding results (reduces API calls)
+const geocodeCache = new Map();
+const CACHE_MAX_SIZE = 1000; // Store max 1000 addresses
+const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 // Geocode a single address using Google Maps API (more reliable than OpenStreetMap)
 router.post('/geocode', async (req, res) => {
   try {
@@ -14,6 +19,16 @@ router.post('/geocode', async (req, res) => {
       return res.status(400).json({ 
         error: 'Adresse ist erforderlich' 
       });
+    }
+
+    // Normalize address for cache key
+    const cacheKey = fullAddress.toLowerCase().trim();
+    
+    // Check cache first
+    const cached = geocodeCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      console.log(`💾 Cache hit: ${fullAddress}`);
+      return res.json(cached.data);
     }
 
     const axios = require('axios');
@@ -42,14 +57,25 @@ router.post('/geocode', async (req, res) => {
       const result = response.data.results[0];
       const location = result.geometry.location;
       
-      console.log(`✅ Geocoded: ${result.formatted_address}`);
-      
-      return res.json({
+      const responseData = {
         success: true,
         lat: location.lat,
         lon: location.lng,
         display_name: result.formatted_address
+      };
+      
+      // Store in cache (limit size)
+      if (geocodeCache.size >= CACHE_MAX_SIZE) {
+        const firstKey = geocodeCache.keys().next().value;
+        geocodeCache.delete(firstKey);
+      }
+      geocodeCache.set(cacheKey, {
+        data: responseData,
+        timestamp: Date.now()
       });
+      
+      console.log(`✅ Geocoded: ${result.formatted_address} (cached)`);
+      return res.json(responseData);
     }
     
     console.warn(`⚠️ Google Maps API returned: ${response.data.status}`);
