@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ordersAPI } from '../services/api';
+import api, { ordersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { X, MapPin, Calendar, Truck, Package, AlertCircle, Star } from 'lucide-react';
 import AddressSearch from './AddressSearch';
@@ -219,27 +219,48 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
     }
   };
 
-  // Geocode helper function
-  const geocodeAddress = async (address) => {
+  // Geocode helper function - uses backend API to avoid CORS
+  const geocodeAddress = async (fullAddress) => {
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=de`,
-        {
-          headers: {
-            'User-Agent': 'CityJumper-Transport-App/1.0',
-            'Accept': 'application/json'
-          }
-        }
-      );
+      // Parse: "Address, PLZ City, Country"
+      const parts = fullAddress.split(',').map(s => s.trim());
+      let address, postalCode, city, country = 'Deutschland';
       
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.length > 0) {
-          return {
-            lat: parseFloat(data[0].lat),
-            lon: parseFloat(data[0].lon)
-          };
+      if (parts.length >= 2) {
+        address = parts[0];
+        const plzMatch = parts[1].match(/(\d{5})\s+(.+)/);
+        if (plzMatch) {
+          postalCode = plzMatch[1];
+          city = plzMatch[2];
+        } else {
+          city = parts[1];
+          postalCode = '';
         }
+        if (parts.length >= 3) country = parts[2];
+      } else {
+        address = fullAddress;
+        const plzMatch = fullAddress.match(/(\d{5})\s+([^,]+)/);
+        if (plzMatch) {
+          postalCode = plzMatch[1];
+          city = plzMatch[2];
+        } else {
+          postalCode = '';
+          city = fullAddress;
+        }
+      }
+      
+      const response = await api.post('/pricing/geocode', { 
+        address, 
+        postalCode, 
+        city, 
+        country 
+      });
+      
+      if (response.data?.success && response.data.lat && response.data.lon) {
+        return {
+          lat: response.data.lat,
+          lon: response.data.lon
+        };
       }
     } catch (error) {
       console.error('Geocoding error:', error);
