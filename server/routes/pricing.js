@@ -45,43 +45,66 @@ router.post('/calculate-route', async (req, res) => {
       });
     }
 
-    // For multistop routes, calculate total distance
+    // For multistop routes, calculate exact distance for each segment
     console.log(`📍 Calculating multistop route: ${pickupStops.length} pickup stops, ${deliveryStops.length} delivery stops`);
     
     let totalDistance = 0;
     let totalDuration = 0;
+    const segments = [];
 
-    // Calculate main route (pickup to delivery)
-    const mainRoute = await calculateDistanceAndDuration(
-      pickupAddress,
-      pickupPostalCode,
-      pickupCity,
-      deliveryAddress,
-      deliveryPostalCode,
-      deliveryCity
-    );
-    
-    totalDistance += mainRoute.distance_km || 0;
-    totalDuration += mainRoute.duration_minutes || 0;
+    // Build the complete route: Pickup → Pickup Stops → Delivery Stops → Delivery
+    const allStops = [
+      { address: pickupAddress, postal_code: pickupPostalCode, city: pickupCity, type: 'pickup' },
+      ...pickupStops.map(s => ({ ...s, type: 'pickup_stop' })),
+      ...deliveryStops.map(s => ({ ...s, type: 'delivery_stop' })),
+      { address: deliveryAddress, postal_code: deliveryPostalCode, city: deliveryCity, type: 'delivery' }
+    ];
 
-    // Add pickup stops (estimate: +5km and +10min per stop)
-    totalDistance += pickupStops.length * 5;
-    totalDuration += pickupStops.length * 10;
+    // Calculate distance for each segment (A→B, B→C, C→D, etc.)
+    for (let i = 0; i < allStops.length - 1; i++) {
+      const from = allStops[i];
+      const to = allStops[i + 1];
+      
+      try {
+        console.log(`  📏 Segment ${i + 1}: ${from.city} → ${to.city}`);
+        
+        const segmentRoute = await calculateDistanceAndDuration(
+          from.address,
+          from.postal_code,
+          from.city,
+          to.address,
+          to.postal_code,
+          to.city
+        );
+        
+        totalDistance += segmentRoute.distance_km || 0;
+        totalDuration += segmentRoute.duration_minutes || 0;
+        
+        segments.push({
+          from: `${from.city}`,
+          to: `${to.city}`,
+          distance_km: segmentRoute.distance_km,
+          duration_minutes: segmentRoute.duration_minutes
+        });
+        
+        console.log(`     ✅ ${segmentRoute.distance_km}km, ${segmentRoute.duration_minutes}min`);
+      } catch (error) {
+        console.error(`     ❌ Segment ${i + 1} failed:`, error.message);
+        throw new Error(`Fehler bei Segment ${i + 1}: ${from.city} → ${to.city}`);
+      }
+    }
 
-    // Add delivery stops (estimate: +5km and +10min per stop)
-    totalDistance += deliveryStops.length * 5;
-    totalDuration += deliveryStops.length * 10;
-
-    console.log(`✅ Multistop route calculated: ${totalDistance}km, ${totalDuration}min`);
+    console.log(`✅ Multistop route calculated: ${totalDistance}km, ${totalDuration}min (${segments.length} segments)`);
 
     res.json({
       success: true,
       distance_km: totalDistance,
       duration_minutes: totalDuration,
-      route_geometry: mainRoute.route_geometry,
       is_multistop: true,
       pickup_stops_count: pickupStops.length,
-      delivery_stops_count: deliveryStops.length
+      delivery_stops_count: deliveryStops.length,
+      segments: segments,
+      total_stops: allStops.length
     });
   } catch (error) {
     console.error('Route calculation error:', error);
