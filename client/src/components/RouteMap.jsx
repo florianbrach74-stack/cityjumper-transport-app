@@ -52,60 +52,83 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Geocode an address using backend API (avoids CORS issues)
-  const geocodeAddress = async (addressString) => {
-    try {
-      // Parse address string (format: "PLZ City, Country" or "Address, PLZ City")
-      const parts = addressString.split(',').map(s => s.trim());
-      let postalCode, city, address;
-      
-      // Try to extract postal code and city
-      const plzMatch = addressString.match(/(\d{5})\s+([^,]+)/);
-      if (plzMatch) {
-        postalCode = plzMatch[1];
-        city = plzMatch[2];
-        address = parts[0] || city;
-      } else {
-        // Fallback parsing
-        postalCode = addressString.match(/\d{5}/)?.[0] || '';
-        city = parts[parts.length - 1].replace(/Deutschland|Germany/i, '').trim();
-        address = parts[0] || city;
+  const geocodeAddress = async (address, retries = 3) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        // Add delay to respect Nominatim rate limits (1 request per second)
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=de`,
+          {
+            headers: {
+              'User-Agent': 'CityJumper-Transport-App/1.0',
+              'Accept': 'application/json'
+            }
+          }
+        );
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        if (data && data.length > 0) {
+          return {
+            lat: parseFloat(data[0].lat),
+            lon: parseFloat(data[0].lon)
+          };
+        }
+        
+        // No results found
+        console.warn(`Geocoding: No results for "${address}"`);
+        return null;
+        
+      } catch (error) {
+        console.error(`Geocoding attempt ${attempt}/${retries} failed:`, error.message);
+        
+        if (attempt === retries) {
+          // Last attempt failed - try fallback with just postal code
+          try {
+            const postalCodeMatch = address.match(/\b\d{5}\b/);
+            if (postalCodeMatch) {
+              const postalCode = postalCodeMatch[0];
+              console.log(`Fallback: Trying with postal code ${postalCode}`);
+              
+              await new Promise(resolve => setTimeout(resolve, 1200));
+              const fallbackResponse = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&postalcode=${postalCode}&country=Germany&limit=1`,
+                {
+                  headers: {
+                    'User-Agent': 'CityJumper-Transport-App/1.0',
+                    'Accept': 'application/json'
+                  }
+                }
+              );
+              
+              if (fallbackResponse.ok) {
+                const fallbackData = await fallbackResponse.json();
+                if (fallbackData && fallbackData.length > 0) {
+                  console.log(`✅ Fallback successful for ${postalCode}`);
+                  return {
+                    lat: parseFloat(fallbackData[0].lat),
+                    lon: parseFloat(fallbackData[0].lon)
+                  };
+                }
+              }
+            }
+          } catch (fallbackError) {
+            console.error('Fallback geocoding failed:', fallbackError.message);
+          }
+          
+          return null;
+        }
+        
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
       }
-      
-      console.log(`🔍 Geocoding via backend: ${address}, ${postalCode} ${city}`);
-      
-      const response = await fetch('/api/pricing/geocode', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          address: address,
-          postalCode: postalCode,
-          city: city,
-          country: 'Deutschland'
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Geocoding failed: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success && data.lat && data.lon) {
-        console.log(`✅ Geocoded: ${data.display_name || `${city}`}`);
-        return {
-          lat: data.lat,
-          lon: data.lon
-        };
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Geocoding error:', error);
-      return null;
     }
+    return null;
   };
 
   useEffect(() => {
@@ -200,13 +223,6 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
       }
     } catch (err) {
       console.error('Route calculation error:', err);
-      console.error('Error details:', {
-        message: err.message,
-        pickup: pickup,
-        delivery: delivery,
-        pickupStops: pickupStops,
-        deliveryStops: deliveryStops
-      });
       
       // Provide user-friendly error message
       let errorMessage = 'Fehler beim Berechnen der Route';
@@ -216,8 +232,6 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
         errorMessage = 'Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.';
       } else if (err.message.includes('geocod')) {
         errorMessage = 'Adresse konnte nicht gefunden werden. Bitte überprüfen Sie die Eingabe.';
-      } else if (err.message.includes('Keine Route gefunden')) {
-        errorMessage = 'Route konnte nicht berechnet werden. Auftrag wird trotzdem erstellt.';
       }
       
       setError(errorMessage);
