@@ -29,7 +29,12 @@ const poolConfig = getPoolConfig();
 const pool = process.env.DATABASE_URL
   ? new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      ssl: process.env.NODE_ENV === 'production' ? { 
+        rejectUnauthorized: false,
+        // Support PostgreSQL 17.6 TLS requirements
+        minVersion: 'TLSv1.2',
+        maxVersion: 'TLSv1.3'
+      } : false,
       ...poolConfig
     })
   : new Pool({
