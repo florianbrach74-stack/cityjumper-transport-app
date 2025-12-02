@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-// WICHTIG: Ersetze 'G-XXXXXXXXXX' mit deiner echten Google Analytics Mess-ID
-// Die bekommst du von: https://analytics.google.com
-const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+// Google Analytics Mess-ID von https://analytics.google.com
+const GA_MEASUREMENT_ID = 'G-R25QBLGT17';
 
 export const GoogleAnalytics = () => {
   const location = useLocation();

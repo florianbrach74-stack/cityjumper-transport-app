@@ -28,6 +28,7 @@ import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
 import VerifyEmailToken from './pages/VerifyEmailToken';
 import ChatBot from './components/ChatBot';
+import { GoogleAnalytics } from './components/GoogleAnalytics';
 
 const DashboardRouter = () => {
   const { user } = useAuth();
@@ -63,6 +64,9 @@ function App() {
     <LanguageProvider>
       <AuthProvider>
         <Router>
+          {/* Google Analytics */}
+          <GoogleAnalytics />
+          
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
