@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, Trash2, MapPin } from 'lucide-react';
 import AddressSearch from './AddressSearch';
 
-export default function MultiStopManager({ type, stops, onStopsChange }) {
+export default function MultiStopManager({ type, stops, onStopsChange, mainDeliveryTimeEnd }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newStop, setNewStop] = useState({
     address: '',
@@ -11,7 +11,9 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
     country: 'Deutschland',
     contact_name: '',
     contact_phone: '',
-    notes: ''
+    notes: '',
+    time_start: '',
+    time_end: ''
   });
 
   const handleAddStop = () => {
@@ -25,6 +27,31 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
       alert('Bitte Empfängername eingeben (wird für CMR Feld 2 benötigt)');
       return;
     }
+    
+    // For delivery stops, validate time windows
+    if (type === 'delivery' && mainDeliveryTimeEnd) {
+      if (!newStop.time_start || !newStop.time_end) {
+        alert('Bitte Zeitfenster eingeben');
+        return;
+      }
+      
+      // time_start must be >= mainDeliveryTimeEnd
+      if (newStop.time_start < mainDeliveryTimeEnd) {
+        alert(`Zustellung VON muss nach der Hauptzustellung (${mainDeliveryTimeEnd}) sein`);
+        return;
+      }
+      
+      // time_end must be at least 10 minutes after time_start
+      const [startH, startM] = newStop.time_start.split(':').map(Number);
+      const [endH, endM] = newStop.time_end.split(':').map(Number);
+      const startMinutes = startH * 60 + startM;
+      const endMinutes = endH * 60 + endM;
+      
+      if (endMinutes < startMinutes + 10) {
+        alert('Zustellung BIS muss mindestens 10 Minuten nach Zustellung VON sein');
+        return;
+      }
+    }
 
     onStopsChange([...stops, { ...newStop }]);
     
@@ -36,7 +63,9 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
       country: 'Deutschland',
       contact_name: '',
       contact_phone: '',
-      notes: ''
+      notes: '',
+      time_start: '',
+      time_end: ''
     });
     
     // Close form automatically after adding
@@ -149,6 +178,37 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
             </div>
           </div>
           
+          {/* Time fields for delivery stops */}
+          {type === 'delivery' && mainDeliveryTimeEnd && (
+            <div className="grid grid-cols-2 gap-3 bg-blue-50 p-3 rounded-md">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Zustellung VON * (frühestens {mainDeliveryTimeEnd})
+                </label>
+                <input
+                  type="time"
+                  value={newStop.time_start}
+                  onChange={(e) => setNewStop({ ...newStop, time_start: e.target.value })}
+                  min={mainDeliveryTimeEnd}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Zustellung BIS * (mind. +10 Min)
+                </label>
+                <input
+                  type="time"
+                  value={newStop.time_end}
+                  onChange={(e) => setNewStop({ ...newStop, time_end: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+            </div>
+          )}
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Notizen
@@ -203,6 +263,11 @@ export default function MultiStopManager({ type, stops, onStopsChange }) {
                   {stop.contact_name && (
                     <p className="text-sm text-gray-600">
                       Kontakt: {stop.contact_name} {stop.contact_phone}
+                    </p>
+                  )}
+                  {stop.time_start && stop.time_end && (
+                    <p className="text-sm text-blue-600 font-medium">
+                      ⏰ {stop.time_start} - {stop.time_end}
                     </p>
                   )}
                   {stop.notes && (
