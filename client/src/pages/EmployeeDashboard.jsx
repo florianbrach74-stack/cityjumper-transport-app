@@ -370,7 +370,10 @@ const EmployeeDashboardNew = () => {
                                     <div className="text-xs text-gray-500">Zusätzliche Abholungen:</div>
                                     {order.pickup_stops.map((stop, idx) => (
                                       <div key={idx} className="text-xs text-gray-600 pl-2 border-l-2 border-green-400">
-                                        {stop.address}, {stop.postal_code} {stop.city}
+                                        <div>{stop.address}, {stop.postal_code} {stop.city}</div>
+                                        {stop.time_start && stop.time_end && (
+                                          <div className="text-green-600 font-medium">⏰ {stop.time_start} - {stop.time_end}</div>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
@@ -380,7 +383,10 @@ const EmployeeDashboardNew = () => {
                                     <div className="text-xs text-gray-500">Zusätzliche Zustellungen:</div>
                                     {order.delivery_stops.map((stop, idx) => (
                                       <div key={idx} className="text-xs text-gray-600 pl-2 border-l-2 border-blue-400">
-                                        {stop.address}, {stop.postal_code} {stop.city}
+                                        <div>{stop.address}, {stop.postal_code} {stop.city}</div>
+                                        {stop.time_start && stop.time_end && (
+                                          <div className="text-blue-600 font-medium">⏰ {stop.time_start} - {stop.time_end}</div>
+                                        )}
                                       </div>
                                     ))}
                                   </div>

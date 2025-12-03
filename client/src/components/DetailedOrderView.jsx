@@ -274,6 +274,9 @@ const DetailedOrderView = ({ orderId, onClose }) => {
                             <div key={index} className="pl-4 border-l-2 border-green-400 text-sm text-gray-600">
                               <div className="font-medium">{stop.address}</div>
                               <div>{stop.postal_code} {stop.city}</div>
+                              {stop.time_start && stop.time_end && (
+                                <div className="text-green-600 font-medium">⏰ {stop.time_start} - {stop.time_end}</div>
+                              )}
                             </div>
                           ))}
                         </div>
