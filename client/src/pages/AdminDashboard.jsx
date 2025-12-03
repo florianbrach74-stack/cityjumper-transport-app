@@ -837,9 +837,9 @@ export default function AdminDashboard() {
                                 ⬆️ ERHÖHT
                               </span>
                             )}
-                            {order.available_budget && parseFloat(order.available_budget) > parseFloat(order.price) && (
+                            {order.available_budget && order.original_customer_price && parseFloat(order.available_budget) > parseFloat(order.original_customer_price) && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800 border border-red-300" title={`Budget nach AN-Stornierung: €${parseFloat(order.available_budget).toFixed(2)}`}>
-                                💰 +€{(parseFloat(order.available_budget) - parseFloat(order.price)).toFixed(2)} STRAFE
+                                💰 +€{(parseFloat(order.available_budget) - parseFloat(order.original_customer_price)).toFixed(2)} STRAFE
                               </span>
                             )}
                           </div>
@@ -848,9 +848,10 @@ export default function AdminDashboard() {
                               Ursprünglich: €{parseFloat(order.minimum_price_at_creation).toFixed(2)} → Erhöht um €{(parseFloat(order.price) - parseFloat(order.minimum_price_at_creation)).toFixed(2)}
                             </div>
                           )}
-                          {order.available_budget && parseFloat(order.available_budget) > parseFloat(order.price) && (
+                          {order.available_budget && order.original_customer_price && (
                             <div className="text-xs text-red-600 font-medium">
-                              💰 Verfügbares Budget: €{parseFloat(order.available_budget).toFixed(2)} (inkl. AN-Strafe)
+                              💰 Verfügbares Budget: €{Math.max(0, parseFloat(order.available_budget) - parseFloat(order.price)).toFixed(2)} 
+                              {parseFloat(order.available_budget) > parseFloat(order.price) ? '(aus AN-Strafe)' : '(aufgebraucht)'}
                             </div>
                           )}
                           <div className="text-xs text-gray-600" title="Auftragnehmer-Preis (85%)">
