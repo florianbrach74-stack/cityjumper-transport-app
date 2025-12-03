@@ -1088,9 +1088,12 @@ router.post('/orders/:id/increase-price', adminAuth, async (req, res) => {
     
     if (paidBy === 'platform') {
       // Check if enough budget from penalty
-      // available_budget = original_price + penalty
-      // remaining = available_budget - current_price
-      const remainingBudget = availableBudget - currentPrice;
+      // available_budget = penalty only (not including original price)
+      // platform_bonus = current_price - original_customer_price
+      // remaining = available_budget - platform_bonus
+      const originalCustomerPrice = parseFloat(order.original_customer_price || currentPrice);
+      const platformBonus = currentPrice - originalCustomerPrice;
+      const remainingBudget = availableBudget - platformBonus;
       
       if (remainingBudget <= 0) {
         return res.status(400).json({ 
