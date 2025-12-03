@@ -840,7 +840,7 @@ const ContractorDashboard = () => {
                   </ul>
                 </div>
                 <button
-                  onClick={() => navigate('/profile')}
+                  onClick={() => navigate('/settings')}
                   className="mt-4 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors flex items-center space-x-2"
                 >
                   <Edit className="h-4 w-4" />
