@@ -837,9 +837,9 @@ export default function AdminDashboard() {
                                 ⬆️ ERHÖHT
                               </span>
                             )}
-                            {order.available_budget && order.original_customer_price && parseFloat(order.available_budget) > parseFloat(order.original_customer_price) && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800 border border-red-300" title={`Budget nach AN-Stornierung: €${parseFloat(order.available_budget).toFixed(2)}`}>
-                                💰 +€{(parseFloat(order.available_budget) - parseFloat(order.original_customer_price)).toFixed(2)} STRAFE
+                            {order.available_budget && parseFloat(order.available_budget) > 0 && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800 border border-red-300" title={`Strafe vom AN: €${parseFloat(order.available_budget).toFixed(2)}`}>
+                                💰 +€{parseFloat(order.available_budget).toFixed(2)} STRAFE
                               </span>
                             )}
                           </div>
@@ -850,8 +850,8 @@ export default function AdminDashboard() {
                           )}
                           {order.available_budget && order.original_customer_price && (
                             <div className="text-xs text-red-600 font-medium">
-                              💰 Verfügbares Budget: €{Math.max(0, parseFloat(order.available_budget) - parseFloat(order.price)).toFixed(2)} 
-                              {parseFloat(order.available_budget) > parseFloat(order.price) ? '(aus AN-Strafe)' : '(aufgebraucht)'}
+                              💰 Verfügbares Budget: €{Math.max(0, parseFloat(order.available_budget) - (parseFloat(order.price) - parseFloat(order.original_customer_price))).toFixed(2)} 
+                              {(parseFloat(order.available_budget) - (parseFloat(order.price) - parseFloat(order.original_customer_price))) > 0 ? '(aus AN-Strafe)' : '(aufgebraucht)'}
                               <span className="ml-2 text-gray-500">
                                 (Plattform-Bonus: €{(parseFloat(order.price) - parseFloat(order.original_customer_price)).toFixed(2)})
                               </span>

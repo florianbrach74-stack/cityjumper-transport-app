@@ -639,7 +639,7 @@ const ContractorDashboard = () => {
                   </span>
                 )}
               </div>
-              {order.available_budget && order.original_customer_price && parseFloat(order.available_budget) > parseFloat(order.original_customer_price) && showAcceptButton && (
+              {order.available_budget && order.original_customer_price && parseFloat(order.price) > parseFloat(order.original_customer_price) && showAcceptButton && (
                 <div className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-bold bg-gradient-to-r from-red-400 to-red-600 text-white shadow-lg animate-pulse border-2 border-red-700">
                   🔥 BONUS! Erhöhter Preis nach Stornierung
                 </div>

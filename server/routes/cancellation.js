@@ -252,8 +252,9 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
     const actualIncrease = Math.min(priceIncreaseAmount, maxIncrease);
     const newCustomerPrice = originalPrice + actualIncrease;
     
-    // Verfügbares Budget für Neuvermittlung = Kundenpreis + restliche Penalty
-    const availableBudget = originalPrice + penaltyAmount;
+    // Verfügbares Budget = NUR die Strafe (nicht Original-Preis!)
+    // Wird verwendet für Plattform-Bonus an neue Auftragnehmer
+    const availableBudget = penaltyAmount;
     
     console.log('📊 Auftragnehmer-Stornierung:');
     console.log('   Kundenpreis (original):', originalPrice);
