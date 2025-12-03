@@ -80,16 +80,21 @@ router.put('/:id/price', authorizeRole('customer'), async (req, res) => {
       );
     }
 
-    // Update ONLY customer price, NOT contractor_price
+    // Update customer price AND original_customer_price
     // Contractor keeps their original bid price, customer pays more
+    // original_customer_price tracks what customer will be invoiced
+    const originalCustomerPrice = order.original_customer_price || order.price;
+    const newOriginalCustomerPrice = originalCustomerPrice + (price - order.price);
+    
     await pool.query(
-      'UPDATE transport_orders SET price = $1, price_updated_at = NOW(), updated_at = NOW() WHERE id = $2',
-      [price, id]
+      'UPDATE transport_orders SET price = $1, original_customer_price = $2, price_updated_at = NOW(), updated_at = NOW() WHERE id = $3',
+      [price, newOriginalCustomerPrice, id]
     );
 
     res.json({ 
       message: 'Preis erfolgreich aktualisiert',
       newPrice: price,
+      originalCustomerPrice: newOriginalCustomerPrice,
       contractorPrice: order.contractor_price // Keep original contractor price
     });
   } catch (error) {
