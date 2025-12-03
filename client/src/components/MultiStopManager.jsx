@@ -35,20 +35,29 @@ export default function MultiStopManager({ type, stops, onStopsChange, mainDeliv
         return;
       }
       
-      // time_start must be >= mainDeliveryTimeEnd
-      if (newStop.time_start < mainDeliveryTimeEnd) {
-        alert(`Zustellung VON muss nach der Hauptzustellung (${mainDeliveryTimeEnd}) sein`);
+      // Calculate minimum time_end (mainDeliveryTimeEnd + 10 minutes)
+      const [mainH, mainM] = mainDeliveryTimeEnd.split(':').map(Number);
+      const mainMinutes = mainH * 60 + mainM;
+      const minEndMinutes = mainMinutes + 10;
+      const minEndH = Math.floor(minEndMinutes / 60);
+      const minEndM = minEndMinutes % 60;
+      const minTimeEnd = `${String(minEndH).padStart(2, '0')}:${String(minEndM).padStart(2, '0')}`;
+      
+      // time_end must be at least mainDeliveryTimeEnd + 10 minutes
+      const [endH, endM] = newStop.time_end.split(':').map(Number);
+      const endMinutes = endH * 60 + endM;
+      
+      if (endMinutes < minEndMinutes) {
+        alert(`Zustellung BIS muss mindestens ${minTimeEnd} sein (Hauptzustellung BIS + 10 Min)`);
         return;
       }
       
-      // time_end must be at least 10 minutes after time_start
+      // time_end must be after time_start
       const [startH, startM] = newStop.time_start.split(':').map(Number);
-      const [endH, endM] = newStop.time_end.split(':').map(Number);
       const startMinutes = startH * 60 + startM;
-      const endMinutes = endH * 60 + endM;
       
-      if (endMinutes < startMinutes + 10) {
-        alert('Zustellung BIS muss mindestens 10 Minuten nach Zustellung VON sein');
+      if (endMinutes <= startMinutes) {
+        alert('Zustellung BIS muss nach Zustellung VON sein');
         return;
       }
     }
@@ -183,20 +192,23 @@ export default function MultiStopManager({ type, stops, onStopsChange, mainDeliv
             <div className="grid grid-cols-2 gap-3 bg-blue-50 p-3 rounded-md">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Zustellung VON * (frühestens {mainDeliveryTimeEnd})
+                  Zustellung VON * (z.B. Ladenöffnung)
                 </label>
                 <input
                   type="time"
                   value={newStop.time_start}
                   onChange={(e) => setNewStop({ ...newStop, time_start: e.target.value })}
-                  min={mainDeliveryTimeEnd}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Zustellung BIS * (mind. +10 Min)
+                  Zustellung BIS * (mind. {(() => {
+                    const [h, m] = mainDeliveryTimeEnd.split(':').map(Number);
+                    const total = h * 60 + m + 10;
+                    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+                  })()})
                 </label>
                 <input
                   type="time"
