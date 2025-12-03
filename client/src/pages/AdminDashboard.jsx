@@ -852,6 +852,9 @@ export default function AdminDashboard() {
                             <div className="text-xs text-red-600 font-medium">
                               💰 Verfügbares Budget: €{Math.max(0, parseFloat(order.available_budget) - parseFloat(order.price)).toFixed(2)} 
                               {parseFloat(order.available_budget) > parseFloat(order.price) ? '(aus AN-Strafe)' : '(aufgebraucht)'}
+                              <span className="ml-2 text-gray-500">
+                                (Plattform-Bonus: €{(parseFloat(order.price) - parseFloat(order.original_customer_price)).toFixed(2)})
+                              </span>
                             </div>
                           )}
                           <div className="text-xs text-gray-600" title="Auftragnehmer-Preis (85%)">

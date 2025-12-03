@@ -86,13 +86,15 @@ router.put('/:id/price', authorizeRole('customer'), async (req, res) => {
     // Calculate increase amount
     const increaseAmount = price - currentCustomerPrice;
     
-    // Update ONLY original_customer_price (what customer pays)
-    // Do NOT update price (what contractors see) - that's only changed by platform bonus
+    // Update BOTH prices when customer increases
+    // This maintains the platform bonus (price - original_customer_price stays constant)
+    const currentContractorPrice = parseFloat(order.price);
+    const newContractorPrice = currentContractorPrice + increaseAmount;
     const newOriginalCustomerPrice = price;
     
     await pool.query(
-      'UPDATE transport_orders SET original_customer_price = $1, price_updated_at = NOW(), updated_at = NOW() WHERE id = $2',
-      [newOriginalCustomerPrice, id]
+      'UPDATE transport_orders SET price = $1, original_customer_price = $2, price_updated_at = NOW(), updated_at = NOW() WHERE id = $3',
+      [newContractorPrice, newOriginalCustomerPrice, id]
     );
 
     res.json({ 
