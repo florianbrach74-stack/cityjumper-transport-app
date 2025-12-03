@@ -813,6 +813,44 @@ const ContractorDashboard = () => {
           <RoleSwitcher />
         </div>
 
+        {/* Verification Reminder */}
+        {verificationStatus !== 'approved' && (
+          <div className="mb-6 rounded-lg p-4 bg-yellow-50 border-2 border-yellow-300">
+            <div className="flex items-start">
+              <AlertCircle className="h-6 w-6 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-bold text-yellow-900 text-lg">
+                  {verificationStatus === 'pending' ? '⏳ Verifizierung ausstehend' : 
+                   verificationStatus === 'rejected' ? '❌ Verifizierung abgelehnt' : 
+                   '📋 Account-Verifizierung erforderlich'}
+                </h3>
+                <p className="text-sm text-yellow-800 mt-1">
+                  {verificationStatus === 'pending' ? 
+                    'Ihre Dokumente werden geprüft. Sie werden benachrichtigt sobald die Prüfung abgeschlossen ist.' :
+                   verificationStatus === 'rejected' ?
+                    'Ihre Verifizierung wurde abgelehnt. Bitte laden Sie die korrekten Dokumente hoch.' :
+                    'Bitte verifizieren Sie Ihr Konto, um auf Aufträge zugreifen zu können.'}
+                </p>
+                <div className="mt-3 space-y-2 text-sm text-yellow-700">
+                  <p className="font-medium">Erforderliche Dokumente:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>Gewerbeanmeldung</li>
+                    <li>Transportversicherung</li>
+                    <li>Mindestlohn-Erklärung (unterschrieben)</li>
+                  </ul>
+                </div>
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="mt-4 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors flex items-center space-x-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  <span>Jetzt in Profileinstellungen hochladen</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Penalties Warning */}
         {pendingPenaltiesTotal > 0 && (
           <div className="mb-6 rounded-lg p-4 bg-red-50 border-2 border-red-300">

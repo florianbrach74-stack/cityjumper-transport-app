@@ -608,6 +608,30 @@ const Settings = () => {
 
             {(!verificationStatus || verificationStatus.status === 'pending' || verificationStatus.status === 'rejected') && (
               <form onSubmit={handleVerificationSubmit} className="space-y-4">
+                {/* Instructions Banner */}
+                {(!verificationStatus || !verificationStatus.status) && (
+                  <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mb-4">
+                    <div className="flex items-start">
+                      <AlertCircle className="h-5 w-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h3 className="font-bold text-yellow-900 mb-2">📋 Verifizierung erforderlich</h3>
+                        <p className="text-sm text-yellow-800 mb-3">
+                          Um Aufträge annehmen zu können, müssen Sie Ihr Konto verifizieren. 
+                          Bitte laden Sie die folgenden Dokumente hoch:
+                        </p>
+                        <ul className="text-sm text-yellow-700 space-y-1 ml-4 list-disc">
+                          <li><strong>Gewerbeanmeldung:</strong> Nachweis Ihrer gewerblichen Tätigkeit</li>
+                          <li><strong>Transportversicherung:</strong> Gültige Versicherungspolice</li>
+                          <li><strong>Mindestlohn-Erklärung:</strong> Bestätigung der Einhaltung</li>
+                        </ul>
+                        <p className="text-xs text-yellow-600 mt-3">
+                          Nach dem Upload werden Ihre Dokumente geprüft. Sie erhalten eine Benachrichtigung sobald die Prüfung abgeschlossen ist.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                   <p className="text-sm text-blue-800">
                     <strong>Hinweis:</strong> Maximale Dateigröße pro Dokument: 5 MB
