@@ -18,6 +18,8 @@ async function cleanupOldOrders() {
     console.log(`📅 Lösche Aufträge abgeschlossen vor: ${threeMonthsAgo.toISOString().split('T')[0]}`);
     
     // 1. Finde Aufträge die gelöscht werden sollen
+    // WICHTIG: Aufträge die einmal einen Auftragnehmer hatten dürfen NIEMALS gelöscht werden
+    // (wegen Strafen, Rechnungen, rechtlichen Aspekten)
     const ordersToDelete = await pool.query(`
       SELECT id, customer_id, contractor_id, invoice_number, 
              completed_at, cancellation_timestamp,
@@ -26,6 +28,8 @@ async function cleanupOldOrders() {
       WHERE (status = 'completed' OR (cancellation_status IS NOT NULL AND status != 'pending'))
         AND COALESCE(completed_at, cancellation_timestamp) < $1
         AND COALESCE(completed_at, cancellation_timestamp) IS NOT NULL
+        AND contractor_id IS NULL
+        AND invoice_number IS NULL
     `, [threeMonthsAgo]);
     
     if (ordersToDelete.rows.length === 0) {
