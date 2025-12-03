@@ -10,7 +10,7 @@ const geocodeCache = new Map();
 const CACHE_MAX_SIZE = 1000; // Store max 1000 addresses
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-// Geocode using OpenStreetMap Nominatim directly (free, no API key needed)
+// Geocode using LocationIQ (OpenStreetMap-based, free tier with API key)
 router.post('/geocode', async (req, res) => {
   try {
     const { fullAddress } = req.body;
@@ -32,22 +32,25 @@ router.post('/geocode', async (req, res) => {
     }
 
     const axios = require('axios');
+    const LOCATIONIQ_API_KEY = process.env.LOCATIONIQ_API_KEY;
     
-    console.log(`🔍 Geocoding with OpenStreetMap: ${fullAddress}`);
+    if (!LOCATIONIQ_API_KEY) {
+      console.error('❌ LOCATIONIQ_API_KEY not configured');
+      return res.status(500).json({ 
+        error: 'Geocoding service not configured' 
+      });
+    }
     
-    // Add small delay to respect OpenStreetMap rate limits (max 1 request/second)
-    await new Promise(resolve => setTimeout(resolve, 1100));
+    console.log(`🔍 Geocoding with LocationIQ: ${fullAddress}`);
     
-    const response = await axios.get('https://nominatim.openstreetmap.org/search', {
+    const response = await axios.get('https://us1.locationiq.com/v1/search', {
       params: {
         q: fullAddress,
+        key: LOCATIONIQ_API_KEY,
         format: 'json',
         countrycodes: 'de',
         limit: 1,
         addressdetails: 1
-      },
-      headers: {
-        'User-Agent': 'CityJumper-Transport-App/1.0'
       },
       timeout: 10000
     });
