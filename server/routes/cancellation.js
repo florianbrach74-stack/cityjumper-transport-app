@@ -284,7 +284,7 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
     
     // Delete all bids for this order
     await client.query(
-      'DELETE FROM bids WHERE order_id = $1',
+      'DELETE FROM order_bids WHERE order_id = $1',
       [orderId]
     );
     
