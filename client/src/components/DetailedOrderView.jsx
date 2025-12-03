@@ -252,6 +252,45 @@ const DetailedOrderView = ({ orderId, onClose }) => {
                   </div>
                 </div>
 
+                {/* Multi-Stop Information */}
+                {(order.pickup_stops?.length > 0 || order.delivery_stops?.length > 0) && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="text-sm font-medium text-orange-600 mb-3">
+                      🚚 Multi-Stop Auftrag ({(order.pickup_stops?.length || 0) + (order.delivery_stops?.length || 0) + 2} Stops)
+                    </div>
+                    
+                    {/* Additional Pickup Stops */}
+                    {order.pickup_stops?.length > 0 && (
+                      <div className="mb-4">
+                        <div className="text-xs font-medium text-gray-700 mb-2">Zusätzliche Abholungen:</div>
+                        <div className="space-y-2">
+                          {order.pickup_stops.map((stop, index) => (
+                            <div key={index} className="pl-4 border-l-2 border-green-400 text-sm text-gray-600">
+                              <div className="font-medium">{stop.address}</div>
+                              <div>{stop.postal_code} {stop.city}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Additional Delivery Stops */}
+                    {order.delivery_stops?.length > 0 && (
+                      <div>
+                        <div className="text-xs font-medium text-gray-700 mb-2">Zusätzliche Zustellungen:</div>
+                        <div className="space-y-2">
+                          {order.delivery_stops.map((stop, index) => (
+                            <div key={index} className="pl-4 border-l-2 border-blue-400 text-sm text-gray-600">
+                              <div className="font-medium">{stop.address}</div>
+                              <div>{stop.postal_code} {stop.city}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Distance & Duration */}
                 {(order.distance_km || order.duration_minutes) && (
                   <div className="mt-4 pt-4 border-t bg-gray-50 -mx-4 px-4 py-3">
