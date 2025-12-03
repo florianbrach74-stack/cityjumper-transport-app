@@ -998,18 +998,13 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                 {priceWarning && (
                   <div className="bg-red-50 border border-red-200 rounded p-2 mt-2">
                     <p className="text-xs text-red-700">
-                      📊 Berechnung: {routeInfo?.distance}km × €0,50 + {(routeInfo?.durationMinutes / 60).toFixed(2)}h × €22,50/h + €6 Startgebühr + {pickupStops.length + deliveryStops.length} Extra-Stops × €6{loadingHelpFee > 0 ? ` + €${loadingHelpFee.toFixed(2)} Be-/Entladehilfe` : ''} = €{minimumPrice?.toFixed(2)}
+                      ⚠️ <strong>Mindestlohn-Unterschreitung!</strong> Der eingegebene Preis liegt unter dem Mindestlohn-Minimum von €{minimumPrice?.toFixed(2)}.
+                    </p>
+                    <p className="text-xs text-red-600 mt-1">
+                      Bitte erhöhen Sie den Preis, um faire Bezahlung sicherzustellen.
                     </p>
                   </div>
                 )}
-                {!priceWarning && minimumPrice && (
-                  <p className="text-xs text-green-600 mt-1">
-                    ✅ Preis hält Mindestlohn ein (Minimum: €{minimumPrice.toFixed(2)})
-                  </p>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  💡 Basierend auf Mindestlohn-Kalkulation (€0,50/km + €22,50/h + €6 Startgebühr + Extra-Stops)
-                </p>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700">Beschreibung</label>
