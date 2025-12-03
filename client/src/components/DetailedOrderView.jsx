@@ -8,6 +8,10 @@ const DetailedOrderView = ({ orderId, onClose }) => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [showPriceIncreaseModal, setShowPriceIncreaseModal] = useState(false);
+  const [priceIncreaseAmount, setPriceIncreaseAmount] = useState('');
+  const [priceIncreasePaidBy, setPriceIncreasePaidBy] = useState('platform');
+  const [priceIncreaseReason, setPriceIncreaseReason] = useState('');
 
   useEffect(() => {
     loadOrderDetails();
@@ -22,6 +26,30 @@ const DetailedOrderView = ({ orderId, onClose }) => {
       alert('Fehler beim Laden der Auftragsdetails');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePriceIncrease = async () => {
+    if (!priceIncreaseAmount || parseFloat(priceIncreaseAmount) <= 0) {
+      alert('Bitte geben Sie einen gültigen Betrag ein');
+      return;
+    }
+
+    try {
+      await api.post(`/admin/orders/${orderId}/increase-price`, {
+        increaseAmount: parseFloat(priceIncreaseAmount),
+        paidBy: priceIncreasePaidBy,
+        reason: priceIncreaseReason
+      });
+
+      alert('Preis erfolgreich erhöht!');
+      setShowPriceIncreaseModal(false);
+      setPriceIncreaseAmount('');
+      setPriceIncreaseReason('');
+      loadOrderDetails(); // Reload to show new price
+    } catch (error) {
+      console.error('Error increasing price:', error);
+      alert(error.response?.data?.error || 'Fehler beim Erhöhen des Preises');
     }
   };
 
@@ -426,6 +454,35 @@ const DetailedOrderView = ({ orderId, onClose }) => {
                     </div>
                   )}
                 </div>
+                
+                {/* Price Increase Buttons - only for pending orders */}
+                {order.status === 'pending' && (
+                  <div className="mt-4 pt-4 border-t border-primary-200">
+                    <p className="text-xs text-gray-600 mb-2">Preis erhöhen:</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setPriceIncreasePaidBy('platform');
+                          setShowPriceIncreaseModal(true);
+                        }}
+                        className="flex-1 px-3 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-50"
+                        disabled={!order.available_budget || parseFloat(order.available_budget) <= parseFloat(order.price)}
+                        title={order.available_budget ? `Verfügbar: €${(parseFloat(order.available_budget) - parseFloat(order.price)).toFixed(2)}` : 'Nur nach AN-Stornierung'}
+                      >
+                        💰 Plattform zahlt
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPriceIncreasePaidBy('customer');
+                          setShowPriceIncreaseModal(true);
+                        }}
+                        className="flex-1 px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                      >
+                        👤 Kunde zahlt
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -455,6 +512,88 @@ const DetailedOrderView = ({ orderId, onClose }) => {
           order={order}
           onClose={() => setShowInvoice(false)}
         />
+      )}
+
+      {/* Price Increase Modal */}
+      {showPriceIncreaseModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">
+                Preis erhöhen - {priceIncreasePaidBy === 'platform' ? '💰 Plattform zahlt' : '👤 Kunde zahlt'}
+              </h3>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Erhöhungsbetrag (€)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={priceIncreaseAmount}
+                  onChange={(e) => setPriceIncreaseAmount(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  placeholder="z.B. 5.00"
+                />
+                {priceIncreasePaidBy === 'platform' && order.available_budget && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    Verfügbar: €{(parseFloat(order.available_budget) - parseFloat(order.price)).toFixed(2)}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Grund (optional)
+                </label>
+                <textarea
+                  value={priceIncreaseReason}
+                  onChange={(e) => setPriceIncreaseReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  rows="2"
+                  placeholder="z.B. Schwierige Vermittlung"
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                <p className="text-sm text-blue-900">
+                  {priceIncreasePaidBy === 'platform' ? (
+                    <>
+                      <strong>Plattform zahlt:</strong> Die Erhöhung wird aus der Stornierungsgebühr bezahlt. 
+                      Der Kunde zahlt weiterhin €{parseFloat(order.price).toFixed(2)}.
+                    </>
+                  ) : (
+                    <>
+                      <strong>Kunde zahlt:</strong> Der Kunde wird für den erhöhten Preis in Rechnung gestellt.
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowPriceIncreaseModal(false);
+                  setPriceIncreaseAmount('');
+                  setPriceIncreaseReason('');
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handlePriceIncrease}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700"
+              >
+                Preis erhöhen
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

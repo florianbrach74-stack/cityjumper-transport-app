@@ -1056,4 +1056,113 @@ router.patch('/users/:userId/profile', adminAuth, async (req, res) => {
   }
 });
 
+// Increase order price (Admin only)
+router.post('/orders/:id/increase-price', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { increaseAmount, paidBy, reason } = req.body;
+    
+    // paidBy: 'platform' (from penalty budget) or 'customer' (customer pays more)
+    if (!['platform', 'customer'].includes(paidBy)) {
+      return res.status(400).json({ error: 'Invalid paidBy value. Must be "platform" or "customer"' });
+    }
+    
+    const increase = parseFloat(increaseAmount);
+    if (isNaN(increase) || increase <= 0) {
+      return res.status(400).json({ error: 'Invalid increase amount' });
+    }
+    
+    // Get current order
+    const orderResult = await pool.query(
+      'SELECT * FROM transport_orders WHERE id = $1',
+      [id]
+    );
+    
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    const order = orderResult.rows[0];
+    const currentPrice = parseFloat(order.price);
+    const availableBudget = parseFloat(order.available_budget || 0);
+    
+    if (paidBy === 'platform') {
+      // Check if enough budget from penalty
+      // available_budget = original_price + penalty
+      // remaining = available_budget - current_price
+      const remainingBudget = availableBudget - currentPrice;
+      
+      if (remainingBudget <= 0) {
+        return res.status(400).json({ 
+          error: 'Kein Budget verfügbar. Nur bei Auftragnehmer-Stornierung möglich.',
+          availableBudget: 0
+        });
+      }
+      
+      if (increase > remainingBudget) {
+        return res.status(400).json({ 
+          error: `Nicht genug Budget. Verfügbar: €${remainingBudget.toFixed(2)}`,
+          availableBudget: remainingBudget
+        });
+      }
+    }
+    
+    const newPrice = currentPrice + increase;
+    
+    // Update order price
+    const updateResult = await pool.query(
+      `UPDATE transport_orders 
+       SET price = $1,
+           price_updated_at = NOW(),
+           updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [newPrice, id]
+    );
+    
+    // Log price increase in edit_history
+    const historyEntry = {
+      timestamp: new Date().toISOString(),
+      admin_id: req.user.id,
+      admin_email: req.user.email,
+      action: 'price_increase',
+      changes: {
+        old_price: currentPrice,
+        new_price: newPrice,
+        increase: increase,
+        paid_by: paidBy,
+        reason: reason || 'Preiserhöhung'
+      }
+    };
+    
+    const currentHistory = order.edit_history || [];
+    currentHistory.push(historyEntry);
+    
+    await pool.query(
+      'UPDATE transport_orders SET edit_history = $1 WHERE id = $2',
+      [JSON.stringify(currentHistory), id]
+    );
+    
+    console.log(`💰 Preiserhöhung für Auftrag #${id}:`);
+    console.log(`   Alt: €${currentPrice.toFixed(2)}`);
+    console.log(`   Neu: €${newPrice.toFixed(2)}`);
+    console.log(`   Erhöhung: €${increase.toFixed(2)}`);
+    console.log(`   Zahlt: ${paidBy === 'platform' ? 'Plattform' : 'Kunde'}`);
+    
+    res.json({
+      message: 'Preis erfolgreich erhöht',
+      order: updateResult.rows[0],
+      priceIncrease: {
+        oldPrice: currentPrice,
+        newPrice: newPrice,
+        increase: increase,
+        paidBy: paidBy
+      }
+    });
+  } catch (error) {
+    console.error('Price increase error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
