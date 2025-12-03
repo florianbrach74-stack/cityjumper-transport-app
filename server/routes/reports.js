@@ -1231,6 +1231,35 @@ router.get('/profit-loss', authenticateToken, authorizeRole('admin'), async (req
     
     const result = await pool.query(query, params);
     
+    // Get cancellation data for the same period
+    const cancellationQuery = `
+      SELECT 
+        o.id as order_id,
+        o.cancellation_status,
+        o.cancellation_fee,
+        o.cancellation_fee_percentage,
+        o.contractor_penalty,
+        o.price as customer_price,
+        o.contractor_price,
+        o.available_budget,
+        o.cancellation_timestamp,
+        c.first_name as customer_first_name,
+        c.last_name as customer_last_name,
+        c.company_name as customer_company,
+        con.first_name as contractor_first_name,
+        con.last_name as contractor_last_name,
+        con.company_name as contractor_company
+      FROM transport_orders o
+      LEFT JOIN users c ON o.customer_id = c.id
+      LEFT JOIN users con ON o.contractor_id = con.id
+      WHERE o.cancellation_status IS NOT NULL
+        ${startDate ? 'AND o.cancellation_timestamp >= $1' : ''}
+        ${endDate ? `AND o.cancellation_timestamp <= $${startDate ? '2' : '1'}` : ''}
+      ORDER BY o.cancellation_timestamp DESC
+    `;
+    
+    const cancellationResult = await pool.query(cancellationQuery, params);
+    
     // Calculate profit/loss for each order
     const analysis = result.rows.map(order => {
       const customerPrice = parseFloat(order.customer_price) || 0;
@@ -1273,7 +1302,18 @@ router.get('/profit-loss', authenticateToken, authorizeRole('admin'), async (req
       };
     });
     
-    // Calculate totals
+    // Process contractor cancellations
+    const cancellations = cancellationResult.rows
+      .filter(c => c.cancellation_status === 'cancelled_by_contractor')
+      .map(c => ({
+        orderId: c.order_id,
+        date: c.cancellation_timestamp,
+        contractor: c.contractor_company || `${c.contractor_first_name} ${c.contractor_last_name}`,
+        penalty: parseFloat(c.contractor_penalty) || 0,
+        type: 'contractor_penalty'
+      }));
+    
+    // Calculate totals including contractor penalties
     const totals = analysis.reduce((acc, item) => {
       acc.totalRevenue += parseFloat(item.revenue);
       acc.totalDiscounts += parseFloat(item.discountAmount);
@@ -1293,7 +1333,14 @@ router.get('/profit-loss', authenticateToken, authorizeRole('admin'), async (req
       totalCosts: 0,
       totalProfit: 0,
       profitableOrders: 0,
-      lossOrders: 0
+      lossOrders: 0,
+      contractorPenalties: 0
+    });
+    
+    // Add contractor penalties to revenue
+    cancellations.forEach(c => {
+      totals.contractorPenalties += c.penalty;
+      totals.totalProfit += c.penalty; // Penalties increase profit
     });
     
     const overallMargin = totals.totalRevenue > 0 
@@ -1302,15 +1349,18 @@ router.get('/profit-loss', authenticateToken, authorizeRole('admin'), async (req
     
     res.json({
       orders: analysis,
+      cancellations: cancellations,
       totals: {
         ...totals,
         totalRevenue: totals.totalRevenue.toFixed(2),
         totalDiscounts: totals.totalDiscounts.toFixed(2),
         totalRevenueAfterDiscount: totals.totalRevenueAfterDiscount.toFixed(2),
         totalCosts: totals.totalCosts.toFixed(2),
+        contractorPenalties: totals.contractorPenalties.toFixed(2),
         totalProfit: totals.totalProfit.toFixed(2),
         overallMargin: overallMargin.toFixed(2),
-        totalOrders: analysis.length
+        totalOrders: analysis.length,
+        totalCancellations: cancellations.length
       }
     });
     
