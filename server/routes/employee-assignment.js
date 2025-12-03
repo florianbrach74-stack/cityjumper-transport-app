@@ -248,6 +248,16 @@ router.get('/employee/orders', authenticateToken, authorizeRole('employee'), asy
     }
 
     console.log('   Query params:', { contractorId, employeeId: req.user.id, assignmentMode });
+    
+    // DEBUG: Check if there are ANY orders assigned to this employee
+    const debugCheck = await pool.query(
+      `SELECT id, contractor_id, assigned_employee_id, status 
+       FROM transport_orders 
+       WHERE assigned_employee_id = $1`,
+      [req.user.id]
+    );
+    console.log('   DEBUG: Orders assigned to employee:', debugCheck.rows);
+    
     console.log('   Query:', query);
     
     const result = await pool.query(query, params);
