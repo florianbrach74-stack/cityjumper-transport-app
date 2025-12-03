@@ -221,7 +221,10 @@ const DetailedOrderView = ({ orderId, onClose }) => {
                       <div>{order.pickup_postal_code} {order.pickup_city}</div>
                       <div className="pt-2 border-t">
                         <Calendar className="h-4 w-4 inline mr-1" />
-                        {new Date(order.pickup_date).toLocaleDateString('de-DE')} um {order.pickup_time}
+                        {new Date(order.pickup_date).toLocaleDateString('de-DE')}
+                        {order.pickup_time_start && order.pickup_time_end && (
+                          <> • {order.pickup_time_start} - {order.pickup_time_end}</>
+                        )}
                       </div>
                       {order.pickup_contact_phone && (
                         <div>📱 {order.pickup_contact_phone}</div>
@@ -243,7 +246,10 @@ const DetailedOrderView = ({ orderId, onClose }) => {
                       <div>{order.delivery_postal_code} {order.delivery_city}</div>
                       <div className="pt-2 border-t">
                         <Calendar className="h-4 w-4 inline mr-1" />
-                        {new Date(order.delivery_date).toLocaleDateString('de-DE')} um {order.delivery_time}
+                        {new Date(order.delivery_date).toLocaleDateString('de-DE')}
+                        {order.delivery_time_start && order.delivery_time_end && (
+                          <> • {order.delivery_time_start} - {order.delivery_time_end}</>
+                        )}
                       </div>
                       {order.delivery_contact_phone && (
                         <div>📱 {order.delivery_contact_phone}</div>
