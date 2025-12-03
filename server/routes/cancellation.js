@@ -5,6 +5,11 @@ const pool = require('../config/database');
 
 // Calculate cancellation fee based on AGB rules
 function calculateCancellationFee(order, cancelledBy) {
+  console.log('📊 Calculating cancellation fee for order:', order.id);
+  console.log('   pickup_date:', order.pickup_date);
+  console.log('   pickup_time_from:', order.pickup_time_from);
+  console.log('   price:', order.price);
+  
   // Safety check: ensure pickup_date exists
   if (!order.pickup_date) {
     console.error('Order missing pickup_date:', order.id);
@@ -19,6 +24,9 @@ function calculateCancellationFee(order, cancelledBy) {
   
   const pickupDateTime = new Date(`${order.pickup_date}T${order.pickup_time_from || '00:00'}`);
   const now = new Date();
+  
+  console.log('   pickupDateTime:', pickupDateTime);
+  console.log('   now:', now);
   
   // Check if date is valid
   if (isNaN(pickupDateTime.getTime())) {
@@ -38,12 +46,12 @@ function calculateCancellationFee(order, cancelledBy) {
   let driverStatus = 'not_started';
   
   if (cancelledBy === 'customer') {
-    // Customer cancellation rules from AGB (12h/2h structure)
-    if (hoursUntilPickup > 24) {
-      feePercentage = 0; // Free cancellation >24h
-    } else if (hoursUntilPickup > 12) {
+    // Customer cancellation rules from AGB §7.1 (24h/12h/2h structure)
+    if (hoursUntilPickup >= 24) {
+      feePercentage = 0; // Free cancellation >=24h
+    } else if (hoursUntilPickup >= 12) {
       feePercentage = 50; // 50% fee 12-24h before pickup
-    } else if (hoursUntilPickup > 2) {
+    } else if (hoursUntilPickup >= 2) {
       feePercentage = 75; // 75% fee 2-12h before pickup
     } else if (hoursUntilPickup > 0) {
       feePercentage = 100; // 100% fee <2h before pickup
@@ -56,6 +64,10 @@ function calculateCancellationFee(order, cancelledBy) {
   
   const originalPrice = parseFloat(order.price) || 0;
   const cancellationFee = (originalPrice * feePercentage) / 100;
+  
+  console.log('   hoursUntilPickup:', hoursUntilPickup);
+  console.log('   feePercentage:', feePercentage);
+  console.log('   cancellationFee:', cancellationFee);
   
   return {
     feePercentage,
