@@ -1,7 +1,8 @@
 # 🔄 SAFEPOINT: Stornierungssystem & Preiserhöhungen
 
-**Datum:** 3. Dezember 2025  
-**Status:** ✅ Vollständig implementiert und getestet  
+**Datum:** 3. Dezember 2025, 18:16 Uhr  
+**Status:** ✅ Vollständig implementiert, getestet und produktiv  
+**Letzter Commit:** `880e628` - Backend budget validation fix  
 **Session wiederherstellen mit:** `@SAFEPOINT_CANCELLATION_SYSTEM.md`
 
 ---
@@ -49,9 +50,24 @@ ADD COLUMN original_customer_price DECIMAL(10, 2);
 ### Felder-Bedeutung:
 - **`price`**: Preis für Auftragnehmer (kann durch Plattform-Bonus erhöht sein)
 - **`original_customer_price`**: Preis für Kunde (Rechnungsbetrag)
-- **`available_budget`**: Total verfügbares Budget (Original + Strafe)
+- **`available_budget`**: ⚠️ **NUR die Strafe!** (NICHT Original-Preis + Strafe)
 - **`contractor_penalty`**: Strafbetrag vom Auftragnehmer
 - **`contractor_price`**: Gebotspreis des Auftragnehmers
+
+### ⚠️ WICHTIG: `available_budget` Berechnung
+```javascript
+// RICHTIG (nach Fix):
+const availableBudget = penaltyAmount; // NUR Strafe!
+
+// FALSCH (vorher):
+const availableBudget = originalPrice + penaltyAmount; // Original + Strafe
+```
+
+### Verfügbares Budget berechnen:
+```javascript
+const platformBonus = price - original_customer_price;
+const remainingBudget = available_budget - platformBonus;
+```
 
 ---
 
@@ -61,39 +77,62 @@ ADD COLUMN original_customer_price DECIMAL(10, 2);
 - Original Kundenpreis: **€23.55**
 - Auftragnehmer-Gebotspreis: **€20.02**
 - Strafe (100%): **€20.02**
-- Available Budget: **€43.57** (€23.55 + €20.02)
+- Available Budget: **€20.02** ⚠️ (NUR Strafe!)
 
 ### Szenario 1: Admin erhöht um €5 (Plattform zahlt)
 ```
 price:                    €23.55 → €28.55
 original_customer_price:  €23.55 → €23.55 (GLEICH!)
-available_budget:         €43.57 (unverändert)
+available_budget:         €20.02 (unverändert)
+
+Platform Bonus:  €28.55 - €23.55 = €5.00
+Verfügbar:       €20.02 - €5.00 = €15.02
 
 Kunde zahlt:     €23.55
 Auftragnehmer:   €28.55 × 0.85 = €24.27
 Plattform zahlt: €5.00 (aus Strafe)
 ```
 
-### Szenario 2: Admin erhöht um €10 (Plattform zahlt)
+### Szenario 2: Admin erhöht um weitere €10 (Plattform zahlt)
 ```
 price:                    €28.55 → €38.55
 original_customer_price:  €23.55 → €23.55 (GLEICH!)
-available_budget:         €43.57 (unverändert)
+available_budget:         €20.02 (unverändert)
+
+Platform Bonus:  €38.55 - €23.55 = €15.00
+Verfügbar:       €20.02 - €15.00 = €5.02
 
 Kunde zahlt:     €23.55
 Auftragnehmer:   €38.55 × 0.85 = €32.77
 Plattform zahlt: €15.00 (aus Strafe)
 ```
 
-### Szenario 3: Kunde erhöht um €5 (Kunde zahlt)
+### Szenario 3: Kunde erhöht um €7 (Kunde zahlt)
 ```
-price:                    €38.55 → €43.55
-original_customer_price:  €23.55 → €28.55 (ERHÖHT!)
-available_budget:         €43.57 (unverändert)
+price:                    €38.55 → €45.55 (BEIDE erhöhen sich!)
+original_customer_price:  €23.55 → €30.55 (ERHÖHT!)
+available_budget:         €20.02 (unverändert)
 
-Kunde zahlt:     €28.55
-Auftragnehmer:   €43.55 × 0.85 = €37.02
+Platform Bonus:  €45.55 - €30.55 = €15.00 (BLEIBT!)
+Verfügbar:       €20.02 - €15.00 = €5.02 (BLEIBT!)
+
+Kunde zahlt:     €30.55
+Auftragnehmer:   €45.55 × 0.85 = €38.72
 Plattform zahlt: €15.00 (aus Strafe, bleibt)
+```
+
+### Szenario 4: Admin erhöht um restliche €5 (Plattform zahlt)
+```
+price:                    €45.55 → €50.55
+original_customer_price:  €30.55 → €30.55 (GLEICH!)
+available_budget:         €20.02 (unverändert)
+
+Platform Bonus:  €50.55 - €30.55 = €20.00
+Verfügbar:       €20.02 - €20.00 = €0.02 (FAST AUFGEBRAUCHT!)
+
+Kunde zahlt:     €30.55
+Auftragnehmer:   €50.55 × 0.85 = €42.97
+Plattform zahlt: €20.00 (aus Strafe, fast alles)
 ```
 
 ### Rechnung:
@@ -282,14 +321,17 @@ const newOriginalCustomerPrice = paidBy === 'customer'
 
 ### Letzte Deployments:
 1. ✅ Migration `original_customer_price` (3.12.2025 17:18)
-2. ✅ Fix Order #101 (3.12.2025 17:21)
-3. ✅ Preiserhöhungs-Endpoints (3.12.2025 17:00)
-4. ✅ Frontend-Anpassungen (3.12.2025 17:35)
-5. ✅ Badge-Logik Fix (3.12.2025 17:42)
+2. ✅ Fix Order #101 original_customer_price (3.12.2025 17:21)
+3. ✅ Fix Order #101 available_budget (3.12.2025 18:03)
+4. ✅ available_budget = nur Strafe (3.12.2025 18:00)
+5. ✅ Kunde-Erhöhung erhöht beide Preise (3.12.2025 17:56)
+6. ✅ Frontend Button-Logik Fix (3.12.2025 18:08)
+7. ✅ Backend Budget-Validierung Fix (3.12.2025 18:15)
 
 ### Aktuelle Version:
 - **Build:** v2.6 - FORCE CACHE CLEAR - System Monitoring Fixed
-- **Commit:** `b8791fb` (3.12.2025 17:42)
+- **Commit:** `880e628` (3.12.2025 18:15)
+- **Status:** 🟢 Produktiv und stabil
 
 ---
 
@@ -348,6 +390,50 @@ const newOriginalCustomerPrice = paidBy === 'customer'
 ### Problem 4: Validierung schlägt fehl
 **Ursache:** Backend prüfte gegen `order.price` statt `original_customer_price`  
 **Lösung:** orders.js angepasst (Zeile 70-76)
+
+### Problem 5: ⚠️ **KRITISCH** - available_budget falsch berechnet
+**Ursache:** `available_budget` enthielt Original-Preis + Strafe statt nur Strafe  
+**Lösung:** cancellation.js angepasst (Zeile 257)
+```javascript
+// VORHER (FALSCH):
+const availableBudget = originalPrice + penaltyAmount;
+
+// NACHHER (RICHTIG):
+const availableBudget = penaltyAmount;
+```
+
+### Problem 6: Kunde-Erhöhung verbraucht Plattform-Budget
+**Ursache:** Kunden-Erhöhung erhöhte nur `original_customer_price`, nicht `price`  
+**Lösung:** orders.js angepasst - beide Preise erhöhen sich parallel
+```javascript
+// Kunde erhöht um €7:
+price: €38.55 → €45.55 (BEIDE!)
+original_customer_price: €23.55 → €30.55
+Platform Bonus bleibt: €15.00
+```
+
+### Problem 7: Button "Plattform zahlt" disabled trotz Budget
+**Ursache:** Frontend prüfte `available_budget > price` statt korrekte Formel  
+**Lösung:** DetailedOrderView.jsx angepasst (Zeile 469)
+```javascript
+// VORHER:
+disabled={available_budget <= price}
+
+// NACHHER:
+disabled={available_budget - (price - original_customer_price) <= 0}
+```
+
+### Problem 8: Backend-Validierung lehnt Erhöhung ab
+**Ursache:** Backend berechnete `remainingBudget = available_budget - price`  
+**Lösung:** admin.js angepasst (Zeile 1094-1096)
+```javascript
+// VORHER:
+const remainingBudget = availableBudget - currentPrice;
+
+// NACHHER:
+const platformBonus = currentPrice - originalCustomerPrice;
+const remainingBudget = availableBudget - platformBonus;
+```
 
 ---
 
