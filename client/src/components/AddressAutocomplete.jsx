@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import api from '../services/api';
 
 // Fix for default marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -48,10 +49,10 @@ export default function AddressAutocomplete({
   const searchAddress = async (query) => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=de&limit=5`
-      );
-      const data = await response.json();
+      const response = await api.post('/pricing/geocode', {
+        fullAddress: query + ', Deutschland'
+      });
+      const data = response.data ? [response.data] : [];
       setSuggestions(data);
       setShowSuggestions(true);
     } catch (error) {

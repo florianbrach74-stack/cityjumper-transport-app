@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import api from '../services/api';
 
 export default function AddressSearch({ 
   label, 
@@ -49,15 +50,10 @@ export default function AddressSearch({
   const searchAddress = async (query) => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Deutschland')}&countrycodes=de&limit=8&addressdetails=1`,
-        {
-          headers: {
-            'Accept-Language': 'de'
-          }
-        }
-      );
-      const data = await response.json();
+      const response = await api.post('/pricing/geocode', {
+        fullAddress: query + ', Deutschland'
+      });
+      const data = response.data ? [response.data] : [];
       console.log('Search results:', data);
       setSuggestions(data);
       if (data.length > 0) {

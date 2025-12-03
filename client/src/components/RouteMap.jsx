@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { MapPin, Navigation, Clock, AlertTriangle } from 'lucide-react';
+import api from '../services/api';
 
 // Fix for default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -55,32 +56,18 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
   const geocodeAddress = async (address, retries = 3) => {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        // Add delay to respect Nominatim rate limits (1 request per second)
-        await new Promise(resolve => setTimeout(resolve, 1200));
+        // Use backend API for geocoding
+        const response = await api.post('/pricing/geocode', { 
+          fullAddress: address 
+        });
         
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=de`,
-          {
-            headers: {
-              'User-Agent': 'CityJumper-Transport-App/1.0',
-              'Accept': 'application/json'
-            }
-          }
-        );
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        if (data && data.length > 0) {
+        if (response.data && response.data.lat && response.data.lon) {
           return {
-            lat: parseFloat(data[0].lat),
-            lon: parseFloat(data[0].lon)
+            lat: response.data.lat,
+            lon: response.data.lon
           };
         }
         
-        // No results found
         console.warn(`Geocoding: No results for "${address}"`);
         return null;
         
@@ -88,39 +75,6 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
         console.error(`Geocoding attempt ${attempt}/${retries} failed:`, error.message);
         
         if (attempt === retries) {
-          // Last attempt failed - try fallback with just postal code
-          try {
-            const postalCodeMatch = address.match(/\b\d{5}\b/);
-            if (postalCodeMatch) {
-              const postalCode = postalCodeMatch[0];
-              console.log(`Fallback: Trying with postal code ${postalCode}`);
-              
-              await new Promise(resolve => setTimeout(resolve, 1200));
-              const fallbackResponse = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&postalcode=${postalCode}&country=Germany&limit=1`,
-                {
-                  headers: {
-                    'User-Agent': 'CityJumper-Transport-App/1.0',
-                    'Accept': 'application/json'
-                  }
-                }
-              );
-              
-              if (fallbackResponse.ok) {
-                const fallbackData = await fallbackResponse.json();
-                if (fallbackData && fallbackData.length > 0) {
-                  console.log(`✅ Fallback successful for ${postalCode}`);
-                  return {
-                    lat: parseFloat(fallbackData[0].lat),
-                    lon: parseFloat(fallbackData[0].lon)
-                  };
-                }
-              }
-            }
-          } catch (fallbackError) {
-            console.error('Fallback geocoding failed:', fallbackError.message);
-          }
-          
           return null;
         }
         
