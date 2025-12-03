@@ -78,9 +78,9 @@ export default function CancellationModal({ order, onClose, onSuccess, userRole 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-red-50">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-red-50 flex-shrink-0">
           <h2 className="text-xl font-bold text-gray-900 flex items-center">
             <AlertTriangle className="h-6 w-6 mr-2 text-red-600" />
             Auftrag stornieren #{order.id}
@@ -90,8 +90,8 @@ export default function CancellationModal({ order, onClose, onSuccess, userRole 
           </button>
         </div>
 
-        {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {/* Content - Scrollable */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1">
           {/* Order Info */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h3 className="font-semibold text-gray-900 mb-2">Auftragsdetails</h3>
