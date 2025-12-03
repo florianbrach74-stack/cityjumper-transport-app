@@ -23,7 +23,7 @@ async function cleanupOldOrders() {
              completed_at, cancellation_timestamp,
              COALESCE(completed_at, cancellation_timestamp) as finish_date
       FROM transport_orders
-      WHERE (status = 'completed' OR cancellation_status IS NOT NULL)
+      WHERE (status = 'completed' OR (cancellation_status IS NOT NULL AND status != 'pending'))
         AND COALESCE(completed_at, cancellation_timestamp) < $1
         AND COALESCE(completed_at, cancellation_timestamp) IS NOT NULL
     `, [threeMonthsAgo]);
