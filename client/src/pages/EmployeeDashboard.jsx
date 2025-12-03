@@ -305,8 +305,7 @@ const EmployeeDashboardNew = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Route</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Route & Ladegut</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fahrzeug</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aktionen</th>
@@ -323,18 +322,45 @@ const EmployeeDashboardNew = () => {
                           #{order.id}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          <div className="flex items-center space-x-2">
-                            <MapPin className="h-4 w-4 text-gray-400" />
+                          <div className="space-y-3">
+                            {/* Abholung */}
                             <div>
-                              <div className="font-medium">{order.pickup_city}</div>
-                              <div className="text-gray-500">→ {order.delivery_city}</div>
+                              <div className="flex items-center space-x-2 text-green-600 font-medium mb-1">
+                                <MapPin className="h-4 w-4" />
+                                <span>Abholung</span>
+                              </div>
+                              <div className="ml-6 text-sm">
+                                <div>{order.pickup_address}</div>
+                                <div className="text-gray-500">{order.pickup_postal_code} {order.pickup_city}</div>
+                                <div className="text-xs text-gray-400">
+                                  {new Date(order.pickup_date).toLocaleDateString('de-DE')} • {order.pickup_time_start} - {order.pickup_time_end}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>{new Date(order.pickup_date).toLocaleDateString('de-DE')}</span>
+                            
+                            {/* Zustellung */}
+                            <div>
+                              <div className="flex items-center space-x-2 text-blue-600 font-medium mb-1">
+                                <MapPin className="h-4 w-4" />
+                                <span>Zustellung</span>
+                              </div>
+                              <div className="ml-6 text-sm">
+                                <div>{order.delivery_address}</div>
+                                <div className="text-gray-500">{order.delivery_postal_code} {order.delivery_city}</div>
+                                <div className="text-xs text-gray-400">
+                                  {new Date(order.delivery_date).toLocaleDateString('de-DE')} • {order.delivery_time_start} - {order.delivery_time_end}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Ladegut */}
+                            <div className="pt-2 border-t border-gray-100">
+                              <div className="text-xs text-gray-600">
+                                <div><strong>Gewicht:</strong> {order.weight} kg</div>
+                                <div><strong>Maße:</strong> {order.length} × {order.width} × {order.height} cm</div>
+                                <div><strong>Paletten:</strong> {order.pallets}</div>
+                              </div>
+                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
