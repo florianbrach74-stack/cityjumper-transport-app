@@ -21,6 +21,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/migration', require('./routes/run-migration-endpoint')); // TEMPORARY
 app.use('/api/fix', require('./routes/fix-order-101')); // TEMPORARY
+app.use('/api/fix-budget', require('./routes/fix-order-101-budget')); // TEMPORARY
 app.use('/api/password-reset', require('./routes/password-reset'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/cmr', require('./routes/cmr'));
