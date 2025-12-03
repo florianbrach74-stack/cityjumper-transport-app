@@ -353,6 +353,35 @@ const EmployeeDashboardNew = () => {
                               </div>
                             </div>
                             
+                            {/* Multi-Stop Information */}
+                            {(order.pickup_stops?.length > 0 || order.delivery_stops?.length > 0) && (
+                              <div className="pt-2 border-t border-gray-100">
+                                <div className="text-xs font-medium text-orange-600 mb-2">
+                                  🚚 Multi-Stop ({(order.pickup_stops?.length || 0) + (order.delivery_stops?.length || 0) + 2} Stops)
+                                </div>
+                                {order.pickup_stops?.length > 0 && (
+                                  <div className="mb-2">
+                                    <div className="text-xs text-gray-500">Zusätzliche Abholungen:</div>
+                                    {order.pickup_stops.map((stop, idx) => (
+                                      <div key={idx} className="text-xs text-gray-600 pl-2 border-l-2 border-green-400">
+                                        {stop.address}, {stop.postal_code} {stop.city}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {order.delivery_stops?.length > 0 && (
+                                  <div>
+                                    <div className="text-xs text-gray-500">Zusätzliche Zustellungen:</div>
+                                    {order.delivery_stops.map((stop, idx) => (
+                                      <div key={idx} className="text-xs text-gray-600 pl-2 border-l-2 border-blue-400">
+                                        {stop.address}, {stop.postal_code} {stop.city}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
                             {/* Ladegut */}
                             <div className="pt-2 border-t border-gray-100">
                               <div className="text-xs text-gray-600">
