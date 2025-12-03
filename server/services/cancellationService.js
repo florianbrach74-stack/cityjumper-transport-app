@@ -49,7 +49,7 @@ async function cancelByContractor(orderId, reason = 'Auftragnehmer hat storniert
     
     // Hole Auftrag
     const orderResult = await client.query(
-      `SELECT id, price, contractor_id, pickup_date, pickup_time, status
+      `SELECT id, price, contractor_id, pickup_date, pickup_time_from, status
        FROM orders WHERE id = $1`,
       [orderId]
     );
@@ -69,7 +69,7 @@ async function cancelByContractor(orderId, reason = 'Auftragnehmer hat storniert
     }
     
     // Berechne Stunden bis Abholung
-    const hoursBeforePickup = calculateHoursUntilPickup(order.pickup_date, order.pickup_time);
+    const hoursBeforePickup = calculateHoursUntilPickup(order.pickup_date, order.pickup_time_from);
     
     // Berechne was Auftragnehmer bekommen hätte (85%)
     const contractorPayout = order.price * 0.85;
@@ -147,7 +147,7 @@ async function cancelByCustomer(orderId, reason = 'Kunde hat storniert') {
     
     // Hole Auftrag
     const orderResult = await client.query(
-      `SELECT id, price, contractor_id, pickup_date, pickup_time, status
+      `SELECT id, price, contractor_id, pickup_date, pickup_time_from, status
        FROM orders WHERE id = $1`,
       [orderId]
     );
@@ -163,7 +163,7 @@ async function cancelByCustomer(orderId, reason = 'Kunde hat storniert') {
     }
     
     // Berechne Stunden bis Abholung
-    const hoursBeforePickup = calculateHoursUntilPickup(order.pickup_date, order.pickup_time);
+    const hoursBeforePickup = calculateHoursUntilPickup(order.pickup_date, order.pickup_time_from);
     
     // Berechne Stornierungsgebühr laut AGB §7.1
     const cancellationFee = calculateCancellationFee(order.price, hoursBeforePickup);
@@ -295,7 +295,7 @@ async function adjustContractorPrice(orderId, newPrice) {
  */
 async function calculateCancellationPreview(orderId) {
   const orderResult = await pool.query(
-    `SELECT price, pickup_date, pickup_time, contractor_id
+    `SELECT price, pickup_date, pickup_time_from, contractor_id
      FROM orders WHERE id = $1`,
     [orderId]
   );
@@ -305,7 +305,7 @@ async function calculateCancellationPreview(orderId) {
   }
   
   const order = orderResult.rows[0];
-  const hoursBeforePickup = calculateHoursUntilPickup(order.pickup_date, order.pickup_time);
+  const hoursBeforePickup = calculateHoursUntilPickup(order.pickup_date, order.pickup_time_from);
   const cancellationFee = calculateCancellationFee(order.price, hoursBeforePickup);
   
   let feePercentage = 0;
