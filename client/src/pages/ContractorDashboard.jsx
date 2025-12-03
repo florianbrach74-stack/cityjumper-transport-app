@@ -423,6 +423,9 @@ const ContractorDashboard = () => {
                           {stop.contact_name && (
                             <div className="text-gray-500">Kontakt: {stop.contact_name}</div>
                           )}
+                          {stop.time_start && stop.time_end && (
+                            <div className="text-blue-600 font-medium">⏰ {stop.time_start} - {stop.time_end}</div>
+                          )}
                         </div>
                       ))}
                     </div>
