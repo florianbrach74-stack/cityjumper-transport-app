@@ -629,7 +629,7 @@ const ContractorDashboard = () => {
           {order.price && (
             <div className="space-y-2">
               <div className="text-lg font-bold text-primary-600">
-                {formatPrice(showAcceptButton ? (order.price * 0.85) : (order.contractor_price || order.price * 0.85))}
+                {formatPrice(showAcceptButton ? (order.available_budget ? order.available_budget * 0.85 : order.price * 0.85) : (order.contractor_price || order.price * 0.85))}
                 {showAcceptButton && (
                   <span className="text-xs text-gray-500 ml-1">(max.)</span>
                 )}
@@ -639,7 +639,12 @@ const ContractorDashboard = () => {
                   </span>
                 )}
               </div>
-              {order.price_updated_at && new Date(order.price_updated_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) && (
+              {order.available_budget && parseFloat(order.available_budget) > parseFloat(order.price) && showAcceptButton && (
+                <div className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-bold bg-gradient-to-r from-red-400 to-red-600 text-white shadow-lg animate-pulse border-2 border-red-700">
+                  🔥 BONUS! Erhöhter Preis nach Stornierung
+                </div>
+              )}
+              {order.price_updated_at && new Date(order.price_updated_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) && !order.available_budget && (
                 <div className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-bold bg-gradient-to-r from-green-400 to-green-600 text-white shadow-lg animate-pulse border-2 border-green-700">
                   ⬆️ NEUER PREIS! Kunde hat Preis erhöht
                 </div>
