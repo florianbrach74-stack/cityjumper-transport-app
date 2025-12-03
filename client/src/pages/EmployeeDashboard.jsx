@@ -334,8 +334,8 @@ const EmployeeDashboardNew = () => {
                                 <div className="text-gray-500">{order.pickup_postal_code} {order.pickup_city}</div>
                                 <div className="text-xs text-gray-400">
                                   {new Date(order.pickup_date).toLocaleDateString('de-DE')}
-                                  {order.pickup_time_start && order.pickup_time_end && (
-                                    <> • {order.pickup_time_start} - {order.pickup_time_end}</>
+                                  {order.pickup_time_from && order.pickup_time_to && (
+                                    <> • {order.pickup_time_from} - {order.pickup_time_to}</>
                                   )}
                                 </div>
                               </div>
@@ -352,8 +352,8 @@ const EmployeeDashboardNew = () => {
                                 <div className="text-gray-500">{order.delivery_postal_code} {order.delivery_city}</div>
                                 <div className="text-xs text-gray-400">
                                   {new Date(order.delivery_date).toLocaleDateString('de-DE')}
-                                  {order.delivery_time_start && order.delivery_time_end && (
-                                    <> • {order.delivery_time_start} - {order.delivery_time_end}</>
+                                  {order.delivery_time_from && order.delivery_time_to && (
+                                    <> • {order.delivery_time_from} - {order.delivery_time_to}</>
                                   )}
                                 </div>
                               </div>

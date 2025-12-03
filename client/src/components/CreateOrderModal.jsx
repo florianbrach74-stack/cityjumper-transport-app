@@ -795,7 +795,7 @@ const CreateOrderModal = ({ onClose, onSuccess }) => {
                   type="delivery"
                   stops={deliveryStops}
                   onStopsChange={setDeliveryStops}
-                  mainDeliveryTimeEnd={formData.delivery_time_end}
+                  mainDeliveryTimeEnd={formData.delivery_time_to}
                 />
               </div>
             </div>
