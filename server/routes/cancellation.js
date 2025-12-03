@@ -275,6 +275,7 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
     }
     
     // Update order - set to pending with new price and available budget
+    // Save original_customer_price so invoice always uses the price customer agreed to
     await client.query(
       `UPDATE transport_orders 
        SET cancellation_status = 'cancelled_by_contractor',
@@ -285,12 +286,13 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
            available_budget = $3,
            hours_before_pickup = $4,
            price = $7,
+           original_customer_price = $8,
            contractor_price = NULL,
            contractor_id = NULL,
            cancellation_notes = $5,
            status = 'pending'
        WHERE id = $6`,
-      [reason, penaltyAmount, availableBudget, hoursUntilPickup, notes, orderId, newCustomerPrice]
+      [reason, penaltyAmount, availableBudget, hoursUntilPickup, notes, orderId, newCustomerPrice, originalPrice]
     );
     
     // Delete all bids for this order

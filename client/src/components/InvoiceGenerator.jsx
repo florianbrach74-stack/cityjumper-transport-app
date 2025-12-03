@@ -8,7 +8,9 @@ const InvoiceGenerator = ({ order, onClose }) => {
   
   if (!order) return null;
 
-  const netPrice = parseFloat(order.price) || 0;
+  // Use original_customer_price if available (when platform paid for price increase)
+  // Otherwise use current price
+  const netPrice = parseFloat(order.original_customer_price || order.price) || 0;
   const vatAmount = netPrice * 0.19;
   const grossPrice = netPrice + vatAmount;
 

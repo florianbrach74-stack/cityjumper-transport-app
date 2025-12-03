@@ -1110,14 +1110,21 @@ router.post('/orders/:id/increase-price', adminAuth, async (req, res) => {
     const newPrice = currentPrice + increase;
     
     // Update order price
+    // If customer pays, also update original_customer_price (or set it if not exists)
+    const originalCustomerPrice = order.original_customer_price || currentPrice;
+    const newOriginalCustomerPrice = paidBy === 'customer' 
+      ? originalCustomerPrice + increase 
+      : originalCustomerPrice;
+    
     const updateResult = await pool.query(
       `UPDATE transport_orders 
        SET price = $1,
+           original_customer_price = $3,
            price_updated_at = NOW(),
            updated_at = NOW()
        WHERE id = $2
        RETURNING *`,
-      [newPrice, id]
+      [newPrice, id, newOriginalCustomerPrice]
     );
     
     // Log price increase in edit_history
