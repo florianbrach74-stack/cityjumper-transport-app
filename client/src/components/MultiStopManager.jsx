@@ -29,9 +29,15 @@ export default function MultiStopManager({ type, stops, onStopsChange, mainDeliv
     }
     
     // For delivery stops, validate time windows
-    if (type === 'delivery' && mainDeliveryTimeEnd) {
+    if (type === 'delivery') {
       if (!newStop.time_start || !newStop.time_end) {
         alert('Bitte Zeitfenster eingeben');
+        return;
+      }
+      
+      // Require mainDeliveryTimeEnd to be set
+      if (!mainDeliveryTimeEnd) {
+        alert('Bitte zuerst die Hauptzustellzeit (Zustellung BIS) oben eingeben');
         return;
       }
       
