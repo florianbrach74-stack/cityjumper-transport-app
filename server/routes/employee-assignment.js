@@ -247,9 +247,21 @@ router.get('/employee/orders', authenticateToken, authorizeRole('employee'), asy
       params = [contractorId, req.user.id];
     }
 
+    console.log('   Query params:', { contractorId, employeeId: req.user.id, assignmentMode });
+    console.log('   Query:', query);
+    
     const result = await pool.query(query, params);
-    console.log('   Found orders:', result.rows.length);
-
+    
+    console.log(`   Found ${result.rows.length} orders for employee`);
+    if (result.rows.length > 0) {
+      console.log('   First order:', {
+        id: result.rows[0].id,
+        status: result.rows[0].status,
+        assigned_employee_id: result.rows[0].assigned_employee_id,
+        contractor_id: result.rows[0].contractor_id
+      });
+    }
+    
     res.json({
       orders: result.rows,
       assignmentMode
