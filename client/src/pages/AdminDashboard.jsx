@@ -837,10 +837,20 @@ export default function AdminDashboard() {
                                 ⬆️ ERHÖHT
                               </span>
                             )}
+                            {order.available_budget && parseFloat(order.available_budget) > parseFloat(order.price) && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800 border border-red-300" title={`Budget nach AN-Stornierung: €${parseFloat(order.available_budget).toFixed(2)}`}>
+                                💰 +€{(parseFloat(order.available_budget) - parseFloat(order.price)).toFixed(2)} STRAFE
+                              </span>
+                            )}
                           </div>
                           {order.price_updated_at && order.minimum_price_at_creation && (
                             <div className="text-xs text-gray-500">
                               Ursprünglich: €{parseFloat(order.minimum_price_at_creation).toFixed(2)} → Erhöht um €{(parseFloat(order.price) - parseFloat(order.minimum_price_at_creation)).toFixed(2)}
+                            </div>
+                          )}
+                          {order.available_budget && parseFloat(order.available_budget) > parseFloat(order.price) && (
+                            <div className="text-xs text-red-600 font-medium">
+                              💰 Verfügbares Budget: €{parseFloat(order.available_budget).toFixed(2)} (inkl. AN-Strafe)
                             </div>
                           )}
                           <div className="text-xs text-gray-600" title="Auftragnehmer-Preis (85%)">

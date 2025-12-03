@@ -226,9 +226,9 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
     const feeInfo = calculateCancellationFee(order, 'contractor');
     const hoursUntilPickup = feeInfo.hoursUntilPickup;
     
-    // Berechne was Auftragnehmer bekommen hätte (85% vom Kundenpreis)
+    // Berechne was Auftragnehmer bekommen hätte (sein Gebotspreis)
     const originalPrice = parseFloat(order.price);
-    const contractorPayout = originalPrice * 0.85;
+    const contractorPayout = parseFloat(order.contractor_price || order.price * 0.85);
     
     // Berechne Penalty basierend auf Stunden (gleiche Staffelung wie Kunde, §7.2b AGB)
     let penaltyPercentage = 0;
@@ -280,6 +280,12 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
            status = 'pending'
        WHERE id = $6`,
       [reason, penaltyAmount, availableBudget, hoursUntilPickup, notes, orderId]
+    );
+    
+    // Delete all bids for this order
+    await client.query(
+      'DELETE FROM bids WHERE order_id = $1',
+      [orderId]
     );
     
     // Create history entry
