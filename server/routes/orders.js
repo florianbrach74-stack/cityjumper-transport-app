@@ -67,8 +67,11 @@ router.put('/:id/price', authorizeRole('customer'), async (req, res) => {
       return res.status(400).json({ message: 'Preis kann nur für ausstehende Aufträge geändert werden' });
     }
 
-    // Price must be higher than current price
-    if (price <= order.price) {
+    // Get current customer price (what customer actually pays)
+    const currentCustomerPrice = parseFloat(order.original_customer_price || order.price);
+    
+    // Price must be higher than current customer price
+    if (price <= currentCustomerPrice) {
       return res.status(400).json({ message: 'Neuer Preis muss höher sein als der aktuelle Preis' });
     }
 
@@ -76,19 +79,21 @@ router.put('/:id/price', authorizeRole('customer'), async (req, res) => {
     if (!order.minimum_price_at_creation) {
       await pool.query(
         'UPDATE transport_orders SET minimum_price_at_creation = $1 WHERE id = $2',
-        [order.price, id]
+        [currentCustomerPrice, id]
       );
     }
 
-    // Update customer price AND original_customer_price
-    // Contractor keeps their original bid price, customer pays more
-    // original_customer_price tracks what customer will be invoiced
-    const originalCustomerPrice = order.original_customer_price || order.price;
-    const newOriginalCustomerPrice = originalCustomerPrice + (price - order.price);
+    // Calculate increase amount
+    const increaseAmount = price - currentCustomerPrice;
+    
+    // Update both price (for contractors) and original_customer_price (for customer invoice)
+    // If there's a platform bonus, maintain it by adding increase to both
+    const newContractorPrice = parseFloat(order.price) + increaseAmount;
+    const newOriginalCustomerPrice = price;
     
     await pool.query(
       'UPDATE transport_orders SET price = $1, original_customer_price = $2, price_updated_at = NOW(), updated_at = NOW() WHERE id = $3',
-      [price, newOriginalCustomerPrice, id]
+      [newContractorPrice, newOriginalCustomerPrice, id]
     );
 
     res.json({ 
