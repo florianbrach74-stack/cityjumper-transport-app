@@ -207,18 +207,41 @@ router.get('/employee/orders', authenticateToken, authorizeRole('employee'), asy
     const assignmentMode = contractorResult.rows[0]?.employee_assignment_mode || 'all_access';
     console.log('   Assignment mode:', assignmentMode);
 
-    // Get ALL active and completed orders of the contractor
-    const query = `
-      SELECT o.*,
-             e.first_name as employee_first_name,
-             e.last_name as employee_last_name
-      FROM transport_orders o
-      LEFT JOIN users e ON o.assigned_employee_id = e.id
-      WHERE o.contractor_id = $1 
-        AND o.status IN ('approved', 'accepted', 'picked_up', 'in_transit', 'completed')
-      ORDER BY o.created_at DESC
-    `;
-    const params = [contractorId];
+    // Get only approved orders (not yet picked up or completed)
+    // In 'all_access' mode: show all approved orders
+    // In 'manual_assignment' mode: show only orders assigned to this employee
+    let query;
+    let params;
+    
+    if (assignmentMode === 'all_access') {
+      // Show all approved orders that are not yet assigned or in progress
+      query = `
+        SELECT o.*,
+               e.first_name as employee_first_name,
+               e.last_name as employee_last_name
+        FROM transport_orders o
+        LEFT JOIN users e ON o.assigned_employee_id = e.id
+        WHERE o.contractor_id = $1 
+          AND o.status = 'approved'
+          AND (o.assigned_employee_id IS NULL OR o.assigned_employee_id = $2)
+        ORDER BY o.created_at DESC
+      `;
+      params = [contractorId, req.user.id];
+    } else {
+      // Manual assignment: show only orders assigned to this employee
+      query = `
+        SELECT o.*,
+               e.first_name as employee_first_name,
+               e.last_name as employee_last_name
+        FROM transport_orders o
+        LEFT JOIN users e ON o.assigned_employee_id = e.id
+        WHERE o.contractor_id = $1 
+          AND o.assigned_employee_id = $2
+          AND o.status IN ('approved', 'picked_up', 'in_transit')
+        ORDER BY o.created_at DESC
+      `;
+      params = [contractorId, req.user.id];
+    }
 
     const result = await pool.query(query, params);
     console.log('   Found orders:', result.rows.length);
