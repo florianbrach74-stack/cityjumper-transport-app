@@ -104,9 +104,10 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
       
       // Add additional pickup stops
       for (const stop of pickupStops) {
-        if (stop.city && stop.postal_code) {
+        if (stop.address && stop.city && stop.postal_code) {
           try {
-            const geocoded = await geocodeAddress(`${stop.postal_code} ${stop.city}, ${stop.country || 'Deutschland'}`);
+            const fullAddress = `${stop.address}, ${stop.postal_code} ${stop.city}, ${stop.country || 'Deutschland'}`;
+            const geocoded = await geocodeAddress(fullAddress);
             if (geocoded) {
               waypoints.push(`${geocoded.lon},${geocoded.lat}`);
             }
@@ -121,9 +122,10 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
       
       // Add additional delivery stops
       for (const stop of deliveryStops) {
-        if (stop.city && stop.postal_code) {
+        if (stop.address && stop.city && stop.postal_code) {
           try {
-            const geocoded = await geocodeAddress(`${stop.postal_code} ${stop.city}, ${stop.country || 'Deutschland'}`);
+            const fullAddress = `${stop.address}, ${stop.postal_code} ${stop.city}, ${stop.country || 'Deutschland'}`;
+            const geocoded = await geocodeAddress(fullAddress);
             if (geocoded) {
               waypoints.push(`${geocoded.lon},${geocoded.lat}`);
             }
