@@ -28,7 +28,7 @@ const bidsAPI = {
 };
 
 const verificationAPI = {
-  getStatus: () => api.get('/contractors/verification-status'),
+  getStatus: () => api.get('/verification/status'),
 };
 
 const ContractorDashboard = () => {

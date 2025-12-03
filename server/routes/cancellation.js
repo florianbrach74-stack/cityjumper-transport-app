@@ -22,9 +22,15 @@ function calculateCancellationFee(order, cancelledBy) {
     };
   }
   
-  const pickupDateTime = new Date(`${order.pickup_date}T${order.pickup_time_from || '00:00'}`);
+  // Extract date part from ISO string if needed
+  const dateStr = order.pickup_date instanceof Date 
+    ? order.pickup_date.toISOString().split('T')[0]
+    : order.pickup_date.split('T')[0];
+  
+  const pickupDateTime = new Date(`${dateStr}T${order.pickup_time_from || '00:00'}`);
   const now = new Date();
   
+  console.log('   dateStr:', dateStr);
   console.log('   pickupDateTime:', pickupDateTime);
   console.log('   now:', now);
   
