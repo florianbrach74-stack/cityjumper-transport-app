@@ -215,7 +215,7 @@ router.get('/employee/orders', authenticateToken, authorizeRole('employee'), asy
       FROM transport_orders o
       LEFT JOIN users e ON o.assigned_employee_id = e.id
       WHERE o.contractor_id = $1 
-        AND o.status IN ('accepted', 'picked_up', 'in_transit', 'completed')
+        AND o.status IN ('approved', 'accepted', 'picked_up', 'in_transit', 'completed')
       ORDER BY o.created_at DESC
     `;
     const params = [contractorId];
