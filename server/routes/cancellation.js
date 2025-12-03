@@ -193,7 +193,7 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
   
   try {
     const { orderId } = req.params;
-    const { reason, notes } = req.body;
+    const { reason, notes, priceIncrease } = req.body;
     const userId = req.user.id;
     
     await client.query('BEGIN');
@@ -244,11 +244,21 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
     
     const penaltyAmount = contractorPayout * penaltyPercentage;
     
-    // Verfügbares Budget für Neuvermittlung = Kundenpreis + Penalty
+    // Preiserhöhung aus Request (Admin-Eingabe)
+    const priceIncreaseAmount = parseFloat(priceIncrease) || 0;
+    
+    // Neuer Kundenpreis = Original + Erhöhung (max. Penalty)
+    const maxIncrease = penaltyAmount;
+    const actualIncrease = Math.min(priceIncreaseAmount, maxIncrease);
+    const newCustomerPrice = originalPrice + actualIncrease;
+    
+    // Verfügbares Budget für Neuvermittlung = Kundenpreis + restliche Penalty
     const availableBudget = originalPrice + penaltyAmount;
     
     console.log('📊 Auftragnehmer-Stornierung:');
-    console.log('   Kundenpreis:', originalPrice);
+    console.log('   Kundenpreis (original):', originalPrice);
+    console.log('   Preiserhöhung:', actualIncrease.toFixed(2));
+    console.log('   Neuer Kundenpreis:', newCustomerPrice.toFixed(2));
     console.log('   AN hätte bekommen:', contractorPayout);
     console.log('   Stunden bis Abholung:', hoursUntilPickup.toFixed(2));
     console.log('   Penalty (', (penaltyPercentage * 100), '%):', penaltyAmount.toFixed(2));
@@ -264,7 +274,7 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
       );
     }
     
-    // Update order - set to pending with available budget
+    // Update order - set to pending with new price and available budget
     await client.query(
       `UPDATE transport_orders 
        SET cancellation_status = 'cancelled_by_contractor',
@@ -274,12 +284,13 @@ router.post('/:orderId/cancel-by-contractor', authenticateToken, authorizeRole('
            contractor_penalty = $2,
            available_budget = $3,
            hours_before_pickup = $4,
+           price = $7,
            contractor_price = NULL,
            contractor_id = NULL,
            cancellation_notes = $5,
            status = 'pending'
        WHERE id = $6`,
-      [reason, penaltyAmount, availableBudget, hoursUntilPickup, notes, orderId]
+      [reason, penaltyAmount, availableBudget, hoursUntilPickup, notes, orderId, newCustomerPrice]
     );
     
     // Delete all bids for this order

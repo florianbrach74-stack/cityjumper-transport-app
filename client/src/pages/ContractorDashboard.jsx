@@ -629,7 +629,7 @@ const ContractorDashboard = () => {
           {order.price && (
             <div className="space-y-2">
               <div className="text-lg font-bold text-primary-600">
-                {formatPrice(showAcceptButton ? (order.available_budget ? order.available_budget * 0.85 : order.price * 0.85) : (order.contractor_price || order.price * 0.85))}
+                {formatPrice(showAcceptButton ? (order.price * 0.85) : (order.contractor_price || order.price * 0.85))}
                 {showAcceptButton && (
                   <span className="text-xs text-gray-500 ml-1">(max.)</span>
                 )}
