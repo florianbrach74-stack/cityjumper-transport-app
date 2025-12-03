@@ -188,8 +188,15 @@ export default function MultiStopManager({ type, stops, onStopsChange, mainDeliv
           </div>
           
           {/* Time fields for delivery stops */}
-          {type === 'delivery' && mainDeliveryTimeEnd && (
+          {type === 'delivery' && (
             <div className="grid grid-cols-2 gap-3 bg-blue-50 p-3 rounded-md">
+              {!mainDeliveryTimeEnd && (
+                <div className="col-span-2 bg-yellow-50 border border-yellow-300 rounded p-2 mb-2">
+                  <p className="text-xs text-yellow-800">
+                    ⚠️ Bitte zuerst die Hauptzustellzeit oben eingeben, um die Mindestzeit zu berechnen.
+                  </p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Zustellung VON * (z.B. Ladenöffnung)
@@ -204,11 +211,11 @@ export default function MultiStopManager({ type, stops, onStopsChange, mainDeliv
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Zustellung BIS * (mind. {(() => {
+                  Zustellung BIS * {mainDeliveryTimeEnd && `(mind. ${(() => {
                     const [h, m] = mainDeliveryTimeEnd.split(':').map(Number);
                     const total = h * 60 + m + 10;
                     return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
-                  })()})
+                  })()})`}
                 </label>
                 <input
                   type="time"
