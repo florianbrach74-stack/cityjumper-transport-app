@@ -324,9 +324,11 @@ const CustomerDashboard = () => {
                           <span className="font-semibold">
                             {order.customer_price 
                               ? formatPrice(parseFloat(order.customer_price)) 
-                              : order.price 
-                                ? formatPrice(parseFloat(order.price))
-                                : '-'}
+                              : order.original_customer_price
+                                ? formatPrice(parseFloat(order.original_customer_price))
+                                : order.price 
+                                  ? formatPrice(parseFloat(order.price))
+                                  : '-'}
                           </span>
                           
                           {/* Wartezeit-Gebühr für abgeschlossene Aufträge */}

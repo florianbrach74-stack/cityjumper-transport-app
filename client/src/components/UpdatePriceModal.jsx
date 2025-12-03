@@ -3,11 +3,12 @@ import { X, TrendingUp, AlertCircle } from 'lucide-react';
 import { ordersAPI } from '../services/api';
 
 export default function UpdatePriceModal({ order, onClose, onSuccess }) {
-  const [newPrice, setNewPrice] = useState(parseFloat(order.price));
+  // Use original_customer_price (what customer pays) instead of price (what contractors see)
+  const currentPrice = parseFloat(order.original_customer_price || order.price);
+  const [newPrice, setNewPrice] = useState(currentPrice);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const currentPrice = parseFloat(order.price);
   const minimumPrice = order.minimum_price_at_creation ? parseFloat(order.minimum_price_at_creation) : null;
 
   const handleSubmit = async (e) => {
