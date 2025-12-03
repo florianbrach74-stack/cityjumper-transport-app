@@ -10,6 +10,10 @@ const geocodeCache = new Map();
 const CACHE_MAX_SIZE = 1000; // Store max 1000 addresses
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+// Rate limiting for LocationIQ (max 2 requests per second)
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 600; // 600ms = ~1.5 requests per second (safe margin)
+
 // Geocode using LocationIQ (OpenStreetMap-based, free tier with API key)
 router.post('/geocode', async (req, res) => {
   try {
@@ -42,6 +46,15 @@ router.post('/geocode', async (req, res) => {
     }
     
     console.log(`🔍 Geocoding with LocationIQ: ${fullAddress}`);
+    
+    // Rate limiting: wait if needed
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTime;
+    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+      const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    lastRequestTime = Date.now();
     
     const response = await axios.get('https://us1.locationiq.com/v1/search', {
       params: {
