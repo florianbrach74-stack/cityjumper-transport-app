@@ -466,8 +466,8 @@ const DetailedOrderView = ({ orderId, onClose }) => {
                           setShowPriceIncreaseModal(true);
                         }}
                         className="flex-1 px-3 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-50"
-                        disabled={!order.available_budget || parseFloat(order.available_budget) <= parseFloat(order.price)}
-                        title={order.available_budget ? `Verfügbar: €${(parseFloat(order.available_budget) - parseFloat(order.price)).toFixed(2)}` : 'Nur nach AN-Stornierung'}
+                        disabled={!order.available_budget || !order.original_customer_price || (parseFloat(order.available_budget) - (parseFloat(order.price) - parseFloat(order.original_customer_price))) <= 0}
+                        title={order.available_budget && order.original_customer_price ? `Verfügbar: €${Math.max(0, parseFloat(order.available_budget) - (parseFloat(order.price) - parseFloat(order.original_customer_price))).toFixed(2)}` : 'Nur nach AN-Stornierung'}
                       >
                         💰 Plattform zahlt
                       </button>
@@ -538,9 +538,9 @@ const DetailedOrderView = ({ orderId, onClose }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   placeholder="z.B. 5.00"
                 />
-                {priceIncreasePaidBy === 'platform' && order.available_budget && (
+                {priceIncreasePaidBy === 'platform' && order.available_budget && order.original_customer_price && (
                   <p className="text-xs text-gray-600 mt-1">
-                    Verfügbar: €{(parseFloat(order.available_budget) - parseFloat(order.price)).toFixed(2)}
+                    Verfügbar: €{Math.max(0, parseFloat(order.available_budget) - (parseFloat(order.price) - parseFloat(order.original_customer_price))).toFixed(2)}
                   </p>
                 )}
               </div>
