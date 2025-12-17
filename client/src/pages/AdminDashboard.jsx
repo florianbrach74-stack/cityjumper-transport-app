@@ -1067,6 +1067,7 @@ export default function AdminDashboard() {
                         >
                           <option value="customer">Kunde</option>
                           <option value="contractor">Auftragnehmer</option>
+                          <option value="employee">Mitarbeiter</option>
                           <option value="admin">Admin</option>
                         </select>
                       </td>
