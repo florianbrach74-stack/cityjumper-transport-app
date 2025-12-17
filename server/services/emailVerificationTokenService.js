@@ -175,6 +175,7 @@ async function verifyEmailWithToken(token) {
 
 /**
  * Lösche abgelaufene unverifizierte Accounts (älter als 2 Stunden)
+ * WICHTIG: Mitarbeiter (employees) werden NICHT gelöscht, da sie vom Admin angelegt werden
  */
 async function cleanupExpiredUnverifiedAccounts() {
   try {
@@ -182,12 +183,14 @@ async function cleanupExpiredUnverifiedAccounts() {
       `DELETE FROM users 
        WHERE email_verified = false 
        AND created_at < NOW() - INTERVAL '2 hours'
-       RETURNING email`
+       AND role != 'employee'
+       AND "current_role" != 'employee'
+       RETURNING email, role, "current_role"`
     );
     
     if (result.rows.length > 0) {
       console.log(`🧹 ${result.rows.length} abgelaufene unverifizierte Accounts gelöscht:`);
-      result.rows.forEach(row => console.log(`   - ${row.email}`));
+      result.rows.forEach(row => console.log(`   - ${row.email} (${row.role || row.current_role})`));
     }
     
     return { success: true, deleted: result.rows.length };
