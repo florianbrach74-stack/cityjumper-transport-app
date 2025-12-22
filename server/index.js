@@ -181,6 +181,17 @@ app.listen(PORT, async () => {
   } catch (error) {
     console.error('❌ Failed to start Database Backup Service:', error);
   }
+  
+  // Auto-fix employees contractor_id on startup
+  try {
+    const { autoFixEmployeesContractorId } = require('./routes/fix-employees-contractor-id');
+    setTimeout(() => {
+      autoFixEmployeesContractorId();
+    }, 5000); // Wait 5 seconds after startup
+    console.log('✅ Employee Auto-Fix scheduled (runs 5 seconds after startup)');
+  } catch (error) {
+    console.error('❌ Failed to schedule Employee Auto-Fix:', error);
+  }
 });
 
 module.exports = app;

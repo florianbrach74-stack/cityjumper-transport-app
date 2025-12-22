@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Employees - Courierly</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Mitarbeiter Fix - Courierly</h1>
+        
+        <div class="step">
+            <h3>Schritt 1: Admin Login</h3>
+            <p>Bitte gib dein Admin-Token ein (aus dem Browser LocalStorage):</p>
+            <input type="text" id="token" placeholder="Admin Token hier einfügen" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px;">
+            <p style="font-size: 12px; color: #666;">
+                💡 Token findest du in: Browser DevTools → Application → Local Storage → token
+            </p>
+        </div>
+
+        <div class="step">
+            <h3>Schritt 2: Fix ausführen</h3>
+            <button onclick="fixEmployees()" id="fixBtn">
+                🚀 Mitarbeiter jetzt fixen
+            </button>
+        </div>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        async function fixEmployees() {
+            const token = document.getElementById('token').value.trim();
+            const resultDiv = document.getElementById('result');
+            const btn = document.getElementById('fixBtn');
+            
+            if (!token) {
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '❌ Bitte Admin-Token eingeben!';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Wird ausgeführt...';
+            
+            resultDiv.className = 'result info';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '⏳ Fix wird ausgeführt...';
+
+            try {
+                const response = await fetch('https://cityjumper-api-production-01e4.up.railway.app/api/fix-employees/fix-employees-contractor-id', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Erfolgreich!</h3>
+                        <p><strong>${data.fixed}</strong> Mitarbeiter wurden gefixt</p>
+                        <p>${data.message}</p>
+                        ${data.employees && data.employees.length > 0 ? `
+                            <h4>Gefixte Mitarbeiter:</h4>
+                            <ul>
+                                ${data.employees.map(emp => `
+                                    <li>${emp.first_name} ${emp.last_name} (${emp.email}) - contractor_id: ${emp.contractor_id}</li>
+                                `).join('')}
+                            </ul>
+                        ` : ''}
+                        <p style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 5px;">
+                            <strong>🎉 Fertig!</strong><br>
+                            Du kannst jetzt Mitarbeiter zuweisen!<br>
+                            Gehe zurück zur App und versuche es erneut.
+                        </p>
+                    `;
+                    btn.textContent = '✅ Erfolgreich gefixt!';
+                } else {
+                    throw new Error(data.error || 'Unbekannter Fehler');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Fehler</h3>
+                    <p>${error.message}</p>
+                    <pre>${JSON.stringify(error, null, 2)}</pre>
+                    <p style="margin-top: 15px;">
+                        <strong>Mögliche Ursachen:</strong><br>
+                        • Token ist ungültig oder abgelaufen<br>
+                        • Du bist nicht als Admin eingeloggt<br>
+                        • Deployment ist noch nicht fertig
+                    </p>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🔄 Nochmal versuchen';
+            }
+        }
+    </script>
+</body>
+</html>
