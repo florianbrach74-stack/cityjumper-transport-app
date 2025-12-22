@@ -64,8 +64,8 @@ router.post('/', authenticateToken, async (req, res) => {
 
     // Create employee
     const result = await pool.query(
-      `INSERT INTO users (email, password, role, company_id, company_name, first_name, last_name, phone)
-       VALUES ($1, $2, 'employee', $3, $4, $5, $6, $7)
+      `INSERT INTO users (email, password, role, company_id, contractor_id, company_name, first_name, last_name, phone)
+       VALUES ($1, $2, 'employee', $3, $3, $4, $5, $6, $7)
        RETURNING id, email, first_name, last_name, phone, created_at`,
       [email, hashedPassword, req.user.id, contractor.rows[0].company_name, first_name, last_name, phone]
     );

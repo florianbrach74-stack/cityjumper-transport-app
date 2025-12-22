@@ -23,6 +23,7 @@ app.use('/api/migration', require('./routes/run-migration-endpoint')); // TEMPOR
 app.use('/api/test', require('./routes/test-cleanup')); // TEMPORARY - Test cleanup logic
 app.use('/api/fix', require('./routes/fix-order-101')); // TEMPORARY
 app.use('/api/fix-budget', require('./routes/fix-order-101-budget')); // TEMPORARY
+app.use('/api/fix-employees', require('./routes/fix-employees-contractor-id')); // TEMPORARY - Fix employees
 app.use('/api/password-reset', require('./routes/password-reset'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/cmr', require('./routes/cmr'));
