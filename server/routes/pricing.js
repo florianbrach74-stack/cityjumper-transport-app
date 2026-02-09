@@ -14,7 +14,7 @@ const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 600; // 600ms = ~1.5 requests per second (safe margin)
 
-// Geocode using LocationIQ (OpenStreetMap-based, free tier with API key)
+// Geocode using Nominatim (OpenStreetMap - FREE, no API key needed)
 router.post('/geocode', async (req, res) => {
   try {
     const { fullAddress } = req.body;
@@ -36,34 +36,28 @@ router.post('/geocode', async (req, res) => {
     }
 
     const axios = require('axios');
-    const LOCATIONIQ_API_KEY = process.env.LOCATIONIQ_API_KEY;
     
-    if (!LOCATIONIQ_API_KEY) {
-      console.error('❌ LOCATIONIQ_API_KEY not configured');
-      return res.status(500).json({ 
-        error: 'Geocoding service not configured' 
-      });
-    }
+    console.log(`🔍 Geocoding with Nominatim (OpenStreetMap): ${fullAddress}`);
     
-    console.log(`🔍 Geocoding with LocationIQ: ${fullAddress}`);
-    
-    // Rate limiting: wait if needed
+    // Rate limiting: Nominatim requires max 1 request per second
     const now = Date.now();
     const timeSinceLastRequest = now - lastRequestTime;
-    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-      const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+    if (timeSinceLastRequest < 1000) {
+      const waitTime = 1000 - timeSinceLastRequest;
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
     lastRequestTime = Date.now();
     
-    const response = await axios.get('https://us1.locationiq.com/v1/search', {
+    const response = await axios.get('https://nominatim.openstreetmap.org/search', {
       params: {
         q: fullAddress,
-        key: LOCATIONIQ_API_KEY,
         format: 'json',
         countrycodes: 'de',
         limit: 1,
         addressdetails: 1
+      },
+      headers: {
+        'User-Agent': 'Courierly-Transport-App/1.0 (contact@courierly.de)'
       },
       timeout: 10000
     });
@@ -75,7 +69,8 @@ router.post('/geocode', async (req, res) => {
         success: true,
         lat: parseFloat(result.lat),
         lon: parseFloat(result.lon),
-        display_name: result.display_name
+        display_name: result.display_name,
+        address: result.address || {}
       };
       
       // Store in cache (limit size)
