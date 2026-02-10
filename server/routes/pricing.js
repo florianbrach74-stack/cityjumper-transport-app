@@ -10,81 +10,9 @@ const geocodeCache = new Map();
 const CACHE_MAX_SIZE = 1000; // Store max 1000 addresses
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-// Request queue for Nominatim rate limiting
+// Rate limiting for LocationIQ (max 2 requests per second)
 let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 1000; // 1 second (Nominatim requirement)
-const requestQueue = [];
-let isProcessingQueue = false;
-const MAX_QUEUE_SIZE = 50; // Reject requests if queue is too long
-const QUEUE_TIMEOUT = 30000; // 30 seconds max wait time
-
-// Process geocoding queue
-async function processQueue() {
-  if (isProcessingQueue || requestQueue.length === 0) return;
-  
-  isProcessingQueue = true;
-  
-  while (requestQueue.length > 0) {
-    const { fullAddress, resolve, reject, timestamp } = requestQueue.shift();
-    
-    // Check if request timed out
-    if (Date.now() - timestamp > QUEUE_TIMEOUT) {
-      reject(new Error('Request timeout - queue too long'));
-      continue;
-    }
-    
-    try {
-      // Rate limiting: wait if needed
-      const now = Date.now();
-      const timeSinceLastRequest = now - lastRequestTime;
-      if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-        await new Promise(r => setTimeout(r, MIN_REQUEST_INTERVAL - timeSinceLastRequest));
-      }
-      lastRequestTime = Date.now();
-      
-      const result = await geocodeAddress(fullAddress);
-      resolve(result);
-    } catch (error) {
-      reject(error);
-    }
-  }
-  
-  isProcessingQueue = false;
-}
-
-// Actual geocoding function
-async function geocodeAddress(fullAddress) {
-  const axios = require('axios');
-  
-  console.log(`🔍 Geocoding with Nominatim: ${fullAddress}`);
-  
-  const response = await axios.get('https://nominatim.openstreetmap.org/search', {
-    params: {
-      q: fullAddress,
-      format: 'json',
-      countrycodes: 'de',
-      limit: 1,
-      addressdetails: 1
-    },
-    headers: {
-      'User-Agent': 'Courierly-Transport-App/1.0 (contact@courierly.de)'
-    },
-    timeout: 10000
-  });
-  
-  if (response.data && response.data.length > 0) {
-    const result = response.data[0];
-    return {
-      success: true,
-      lat: parseFloat(result.lat),
-      lon: parseFloat(result.lon),
-      display_name: result.display_name,
-      address: result.address || {}
-    };
-  }
-  
-  throw new Error('Adresse konnte nicht gefunden werden');
-}
+const MIN_REQUEST_INTERVAL = 600; // 600ms = ~1.5 requests per second (safe margin)
 
 // Geocode using Nominatim (OpenStreetMap - FREE, no API key needed)
 router.post('/geocode', async (req, res) => {
@@ -107,37 +35,63 @@ router.post('/geocode', async (req, res) => {
       return res.json(cached.data);
     }
 
-    // Check queue size
-    if (requestQueue.length >= MAX_QUEUE_SIZE) {
-      console.warn(`⚠️ Queue full (${requestQueue.length} requests) - rejecting request`);
-      return res.status(503).json({ 
-        error: 'Server überlastet - bitte versuchen Sie es in wenigen Sekunden erneut' 
-      });
+    const axios = require('axios');
+    
+    console.log(`🔍 Geocoding with Nominatim (OpenStreetMap): ${fullAddress}`);
+    
+    // Rate limiting: Nominatim requires max 1 request per second
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTime;
+    if (timeSinceLastRequest < 1000) {
+      const waitTime = 1000 - timeSinceLastRequest;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
     }
+    lastRequestTime = Date.now();
+    
+    const response = await axios.get('https://nominatim.openstreetmap.org/search', {
+      params: {
+        q: fullAddress,
+        format: 'json',
+        countrycodes: 'de',
+        limit: 1,
+        addressdetails: 1
+      },
+      headers: {
+        'User-Agent': 'Courierly-Transport-App/1.0 (contact@courierly.de)'
+      },
+      timeout: 10000
+    });
 
-    // Add to queue and wait for result
-    const result = await new Promise((resolve, reject) => {
-      requestQueue.push({
-        fullAddress,
-        resolve,
-        reject,
+    if (response.data && response.data.length > 0) {
+      const result = response.data[0];
+      
+      const responseData = {
+        success: true,
+        lat: parseFloat(result.lat),
+        lon: parseFloat(result.lon),
+        display_name: result.display_name,
+        address: result.address || {}
+      };
+      
+      // Store in cache (limit size)
+      if (geocodeCache.size >= CACHE_MAX_SIZE) {
+        const firstKey = geocodeCache.keys().next().value;
+        geocodeCache.delete(firstKey);
+      }
+      geocodeCache.set(cacheKey, {
+        data: responseData,
         timestamp: Date.now()
       });
-      processQueue();
-    });
-    
-    // Store in cache (limit size)
-    if (geocodeCache.size >= CACHE_MAX_SIZE) {
-      const firstKey = geocodeCache.keys().next().value;
-      geocodeCache.delete(firstKey);
+      
+      console.log(`✅ Geocoded: ${result.display_name} (cached)`);
+      return res.json(responseData);
     }
-    geocodeCache.set(cacheKey, {
-      data: result,
-      timestamp: Date.now()
-    });
     
-    console.log(`✅ Geocoded: ${result.display_name} (cached)`);
-    res.json(result);
+    console.warn(`⚠️ OpenStreetMap returned no results for: ${fullAddress}`);
+    console.warn(`Response data:`, response.data);
+    res.status(404).json({ 
+      error: 'Adresse konnte nicht gefunden werden'
+    });
   } catch (error) {
     console.error('❌ Geocoding error:', error.message);
     if (error.response) {
