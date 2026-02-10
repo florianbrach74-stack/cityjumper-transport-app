@@ -216,7 +216,7 @@ router.get('/employee/orders', authenticateToken, authorizeRole('employee'), asy
     if (assignmentMode === 'all_access') {
       // Show: 
       // 1. All approved orders (not assigned yet) - can be taken
-      // 2. All orders assigned to this employee (any status) - their own orders
+      // 2. All orders assigned to this employee (any status except completed/cancelled) - their own orders
       query = `
         SELECT o.*,
                e.first_name as employee_first_name,
@@ -226,13 +226,13 @@ router.get('/employee/orders', authenticateToken, authorizeRole('employee'), asy
         WHERE o.contractor_id = $1 
           AND (
             (o.status = 'approved' AND o.assigned_employee_id IS NULL)
-            OR o.assigned_employee_id = $2
+            OR (o.assigned_employee_id = $2 AND o.status NOT IN ('completed', 'cancelled'))
           )
         ORDER BY o.created_at DESC
       `;
       params = [contractorId, req.user.id];
     } else {
-      // Manual assignment: show only orders assigned to this employee (not completed)
+      // Manual assignment: show only orders assigned to this employee (not completed/cancelled)
       query = `
         SELECT o.*,
                e.first_name as employee_first_name,
@@ -241,7 +241,7 @@ router.get('/employee/orders', authenticateToken, authorizeRole('employee'), asy
         LEFT JOIN users e ON o.assigned_employee_id = e.id
         WHERE o.contractor_id = $1 
           AND o.assigned_employee_id = $2
-          AND o.status IN ('approved', 'accepted', 'picked_up', 'in_transit')
+          AND o.status NOT IN ('completed', 'cancelled')
         ORDER BY o.created_at DESC
       `;
       params = [contractorId, req.user.id];
