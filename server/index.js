@@ -22,6 +22,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/migration', require('./routes/run-migration-endpoint')); // TEMPORARY
 app.use('/api/test', require('./routes/test-cleanup')); // TEMPORARY - Test cleanup logic
 app.use('/api/test-employee', require('./routes/test-employee-orders')); // TEMPORARY - Test employee orders
+app.use('/api/debug-assignment', require('./routes/debug-assignment-mode')); // TEMPORARY - Debug assignment mode
 app.use('/api/fix', require('./routes/fix-order-101')); // TEMPORARY
 app.use('/api/fix-budget', require('./routes/fix-order-101-budget')); // TEMPORARY
 app.use('/api/fix-employees', require('./routes/fix-employees-contractor-id')); // TEMPORARY - Fix employees
