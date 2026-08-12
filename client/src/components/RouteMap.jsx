@@ -71,7 +71,9 @@ function MapBounds({ pickup, delivery }) {
   return null;
 }
 
-export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryStops = [], onRouteCalculated }) {
+const EMPTY_STOPS = [];
+
+export default function RouteMap({ pickup, delivery, pickupStops = EMPTY_STOPS, deliveryStops = EMPTY_STOPS, onRouteCalculated }) {
   const [routeData, setRouteData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
