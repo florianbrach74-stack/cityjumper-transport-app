@@ -34,17 +34,23 @@ const deliveryIcon = new L.Icon({
 
 function MapBounds({ pickup, delivery }) {
   const map = useMap();
-  
+
   useEffect(() => {
-    if (pickup && delivery) {
-      const bounds = L.latLngBounds([
-        [pickup.lat, pickup.lon],
-        [delivery.lat, delivery.lon]
-      ]);
+    if (!map || !pickup || !delivery) return;
+    const pLat = Number(pickup.lat);
+    const pLon = Number(pickup.lon);
+    const dLat = Number(delivery.lat);
+    const dLon = Number(delivery.lon);
+    if (isNaN(pLat) || isNaN(pLon) || isNaN(dLat) || isNaN(dLon)) return;
+    const bounds = L.latLngBounds([
+      [pLat, pLon],
+      [dLat, dLon]
+    ]);
+    if (bounds.isValid()) {
       map.fitBounds(bounds, { padding: [50, 50] });
     }
   }, [pickup, delivery, map]);
-  
+
   return null;
 }
 
@@ -52,6 +58,15 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
   const [routeData, setRouteData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const pickupLat = Number(pickup?.lat);
+  const pickupLon = Number(pickup?.lon);
+  const deliveryLat = Number(delivery?.lat);
+  const deliveryLon = Number(delivery?.lon);
+  const hasValidCoords = !isNaN(pickupLat) && !isNaN(pickupLon) && !isNaN(deliveryLat) && !isNaN(deliveryLon);
+  const validRouteCoordinates = (routeData?.coordinates || []).filter(
+    coord => Array.isArray(coord) && coord.length >= 2 && !isNaN(Number(coord[0])) && !isNaN(Number(coord[1]))
+  );
 
   const geocodeAddress = async (address, retries = 3) => {
     for (let attempt = 1; attempt <= retries; attempt++) {
@@ -86,12 +101,19 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
   };
 
   useEffect(() => {
-    if (pickup && delivery) {
+    if (hasValidCoords) {
       fetchRoute();
     }
   }, [pickup, delivery, pickupStops, deliveryStops]);
 
   const fetchRoute = async () => {
+    if (!hasValidCoords) {
+      console.warn('Invalid pickup/delivery coordinates for route calculation');
+      setError('Ungültige Adresskoordinaten');
+      setLoading(false);
+      if (onRouteCalculated) onRouteCalculated(null);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -108,7 +130,7 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
           try {
             const fullAddress = `${stop.address}, ${stop.postal_code} ${stop.city}, ${stop.country || 'Deutschland'}`;
             const geocoded = await geocodeAddress(fullAddress);
-            if (geocoded) {
+            if (geocoded && typeof geocoded.lat === 'number' && typeof geocoded.lon === 'number') {
               waypoints.push(`${geocoded.lon},${geocoded.lat}`);
             }
           } catch (e) {
@@ -126,7 +148,7 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
           try {
             const fullAddress = `${stop.address}, ${stop.postal_code} ${stop.city}, ${stop.country || 'Deutschland'}`;
             const geocoded = await geocodeAddress(fullAddress);
-            if (geocoded) {
+            if (geocoded && typeof geocoded.lat === 'number' && typeof geocoded.lon === 'number') {
               waypoints.push(`${geocoded.lon},${geocoded.lat}`);
             }
           } catch (e) {
@@ -201,7 +223,7 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
     }
   };
 
-  if (!pickup || !delivery) {
+  if (!hasValidCoords) {
     return (
       <div className="bg-gray-50 rounded-lg p-8 text-center">
         <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
@@ -266,8 +288,8 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
       <div className="rounded-lg overflow-hidden border-2 border-gray-300 shadow-lg">
         <MapContainer
           center={[
-            (pickup.lat + delivery.lat) / 2,
-            (pickup.lon + delivery.lon) / 2
+            (pickupLat + deliveryLat) / 2,
+            (pickupLon + deliveryLon) / 2
           ]}
           zoom={10}
           style={{ height: '500px', width: '100%' }}
@@ -279,7 +301,7 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
           />
           
           {/* Pickup Marker */}
-          <Marker position={[pickup.lat, pickup.lon]} icon={pickupIcon}>
+          <Marker position={[pickupLat, pickupLon]} icon={pickupIcon}>
             <Popup>
               <div className="p-2">
                 <p className="font-semibold text-green-700">📍 Abholung</p>
@@ -290,7 +312,7 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
           </Marker>
           
           {/* Delivery Marker */}
-          <Marker position={[delivery.lat, delivery.lon]} icon={deliveryIcon}>
+          <Marker position={[deliveryLat, deliveryLon]} icon={deliveryIcon}>
             <Popup>
               <div className="p-2">
                 <p className="font-semibold text-red-700">🎯 Zustellung</p>
@@ -302,7 +324,7 @@ export default function RouteMap({ pickup, delivery, pickupStops = [], deliveryS
           
           {/* Route Line */}
           <Polyline
-            positions={routeData.coordinates}
+            positions={validRouteCoordinates}
             color="#2563eb"
             weight={5}
             opacity={0.8}

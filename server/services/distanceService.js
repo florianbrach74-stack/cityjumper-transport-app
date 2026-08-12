@@ -25,7 +25,7 @@ async function geocodeAddress(address, postalCode, city, country = 'Deutschland'
         addressdetails: 1 // Get detailed address info
       },
       headers: {
-        'User-Agent': 'Courierly-Transport-App/1.0'
+        'User-Agent': 'Courierly-Transport-App/1.0 (contact@courierly.de)'
       },
       timeout: REQUEST_TIMEOUT
     });
@@ -201,11 +201,9 @@ async function calculateDistanceAndDuration(
   try {
     console.log(`📍 Calculating route: ${pickupCity} → ${deliveryCity}`);
     
-    // Geocode both addresses
-    const [startCoords, endCoords] = await Promise.all([
-      geocodeAddress(pickupAddress, pickupPostalCode, pickupCity),
-      geocodeAddress(deliveryAddress, deliveryPostalCode, deliveryCity)
-    ]);
+    // Geocode both addresses (sequentially to respect Nominatim rate limits)
+    const startCoords = await geocodeAddress(pickupAddress, pickupPostalCode, pickupCity);
+    const endCoords = await geocodeAddress(deliveryAddress, deliveryPostalCode, deliveryCity);
 
     if (!startCoords || !endCoords) {
       const missingAddress = !startCoords ? 'pickup' : 'delivery';

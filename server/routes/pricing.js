@@ -14,6 +14,54 @@ const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 600; // 600ms = ~1.5 requests per second (safe margin)
 
+// Photon-Fallback für Nominatim-Fehlschläge
+async function photonGeocode(fullAddress) {
+  try {
+    const encoded = encodeURIComponent(fullAddress);
+    const axios = require('axios');
+    const response = await axios.get(`https://photon.komoot.io/api/?q=${encoded}&limit=1&lang=de`, {
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Courierly-Transport-App/1.0 (contact@courierly.de)'
+      }
+    });
+    const features = response.data && response.data.features;
+    if (features && features.length > 0) {
+      const f = features[0];
+      const p = f.properties;
+      const [lon, lat] = f.geometry.coordinates;
+      const street = p.street || p.road || p.name || '';
+      const houseNumber = p.housenumber || '';
+      const city = p.city || p.town || p.village || p.municipality || p.district || '';
+      const postcode = p.postcode || '';
+      const country = p.country || 'Deutschland';
+      const displayName = `${street} ${houseNumber}, ${postcode} ${city}, ${country}`.replace(/\s+/g, ' ').trim().replace(/^,\s*|,\s*$/g, '');
+      return {
+        success: true,
+        lat,
+        lon,
+        display_name: displayName,
+        address: {
+          road: street,
+          street: street,
+          house_number: houseNumber,
+          postcode,
+          city,
+          town: p.town || city,
+          village: p.village || city,
+          municipality: p.municipality || city,
+          country,
+          state: p.state || ''
+        }
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('❌ Photon geocoding error:', error.message);
+    return null;
+  }
+}
+
 // Geocode using Nominatim (OpenStreetMap - FREE, no API key needed)
 router.post('/geocode', async (req, res) => {
   try {
@@ -98,8 +146,21 @@ router.post('/geocode', async (req, res) => {
       console.error('Response status:', error.response.status);
       console.error('Response data:', error.response.data);
     }
+    const photonResult = await photonGeocode(fullAddress);
+    if (photonResult) {
+      if (geocodeCache.size >= CACHE_MAX_SIZE) {
+        const firstKey = geocodeCache.keys().next().value;
+        geocodeCache.delete(firstKey);
+      }
+      geocodeCache.set(cacheKey, {
+        data: photonResult,
+        timestamp: Date.now()
+      });
+      console.log(`✅ Geocoded with Photon fallback: ${photonResult.display_name}`);
+      return res.json(photonResult);
+    }
     res.status(500).json({ 
-      error: error.message || 'Fehler beim Geocoding' 
+      error: error.message || 'Fehler beim Geocoding'
     });
   }
 });
