@@ -46,9 +46,26 @@ function MapBounds({ pickup, delivery }) {
       [pLat, pLon],
       [dLat, dLon]
     ]);
-    if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [50, 50] });
-    }
+    if (!bounds.isValid()) return;
+
+    const fit = () => {
+      if (!map || !map._container) return;
+      try {
+        map.fitBounds(bounds, { padding: [50, 50] });
+      } catch (e) {
+        console.warn('fitBounds failed:', e.message);
+      }
+    };
+
+    map.whenReady(fit);
+
+    return () => {
+      try {
+        map.off('load', fit);
+      } catch (e) {
+        // ignore
+      }
+    };
   }, [pickup, delivery, map]);
 
   return null;
